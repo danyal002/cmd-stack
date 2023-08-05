@@ -15,6 +15,7 @@ function createWindow() {
 		webPreferences: {
 			nodeIntegration: true,
 		},
+		icon: icon: path.join(__dirname, 'assets/logo-stack.svg') 
 	});
 	win.loadURL(startUrl);
 	app.on("window-all-closed", () => {
