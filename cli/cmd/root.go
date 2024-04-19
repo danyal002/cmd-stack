@@ -1,6 +1,5 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -10,18 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cmdstack",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Simplify command management for developers with lightning-fast saving and intuitive search.",
+	Long:  `CmdStack CLI streamlines note and command management, offering developers a quick and intuitive way to save and access their development-related notes. With its fast-saving feature and easy search function, CmdStack CLI ensures developers spend less time searching and more time coding. Whether you're tagging commands for easy retrieval or deleting redundant notes, CmdStack CLI is the go-to tool for staying organized and efficient in your development workflow.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -47,5 +39,3 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
-
-
