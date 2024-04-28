@@ -6,8 +6,10 @@ import (
 	"github.com/dgraph-io/badger"
 )
 
+const DATABASE_DIRECTORY = "../db_files"
+
 func Search(key string) string {
-	db, db_err := badger.Open(badger.DefaultOptions("../db_files"))
+	db, db_err := badger.Open(badger.DefaultOptions(DATABASE_DIRECTORY))
 	if db_err != nil {
 		log.Fatal(db_err)
 	}
@@ -46,7 +48,7 @@ func Search(key string) string {
 }
 
 func Add(key string, value string) error {
-	db, err := badger.Open(badger.DefaultOptions("../db_files"))
+	db, err := badger.Open(badger.DefaultOptions(DATABASE_DIRECTORY))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,4 +64,27 @@ func Add(key string, value string) error {
 	}
 
 	return nil
+}
+
+func GenerateId() uint64 {
+	db, db_err := badger.Open(badger.DefaultOptions(DATABASE_DIRECTORY))
+	if db_err != nil {
+		log.Fatal(db_err)
+	}
+
+	defer db.Close()
+
+	seq, seq_err := db.GetSequence([]byte("cmd-id"), 100)
+	if seq_err != nil {
+		log.Fatal(seq_err)
+	}
+
+	defer seq.Release()
+
+	result, res_err := seq.Next()
+	if res_err != nil {
+		log.Fatal(res_err)
+	}
+
+	return result
 }
