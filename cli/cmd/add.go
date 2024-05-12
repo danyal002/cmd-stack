@@ -17,9 +17,15 @@ var addCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		cmdText := args[0]
+		alias, _ := cmd.Flags().GetString("alias")
 		tags, _ := cmd.Flags().GetString("tags")
 		note, _ := cmd.Flags().GetString("note")
-		alias, _ := cmd.Flags().GetString("alias")
+
+		// We must always have an alias. If one is not provided
+		// we will use the command text as the alias
+		if alias == "" {
+			alias = cmdText
+		}
 
 		data_access_layer, err := dal.NewDataAccessLayer()
 		if err != nil {
