@@ -35,7 +35,7 @@ var searchCmd = &cobra.Command{
 		commands := []dal.Command{}
 		var get_from_database = true
 		if tags != "" {
-			fmt.Println("Getting db from tags", tags)
+			log.Println("Getting db from tags", tags)
 			get_from_database = false
 			commands, err = data_access_layer.SearchCommandsByTag(tags)
 			if err != nil {
@@ -44,32 +44,35 @@ var searchCmd = &cobra.Command{
 		}
 
 		if command != "" && get_from_database {
-			fmt.Println("Getting db from command", command)
+			log.Println("Getting db from command", command)
 			get_from_database = false
 			commands, err = data_access_layer.SearchCommandsByCommand(command)
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else if command != "" {
-			fmt.Println("Getting from command", command)
+			log.Println("Getting from command", command)
 			commands = dal.FilterCommandsByCommand(commands, command)
 		}
 
 		if alias != "" && get_from_database {
-			fmt.Println("Getting db from alias", alias)
+			log.Println("Getting db from alias", alias)
 			get_from_database = false
 			commands, err = data_access_layer.SearchCommandsByAlias(alias)
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else if alias != "" {
-			fmt.Println("Getting from alias", alias)
+			log.Println("Getting from alias", alias)
 			commands = dal.FilterCommandsByAlias(commands, alias)
 		}
 
-		// Print success log
-		for _, com := range commands {
-			log.Printf(com.String())
+		if len(commands) > 0 {
+			for _, com := range commands {
+				fmt.Println(com.String())
+			}
+		} else {
+			fmt.Println("No commands found")
 		}
 	},
 }
