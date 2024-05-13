@@ -2,6 +2,7 @@ package dal
 
 import (
 	"encoding/json"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"strings"
 )
 
@@ -38,7 +39,7 @@ func PrintCommands(commands []Command) {
 func FilterCommandsByCommand(commands []Command, command string) []Command {
 	var filteredCommands []Command
 	for _, cmd := range commands {
-		if strings.Contains(cmd.Command, command) {
+		if fuzzy.Match(command, cmd.Command) || strings.Contains(cmd.Command, command) {
 			filteredCommands = append(filteredCommands, cmd)
 		}
 	}
@@ -48,7 +49,7 @@ func FilterCommandsByCommand(commands []Command, command string) []Command {
 func FilterCommandsByAlias(commands []Command, alias string) []Command {
 	var filteredCommands []Command
 	for _, cmd := range commands {
-		if strings.Contains(cmd.Alias, alias) {
+		if fuzzy.Match(alias, cmd.Alias) || strings.Contains(cmd.Alias, alias) {
 			filteredCommands = append(filteredCommands, cmd)
 		}
 	}
