@@ -17,7 +17,7 @@ var searchCmd = &cobra.Command{
 	Long:  `missing_docs`,
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		tags, _ := cmd.Flags().GetString("tags")
+		tag, _ := cmd.Flags().GetString("tag")
 		command, _ := cmd.Flags().GetString("command")
 		alias, _ := cmd.Flags().GetString("alias")
 
@@ -34,10 +34,10 @@ var searchCmd = &cobra.Command{
 
 		commands := []dal.Command{}
 		var get_from_database = true
-		if tags != "" {
-			log.Println("Getting db from tags", tags)
+		if tag != "" {
+			log.Println("Getting db from tags", tag)
 			get_from_database = false
-			commands, err = data_access_layer.SearchCommandsByTag(tags)
+			commands, err = data_access_layer.SearchCommandsByTag(tag)
 			if err != nil {
 				log.Fatal(err)
 			}

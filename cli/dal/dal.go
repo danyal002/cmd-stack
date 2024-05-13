@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS param (
 );
 `
 
+// Create a new data access layer and initialize the database if required
 func NewDataAccessLayer() (*DataAccessLayer, error) {
 	db, err := sql.Open("sqlite3", DATABASE_NAME)
 	if err != nil {
@@ -45,58 +46,58 @@ func NewDataAccessLayer() (*DataAccessLayer, error) {
 	return &DataAccessLayer{db: db}, nil
 }
 
+// Close the database connection
 func (dal *DataAccessLayer) CloseDataAccessLayer() {
 	dal.db.Close()
 }
 
-// Add the command to the database
+// Add a command to the database with the given information
 func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string, note string, user_id uint64) error {
 	last_used := time.Now().Unix()
 	_, err := dal.db.Exec("INSERT INTO command (alias, command, tags, note, user_id, last_used) VALUES (?, ?, ?, ?, ?, ?)", alias, command, tags, note, user_id, last_used)
 	return err
 }
 
-// Find all commands with the given alias as a substring
+// Get all commands in the database
+func (dal *DataAccessLayer) getAllCommands() ([]Command, error) {
+	rows, err := dal.db.Query("SELECT * FROM command")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var commands []Command
+	for rows.Next() {
+		var command Command
+		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.UserId, &command.LastUsed); err != nil {
+			return nil, err
+		}
+		commands = append(commands, command)
+	}
+	return commands, nil
+}
+
+// Find all commands that have a name that matches the given alias
 func (dal *DataAccessLayer) SearchCommandsByAlias(alias string) ([]Command, error) {
-	rows, err := dal.db.Query("SELECT * FROM command WHERE alias LIKE ?", "%"+alias+"%")
+	commands, err := dal.getAllCommands()
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var commands []Command
-	for rows.Next() {
-		var command Command
-		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.UserId, &command.LastUsed); err != nil {
-			return nil, err
-		}
-		commands = append(commands, command)
-	}
-	return commands, nil
+	return FilterCommandsByAlias(commands, alias), nil
 }
 
-// Find all commands with the given command as a substring
+// Find all commands that match the given command
 func (dal *DataAccessLayer) SearchCommandsByCommand(command string) ([]Command, error) {
-	rows, err := dal.db.Query("SELECT * FROM command WHERE command LIKE ?", "%"+command+"%")
+	commands, err := dal.getAllCommands()
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var commands []Command
-	for rows.Next() {
-		var command Command
-		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.UserId, &command.LastUsed); err != nil {
-			return nil, err
-		}
-		commands = append(commands, command)
-	}
-	return commands, nil
+	return FilterCommandsByCommand(commands, command), nil
 }
 
+// Find all commands that have a tag that matches the given tag
 func (dal *DataAccessLayer) SearchCommandsByTag(tag string) ([]Command, error) {
-	// We add two commas around the tag so that
-	rows, err := dal.db.Query("SELECT * FROM command WHERE tags LIKE ?", ",%"+tag+"%,")
+	rows, err := dal.db.Query("SELECT * FROM command WHERE tags LIKE ?", "%"+tag+"%")
 	if err != nil {
 		return nil, err
 	}
