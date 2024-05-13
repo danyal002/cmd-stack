@@ -76,8 +76,27 @@ func (dal *DataAccessLayer) SearchCommandsByAlias(alias string) ([]Command, erro
 }
 
 // Find all commands with the given command as a substring
-func (dal *DataAccessLayer) SearchCommandByCommand(command string) ([]Command, error) {
+func (dal *DataAccessLayer) SearchCommandsByCommand(command string) ([]Command, error) {
 	rows, err := dal.db.Query("SELECT * FROM command WHERE command LIKE ?", "%"+command+"%")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var commands []Command
+	for rows.Next() {
+		var command Command
+		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.UserId, &command.LastUsed); err != nil {
+			return nil, err
+		}
+		commands = append(commands, command)
+	}
+	return commands, nil
+}
+
+func (dal *DataAccessLayer) SearchCommandsByTag(tag string) ([]Command, error) {
+	// We add two commas around the tag so that
+	rows, err := dal.db.Query("SELECT * FROM command WHERE tags LIKE ?", ",%"+tag+"%,")
 	if err != nil {
 		return nil, err
 	}

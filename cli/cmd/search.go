@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"cmdstack/dal"
+	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 )
@@ -16,10 +17,14 @@ var searchCmd = &cobra.Command{
 	Long:  `missing_docs`,
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		//tags, _ := cmd.Flags().GetString("tags")
+		tags, _ := cmd.Flags().GetString("tags")
 		command, _ := cmd.Flags().GetString("command")
-		//alias, _ := cmd.Flags().GetString("alias")
-		//note, _ := cmd.Flags().GetString("note")
+		alias, _ := cmd.Flags().GetString("alias")
+
+		// We process searches in the following order:
+		// 1. Search by tags
+		// 2. Search by command
+		// 3. Search by alias
 
 		data_access_layer, err := dal.NewDataAccessLayer()
 		if err != nil {
@@ -27,14 +32,45 @@ var searchCmd = &cobra.Command{
 		}
 		defer data_access_layer.CloseDataAccessLayer()
 
-		commands, err := data_access_layer.SearchCommandByCommand(command)
-		if err != nil {
-			log.Fatal(err)
+		commands := []dal.Command{}
+		var get_from_database = true
+		if tags != "" {
+			fmt.Println("Getting db from tags", tags)
+			get_from_database = false
+			commands, err = data_access_layer.SearchCommandsByTag(tags)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		if command != "" && get_from_database {
+			fmt.Println("Getting db from command", command)
+			get_from_database = false
+			commands, err = data_access_layer.SearchCommandsByCommand(command)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if command != "" {
+			fmt.Println("Getting from command", command)
+			commands = dal.FilterCommandsByCommand(commands, command)
+		}
+
+		if alias != "" && get_from_database {
+			fmt.Println("Getting db from alias", alias)
+			get_from_database = false
+			commands, err = data_access_layer.SearchCommandsByAlias(alias)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if alias != "" {
+			fmt.Println("Getting from alias", alias)
+			commands = dal.FilterCommandsByAlias(commands, alias)
 		}
 
 		// Print success log
-		log.Printf("Search successful. Got %d command(s)", len(commands))
-
+		for _, com := range commands {
+			log.Printf(com.String())
+		}
 	},
 }
 
@@ -43,5 +79,4 @@ func init() {
 	searchCmd.Flags().StringP("tag", "t", "", "Tag for the command")
 	searchCmd.Flags().StringP("command", "c", "", "Command to search for")
 	searchCmd.Flags().StringP("alias", "a", "", "Name for the command")
-	searchCmd.Flags().StringP("note", "n", "", "Note for the command")
 }
