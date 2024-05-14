@@ -3,6 +3,7 @@ package dal
 import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
+	"log"
 	"time"
 )
 
@@ -58,47 +59,17 @@ func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string
 	return err
 }
 
-// Get all commands in the database
-func (dal *DataAccessLayer) getAllCommands() ([]Command, error) {
-	rows, err := dal.db.Query("SELECT * FROM command")
+// Search for a command by the given text
+func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
+	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE command LIKE ?")
 	if err != nil {
+		log.Fatal(err)
 		return nil, err
 	}
-	defer rows.Close()
 
-	var commands []Command
-	for rows.Next() {
-		var command Command
-		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.UserId, &command.LastUsed); err != nil {
-			return nil, err
-		}
-		commands = append(commands, command)
-	}
-	return commands, nil
-}
-
-// Find all commands that have a name that matches the given alias
-func (dal *DataAccessLayer) SearchCommandsByAlias(alias string) ([]Command, error) {
-	commands, err := dal.getAllCommands()
+	rows, err := stmt.Query("%" + command + "%")
 	if err != nil {
-		return nil, err
-	}
-	return FilterCommandsByAlias(commands, alias), nil
-}
-
-// Find all commands that match the given command
-func (dal *DataAccessLayer) SearchCommandsByCommand(command string) ([]Command, error) {
-	commands, err := dal.getAllCommands()
-	if err != nil {
-		return nil, err
-	}
-	return FilterCommandsByCommand(commands, command), nil
-}
-
-// Find all commands that have a tag that matches the given tag
-func (dal *DataAccessLayer) SearchCommandsByTag(tag string) ([]Command, error) {
-	rows, err := dal.db.Query("SELECT * FROM command WHERE tags LIKE ?", "%"+tag+"%")
-	if err != nil {
+		log.Fatal(err)
 		return nil, err
 	}
 	defer rows.Close()
