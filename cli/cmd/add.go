@@ -34,7 +34,7 @@ var addCmd = &cobra.Command{
 		}
 		defer data_access_layer.CloseDataAccessLayer()
 
-		err = data_access_layer.AddCommand(alias, cmdText, tags, note, 0)
+		err = data_access_layer.AddCommand(alias, cmdText, tags, note)
 		if err != nil {
 			log.Fatal(err)
 			return

@@ -10,7 +10,6 @@ type Command struct {
 	Command  string
 	Tags     string
 	Note     string
-	UserId   *uint64
 	LastUsed uint64
 }
 

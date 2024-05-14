@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS command (
     command TEXT,
     tags TEXT,
     note TEXT,
-    user_id INTEGER,
     last_used INTEGER
 );
 
@@ -53,9 +52,9 @@ func (dal *DataAccessLayer) CloseDataAccessLayer() {
 }
 
 // Add a command to the database with the given information
-func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string, note string, user_id uint64) error {
+func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string, note string) error {
 	last_used := time.Now().Unix()
-	_, err := dal.db.Exec("INSERT INTO command (alias, command, tags, note, user_id, last_used) VALUES (?, ?, ?, ?, ?, ?)", alias, command, tags, note, user_id, last_used)
+	_, err := dal.db.Exec("INSERT INTO command (alias, command, tags, note, last_used) VALUES (?, ?, ?, ?, ?)", alias, command, tags, note, last_used)
 	return err
 }
 
@@ -77,7 +76,7 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 	var commands []Command
 	for rows.Next() {
 		var command Command
-		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.UserId, &command.LastUsed); err != nil {
+		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
 			return nil, err
 		}
 		commands = append(commands, command)

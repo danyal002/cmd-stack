@@ -3,8 +3,8 @@ package dal
 import "encoding/json"
 
 type Parameter struct {
-	Id           *uint64
-	CommandId    *uint64
+	Id           *uint64 // Unique identifier for the parameter in the parameter table
+	CommandId    *uint64 // Id of the command that this parameter belongs to
 	Name         string
 	Symbol       string
 	DefaultValue string
