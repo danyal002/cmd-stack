@@ -29,14 +29,14 @@ var addCmd = &cobra.Command{
 
 		data_access_layer, err := dal.NewDataAccessLayer()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Add Command: Failed to get Data Access Layer: ", err)
 			return
 		}
 		defer data_access_layer.CloseDataAccessLayer()
 
 		err = data_access_layer.AddCommand(alias, cmdText, tags, note)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Add Command: Failed to add command to the database: ", err)
 			return
 		}
 	},
@@ -45,6 +45,6 @@ var addCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(addCmd)
 	addCmd.Flags().StringP("alias", "a", "", "Name for the command")
-	addCmd.Flags().StringP("tag", "t", "", "Tag for the command")
+	addCmd.Flags().StringP("tags", "t", "", "Tag for the command")
 	addCmd.Flags().StringP("note", "n", "", "Note for the command")
 }

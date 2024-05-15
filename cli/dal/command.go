@@ -2,6 +2,7 @@ package dal
 
 import (
 	"encoding/json"
+	"strconv"
 )
 
 type Command struct {
@@ -14,7 +15,7 @@ type Command struct {
 }
 
 func (c Command) String() string {
-	return c.Alias + " | " + c.Command
+	return c.Alias + " | " + c.Command + " | " + c.Tags + " | " + c.Note + " | " + strconv.FormatUint(c.LastUsed, 10)
 }
 
 func (c Command) Serialize() ([]byte, error) {
