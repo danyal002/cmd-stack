@@ -5,8 +5,9 @@ package cmd
 
 import (
 	"cmdstack/dal"
-	"github.com/spf13/cobra"
 	"log"
+
+	"github.com/spf13/cobra"
 )
 
 // addCmd represents the add command

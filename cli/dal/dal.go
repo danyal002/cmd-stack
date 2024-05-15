@@ -2,9 +2,10 @@ package dal
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type DataAccessLayer struct {
@@ -65,6 +66,7 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 		log.Fatal("SearchByCommand: Failed to construct Prepared Statement: ", err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	rows, err := stmt.Query("%" + command + "%")
 	if err != nil {
