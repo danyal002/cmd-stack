@@ -25,7 +25,7 @@ var listCmd = &cobra.Command{
 		}
 		defer data_access_layer.CloseDataAccessLayer()
 
-		commands, err := data_access_layer.GetAllCommands(limit, use_recent)
+		commands, err := data_access_layer.GetCommands(limit, use_recent)
 		if err != nil {
 			log.Fatal("List Command: Failed to retrieve commands from the database: ", err)
 			return

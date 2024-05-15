@@ -66,7 +66,6 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 		log.Fatal("SearchByCommand: Failed to construct Prepared Statement: ", err)
 		return nil, err
 	}
-	defer rows.Close()
 
 	rows, err := stmt.Query("%" + command + "%")
 	if err != nil {
@@ -88,7 +87,7 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 }
 
 // Get all commands from the database, limiting and/or ordering results based on the supplied parameters
-func (dal *DataAccessLayer) GetAllCommands(limit int, order_by_use bool) ([]Command, error) {
+func (dal *DataAccessLayer) GetCommands(limit int, order_by_use bool) ([]Command, error) {
 	var stmt *sql.Stmt
 	var err error
 
@@ -98,13 +97,13 @@ func (dal *DataAccessLayer) GetAllCommands(limit int, order_by_use bool) ([]Comm
 		stmt, err = dal.db.Prepare("SELECT * FROM command LIMIT ?")
 	}
 	if err != nil {
-		log.Fatal("GetAllCommands: Failed to construct Prepared Statement: ", err)
+		log.Fatal("GetCommands: Failed to construct Prepared Statement: ", err)
 		return nil, err
 	}
 
 	rows, err := stmt.Query(limit)
 	if err != nil {
-		log.Fatal("GetAllCommands: Failed to execute query: ", err)
+		log.Fatal("GetCommands: Failed to execute query: ", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -113,7 +112,7 @@ func (dal *DataAccessLayer) GetAllCommands(limit int, order_by_use bool) ([]Comm
 	for rows.Next() {
 		var command Command
 		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
-			log.Fatal("GetAllCommands: Failed to extract Command: ", err)
+			log.Fatal("GetCommands: Failed to extract Command: ", err)
 			return nil, err
 		}
 		commands = append(commands, command)
