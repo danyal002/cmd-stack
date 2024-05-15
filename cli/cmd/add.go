@@ -5,50 +5,46 @@ package cmd
 
 import (
 	"cmdstack/dal"
-	"log"
-	"strconv"
-
 	"github.com/spf13/cobra"
+	"log"
 )
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:   "add",
-	Short: "missing_docs",
+	Short: "Save a command to your command stack",
 	Long:  `missing_docs`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		cmdText := args[0]
-		tag, _ := cmd.Flags().GetString("tag")
-		note, _ := cmd.Flags().GetString("note")
 		alias, _ := cmd.Flags().GetString("alias")
+		tags, _ := cmd.Flags().GetString("tags")
+		note, _ := cmd.Flags().GetString("note")
 
-		command := Command{
-			Command: cmdText,
-			Tag:     tag,
-			Note:    note,
-			Alias:   alias,
-			Id:      nil,
+		// We must always have an alias. If one is not provided
+		// we will use the command text as the alias
+		if alias == "" {
+			alias = cmdText
 		}
 
-		command_id := dal.GenerateId()
-		command.Id = &command_id
-
-		command_str, err := command.Serialize()
+		data_access_layer, err := dal.NewDataAccessLayer()
 		if err != nil {
 			log.Fatal(err)
+			return
 		}
+		defer data_access_layer.CloseDataAccessLayer()
 
-		err = dal.Add(strconv.FormatUint(*command.Id, 10), string(command_str))
+		err = data_access_layer.AddCommand(alias, cmdText, tags, note)
 		if err != nil {
 			log.Fatal(err)
+			return
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(addCmd)
+	addCmd.Flags().StringP("alias", "a", "", "Name for the command")
 	addCmd.Flags().StringP("tag", "t", "", "Tag for the command")
 	addCmd.Flags().StringP("note", "n", "", "Note for the command")
-	addCmd.Flags().StringP("alias", "a", "", "Alias for the command")
 }

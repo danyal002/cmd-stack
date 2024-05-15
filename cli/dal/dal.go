@@ -1,90 +1,85 @@
 package dal
 
 import (
+	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
-
-	"github.com/dgraph-io/badger"
+	"time"
 )
 
-const DATABASE_DIRECTORY = "../db_files"
-
-func Search(key string) string {
-	db, db_err := badger.Open(badger.DefaultOptions(DATABASE_DIRECTORY))
-	if db_err != nil {
-		log.Fatal(db_err)
-	}
-	defer db.Close()
-
-	var valCopy []byte
-	search_err := db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get([]byte(key))
-
-		if err != nil {
-			return err
-		}
-
-		err = item.Value(func(val []byte) error {
-			valCopy = append([]byte{}, val...)
-			return nil
-		})
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if search_err != nil {
-		switch search_err.Error() {
-		case "ErrKeyNotFound":
-			return ""
-		default:
-			log.Fatal(search_err)
-		}
-	}
-
-	return string(valCopy)
+type DataAccessLayer struct {
+	db *sql.DB
 }
 
-func Add(key string, value string) error {
-	db, err := badger.Open(badger.DefaultOptions(DATABASE_DIRECTORY))
+const DATABASE_NAME string = "cmdstack.db"
+const DATABASE_CREATE_STRING string = `
+CREATE TABLE IF NOT EXISTS command (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alias TEXT,
+    command TEXT,
+    tags TEXT,
+    note TEXT,
+    last_used INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS param (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    command_id INTEGER,
+    name TEXT,
+    symbol TEXT,
+    default_value TEXT,
+    note TEXT
+);
+`
+
+// Create a new data access layer and initialize the database if required
+func NewDataAccessLayer() (*DataAccessLayer, error) {
+	db, err := sql.Open("sqlite3", DATABASE_NAME)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize the database if required
+	if _, err := db.Exec(DATABASE_CREATE_STRING); err != nil {
+		return nil, err
+	}
+	return &DataAccessLayer{db: db}, nil
+}
+
+// Close the database connection
+func (dal *DataAccessLayer) CloseDataAccessLayer() {
+	dal.db.Close()
+}
+
+// Add a command to the database with the given information
+func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string, note string) error {
+	last_used := time.Now().Unix()
+	_, err := dal.db.Exec("INSERT INTO command (alias, command, tags, note, last_used) VALUES (?, ?, ?, ?, ?)", alias, command, tags, note, last_used)
+	return err
+}
+
+// Search for a command by the given text
+func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
+	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE command LIKE ?")
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
-	defer db.Close()
 
-	err = db.Update(func(txn *badger.Txn) error {
-		err := txn.Set([]byte(key), []byte(value))
-		return err
-	})
-
+	rows, err := stmt.Query("%" + command + "%")
 	if err != nil {
-		return err
+		log.Fatal(err)
+		return nil, err
 	}
+	defer rows.Close()
 
-	return nil
-}
-
-func GenerateId() uint64 {
-	db, db_err := badger.Open(badger.DefaultOptions(DATABASE_DIRECTORY))
-	if db_err != nil {
-		log.Fatal(db_err)
+	var commands []Command
+	for rows.Next() {
+		var command Command
+		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
+			return nil, err
+		}
+		commands = append(commands, command)
 	}
-
-	defer db.Close()
-
-	seq, seq_err := db.GetSequence([]byte("cmd-id"), 100)
-	if seq_err != nil {
-		log.Fatal(seq_err)
-	}
-
-	defer seq.Release()
-
-	result, res_err := seq.Next()
-	if res_err != nil {
-		log.Fatal(res_err)
-	}
-
-	return result
+	return commands, nil
 }
