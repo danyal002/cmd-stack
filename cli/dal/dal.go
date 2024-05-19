@@ -78,7 +78,7 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 	for rows.Next() {
 		var command Command
 		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
-			log.Fatal("SearchByCommand: Failed to extract Command: ", err)
+			log.Fatal("SearchByCommand: Failed to scan row: ", err)
 			return nil, err
 		}
 		commands = append(commands, command)
@@ -87,11 +87,11 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 }
 
 // Get all commands from the database, limiting and/or ordering results based on the supplied parameters
-func (dal *DataAccessLayer) GetCommands(limit int, order_by_use bool) ([]Command, error) {
+func (dal *DataAccessLayer) GetCommands(limit int, order_by_recent_usage bool) ([]Command, error) {
 	var stmt *sql.Stmt
 	var err error
 
-	if order_by_use {
+	if order_by_recent_usage {
 		stmt, err = dal.db.Prepare("SELECT * FROM command ORDER BY last_used DESC LIMIT ?")
 	} else {
 		stmt, err = dal.db.Prepare("SELECT * FROM command LIMIT ?")
