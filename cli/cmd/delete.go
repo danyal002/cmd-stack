@@ -26,7 +26,7 @@ var deleteCmd = &cobra.Command{
 
 		data_access_layer, err := dal.NewDataAccessLayer()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Failed to create data access layer:", err)
 			return
 		}
 		defer data_access_layer.CloseDataAccessLayer()
@@ -36,7 +36,7 @@ var deleteCmd = &cobra.Command{
 			fmt.Println("The command with ID", id, "does not exist")
 			return
 		} else if err != nil {
-			log.Fatal(err)
+			log.Fatal("An error occurred while deleting the command with ID", id, ":", err)
 			return
 		} else {
 			fmt.Println("Command with ID", id, "deleted successfully")

@@ -65,13 +65,13 @@ func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string
 func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
 	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE id = ?")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("GetCommandById: Failed to prepare statement:", err)
 		return nil, err
 	}
 
 	rows, err := stmt.Query(id)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("GetCommandById: Failed to execute query:", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -81,6 +81,7 @@ func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
 		log.Println("The command with ID", id, "does not exist")
 		return nil, MissingCommandError
 	} else if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
+		log.Fatal("GetCommandById: Failed to scan row:", err)
 		return nil, err
 	}
 	return &command, nil
@@ -116,19 +117,20 @@ func (dal *DataAccessLayer) DeleteCommandById(id int) error {
 	// Determine if the id exists
 	_, err := dal.GetCommandById(id)
 	if err != nil {
+		log.Fatal("DeleteCommandById: failed to get command by id:", err)
 		return err
 	}
 
 	// Delete the id
 	stmt, err := dal.db.Prepare("DELETE FROM command WHERE id = ?")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("DeleteCommandById: Failed to prepare delete statement:", err)
 		return err
 	}
 
 	_, err = stmt.Exec(id)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("DeleteCommandById: failed to execute delete statement:", err)
 		return err
 	}
 	return nil
