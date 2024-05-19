@@ -20,13 +20,13 @@ var deleteCmd = &cobra.Command{
 		id, _ := cmd.Flags().GetInt("id")
 
 		if id == -1 {
-			log.Fatal("You must provide an ID to delete a command")
+			log.Fatal("Delete Cmd: You must provide an ID to delete a command")
 			return
 		}
 
 		data_access_layer, err := dal.NewDataAccessLayer()
 		if err != nil {
-			log.Fatal("Failed to create data access layer:", err)
+			log.Fatal("Delete Cmd: Failed to create data access layer:", err)
 			return
 		}
 		defer data_access_layer.CloseDataAccessLayer()
@@ -36,7 +36,7 @@ var deleteCmd = &cobra.Command{
 			fmt.Println("The command with ID", id, "does not exist")
 			return
 		} else if err != nil {
-			log.Fatal("An error occurred while deleting the command with ID", id, ":", err)
+			log.Fatal("Delete Cmd: An error occurred while deleting the command with ID", id, ":", err)
 			return
 		} else {
 			fmt.Println("Command with ID", id, "deleted successfully")
