@@ -31,11 +31,72 @@ func init() {
 	searchCmd.Flags().StringP("print", "p", "all", "Select how commands are presented to you (all, command, alias)")
 }
 
-func extractAndValidateArgs(cmd *cobra.Command, args []string) (string, string, string, string, error) {
+func searchArgsWizard(cur_tag string, cur_command string, cur_alias string) (string, string, string, string, error) {
+	fmt.Println("Specify the tags, commands, and/or aliases you'd like to see:")
+
+	prompt := promptui.Prompt{
+		Label:     "Tag",
+		AllowEdit: true,
+		Default:   cur_tag,
+	}
+	tag, err := prompt.Run()
+	if err != nil {
+		log.Fatal("Search Cmd: Failed to prompt for tag", err)
+		return "", "", "", "", err
+	}
+
+	prompt = promptui.Prompt{
+		Label:     "Command",
+		AllowEdit: true,
+		Default:   cur_command,
+	}
+	command, err := prompt.Run()
+	if err != nil {
+		log.Fatal("Search Cmd: Failed to prompt for command", err)
+		return "", "", "", "", err
+	}
+
+	prompt = promptui.Prompt{
+		Label:     "Alias",
+		AllowEdit: true,
+		Default:   cur_alias,
+	}
+	alias, err := prompt.Run()
+	if err != nil {
+		log.Fatal("Search Cmd: Failed to prompt for alias", err)
+		return "", "", "", "", err
+	}
+
+	printOption := "all"
+	// TODO: Decide if we want to show this option
+	//sel := promptui.Select{
+	//	Label: "Select printing style",
+	//	Items: dal.CmdPrintingOptions,
+	//}
+	//_, printOption, err := sel.Run()
+	//if err != nil {
+	//	log.Fatal("Search Cmd: Failed to prompt for print option", err)
+	//	return "", "", "", "", err
+	//}
+
+	return tag, command, alias, printOption, nil
+}
+
+func extractAndValidateArgs(cmd *cobra.Command) (string, string, string, string, error) {
+	tag, _ := cmd.Flags().GetString("tag")
 	command, _ := cmd.Flags().GetString("command")
 	alias, _ := cmd.Flags().GetString("alias")
-	tag, _ := cmd.Flags().GetString("tag")
 	printOption, _ := cmd.Flags().GetString("print")
+
+	// If no arguments are provided, we will present the user with a form
+	var err error
+	if tag == "" && command == "" && alias == "" {
+		tag, command, alias, printOption, err = searchArgsWizard(tag, command, alias)
+		if err != nil {
+			log.Fatal("Search Cmd: Failed to prompt for search args", err)
+			return "", "", "", "", err
+		}
+	}
 
 	if !slices.Contains(dal.CmdPrintingOptions, printOption) {
 		fmt.Println("Invalid print argument")
@@ -43,7 +104,7 @@ func extractAndValidateArgs(cmd *cobra.Command, args []string) (string, string, 
 		return "", "", "", "", errors.New("Invalid print argument")
 	}
 
-	return command, alias, tag, printOption, nil
+	return tag, command, alias, printOption, nil
 }
 
 // Get an initial set of commands from the database based on the CLI command arguments
@@ -94,7 +155,7 @@ func runSearch(cmd *cobra.Command, args []string) {
 	}
 	defer dataAccessLayer.CloseDataAccessLayer()
 
-	command, alias, tag, printOption, err := extractAndValidateArgs(cmd, args)
+	tag, command, alias, printOption, err := extractAndValidateArgs(cmd)
 	if err != nil {
 		log.Fatal("Search Cmd: Invalid args", err)
 		return
