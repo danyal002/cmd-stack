@@ -129,13 +129,8 @@ func runSearch(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 	clipboard.Write(clipboard.FmtText, []byte(commands[item].Command))
+	fmt.Println("Command added to clipboard!")
 
 	// Update the command's usage statistics
 	data_access_layer.UpdateCommandLastUsedById(commands[item].Id)
-
-	if len(commands) > 0 {
-		fmt.Println("Command added to clipboard!")
-	} else {
-		fmt.Println("No Commands Found...")
-	}
 }
