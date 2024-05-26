@@ -61,6 +61,19 @@ func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string
 	return err
 }
 
+// Extract list of commands from supplied rows
+func (dal *DataAccessLayer) getCommandsFromRows(rows *sql.Rows) ([]Command, error) {
+	var commands []Command
+	for rows.Next() {
+		var command Command
+		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
+			return nil, err
+		}
+		commands = append(commands, command)
+	}
+	return commands, nil
+}
+
 // Get a command by the given id
 func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
 	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE id = ?")
@@ -87,7 +100,30 @@ func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
 	return &command, nil
 }
 
-// Search for a command by the given text
+// Search for a command by the given tag text
+func (dal *DataAccessLayer) SearchByTag(tag string) ([]Command, error) {
+	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE tags LIKE ?")
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	rows, err := stmt.Query("%" + tag + "%")
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	commands, err := dal.getCommandsFromRows(rows)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	return commands, nil
+}
+
+// Search for a command by the given command text
 func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE command LIKE ?")
 	if err != nil {
@@ -102,13 +138,33 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 	}
 	defer rows.Close()
 
-	var commands []Command
-	for rows.Next() {
-		var command Command
-		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
-			return nil, err
-		}
-		commands = append(commands, command)
+	commands, err := dal.getCommandsFromRows(rows)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	return commands, nil
+}
+
+// Search for a command by the given alias text
+func (dal *DataAccessLayer) SearchByAlias(alias string) ([]Command, error) {
+	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE alias LIKE ?")
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	rows, err := stmt.Query("%" + alias + "%")
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	commands, err := dal.getCommandsFromRows(rows)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
 	}
 	return commands, nil
 }

@@ -5,8 +5,11 @@ package cmd
 
 import (
 	"cmdstack/dal"
+	"errors"
 	"fmt"
+	"github.com/manifoldco/promptui"
 	"log"
+	"slices"
 
 	"github.com/spf13/cobra"
 )
@@ -16,31 +19,110 @@ var searchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "Search for a command in your command stack",
 	Long:  `missing_docs`,
-	Run: func(cmd *cobra.Command, args []string) {
-		command, _ := cmd.Flags().GetString("command")
-
-		data_access_layer, err := dal.NewDataAccessLayer()
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-		defer data_access_layer.CloseDataAccessLayer()
-
-		commands, err := data_access_layer.SearchByCommand(command)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-
-		if len(commands) > 0 {
-			dal.PrintCommands(commands)
-		} else {
-			fmt.Println("No Commands Found...")
-		}
-	},
+	Run:   runSearch,
 }
 
 func init() {
 	rootCmd.AddCommand(searchCmd)
 	searchCmd.Flags().StringP("command", "c", "", "Search by command")
+	searchCmd.Flags().StringP("alias", "a", "", "Search by alias")
+	searchCmd.Flags().StringP("tag", "t", "", "Search by tag")
+	searchCmd.Flags().StringP("print", "p", "all", "Select how commands are presented to you (all, command, alias)")
+}
+
+func extractAndValidateArgs(cmd *cobra.Command, args []string) (string, string, string, string, error) {
+	command, _ := cmd.Flags().GetString("command")
+	alias, _ := cmd.Flags().GetString("alias")
+	tag, _ := cmd.Flags().GetString("tag")
+	printOption, _ := cmd.Flags().GetString("print")
+
+	if !slices.Contains(dal.CmdPrintingOptions, printOption) {
+		fmt.Println("Invalid print argument")
+		log.Fatal("Search Cmd: Invalid print argument")
+		return "", "", "", "", errors.New("Invalid print argument")
+	}
+
+	return command, alias, tag, printOption, nil
+}
+
+// Get an initial set of commands from the database based on the CLI command arguments
+func getInitialCommands(command string, alias string, tag string) ([]dal.Command, error) {
+	/*
+		We search in the following order:
+		1. Search by tag
+		2. Search by command
+		3. Search by alias
+	*/
+	data_access_layer, err := dal.NewDataAccessLayer()
+	if err != nil {
+		log.Fatal("Search Cmd: Failed to create dal", err)
+		return nil, err
+	}
+	defer data_access_layer.CloseDataAccessLayer()
+
+	commands := []dal.Command{}
+	if tag != "" {
+		commands, err = data_access_layer.SearchByTag(tag)
+		if err != nil {
+			log.Fatal("Search Cmd: Failed to search for command by tag", err)
+			return nil, err
+		}
+	}
+
+	if len(commands) > 0 && command != "" {
+		commands = dal.FilterCommandsByCommand(commands, command)
+	} else if command != "" {
+		commands, err = data_access_layer.SearchByCommand(command)
+		if err != nil {
+			log.Fatal("Search Cmd: Failed to search for command by command", err)
+			return nil, err
+		}
+	}
+
+	if len(commands) > 0 && alias != "" {
+		commands = dal.FilterCommandsByAlias(commands, alias)
+	} else if alias != "" {
+		commands, err = data_access_layer.SearchByAlias(alias)
+		if err != nil {
+			log.Fatal("Search Cmd: failed to search for command by alias", err)
+			return nil, err
+		}
+	}
+	return commands, nil
+}
+
+func runSearch(cmd *cobra.Command, args []string) {
+	command, alias, tag, printOption, err := extractAndValidateArgs(cmd, args)
+	if err != nil {
+		log.Fatal("Search Cmd: Invalid args", err)
+		return
+	}
+
+	commands, err := getInitialCommands(command, alias, tag)
+	if err != nil {
+		log.Fatal("Search Cmd:", err)
+		return
+	} else if len(commands) == 0 {
+		fmt.Println("No Commands Found...")
+		return
+	}
+
+	formattedCommands := dal.FormatCommands(commands, printOption)
+
+	prompt := promptui.Select{
+		Label: "Select Command",
+		Items: formattedCommands,
+	}
+
+	_, result, err := prompt.Run()
+	if err != nil {
+		fmt.Printf("Search Comd: Prompt failed %v\n", err)
+		return
+	}
+
+	if len(commands) > 0 {
+		fmt.Println("Selected Command: ", result)
+	} else {
+		fmt.Println("No Commands Found...")
+	}
 }
