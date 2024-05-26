@@ -7,11 +7,12 @@ import (
 	"cmdstack/dal"
 	"errors"
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"log"
 	"slices"
 
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
+	"golang.design/x/clipboard"
 )
 
 // searchCmd represents the search command
@@ -114,11 +115,16 @@ func runSearch(cmd *cobra.Command, args []string) {
 		Items: formattedCommands,
 	}
 
-	_, result, err := prompt.Run()
+	item, result, err := prompt.Run()
 	if err != nil {
 		fmt.Printf("Search Comd: Prompt failed %v\n", err)
 		return
 	}
+
+	if err = clipboard.Init(); err != nil {
+		panic(err)
+	}
+	clipboard.Write(clipboard.FmtText, []byte(commands[item].Command))
 
 	if len(commands) > 0 {
 		fmt.Println("Selected Command: ", result)
