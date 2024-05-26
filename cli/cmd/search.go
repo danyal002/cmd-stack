@@ -47,7 +47,7 @@ func extractAndValidateArgs(cmd *cobra.Command, args []string) (string, string, 
 }
 
 // Get an initial set of commands from the database based on the CLI command arguments
-func getInitialCommands(command string, alias string, tag string, data_access_layer *dal.DataAccessLayer) ([]dal.Command, error) {
+func getInitialCommands(command string, alias string, tag string, dataAccessLayer *dal.DataAccessLayer) ([]dal.Command, error) {
 	/*
 		We search in the following order:
 		1. Search by tag
@@ -57,7 +57,7 @@ func getInitialCommands(command string, alias string, tag string, data_access_la
 	commands := []dal.Command{}
 	var err error
 	if tag != "" {
-		commands, err = data_access_layer.SearchByTag(tag)
+		commands, err = dataAccessLayer.SearchByTag(tag)
 		if err != nil {
 			log.Fatal("Search Cmd: Failed to search for command by tag", err)
 			return nil, err
@@ -67,7 +67,7 @@ func getInitialCommands(command string, alias string, tag string, data_access_la
 	if len(commands) > 0 && command != "" {
 		commands = dal.FilterCommandsByCommand(commands, command)
 	} else if command != "" {
-		commands, err = data_access_layer.SearchByCommand(command)
+		commands, err = dataAccessLayer.SearchByCommand(command)
 		if err != nil {
 			log.Fatal("Search Cmd: Failed to search for command by command", err)
 			return nil, err
@@ -77,7 +77,7 @@ func getInitialCommands(command string, alias string, tag string, data_access_la
 	if len(commands) > 0 && alias != "" {
 		commands = dal.FilterCommandsByAlias(commands, alias)
 	} else if alias != "" {
-		commands, err = data_access_layer.SearchByAlias(alias)
+		commands, err = dataAccessLayer.SearchByAlias(alias)
 		if err != nil {
 			log.Fatal("Search Cmd: failed to search for command by alias", err)
 			return nil, err
@@ -87,12 +87,12 @@ func getInitialCommands(command string, alias string, tag string, data_access_la
 }
 
 func runSearch(cmd *cobra.Command, args []string) {
-	data_access_layer, err := dal.NewDataAccessLayer()
+	dataAccessLayer, err := dal.NewDataAccessLayer()
 	if err != nil {
 		log.Fatal("Search Cmd: Failed to create dal", err)
 		return
 	}
-	defer data_access_layer.CloseDataAccessLayer()
+	defer dataAccessLayer.CloseDataAccessLayer()
 
 	command, alias, tag, printOption, err := extractAndValidateArgs(cmd, args)
 	if err != nil {
@@ -101,7 +101,7 @@ func runSearch(cmd *cobra.Command, args []string) {
 	}
 
 	// Get the initial set of commands
-	commands, err := getInitialCommands(command, alias, tag, data_access_layer)
+	commands, err := getInitialCommands(command, alias, tag, dataAccessLayer)
 	if err != nil {
 		log.Fatal("Search Cmd:", err)
 		return
@@ -132,5 +132,5 @@ func runSearch(cmd *cobra.Command, args []string) {
 	fmt.Println("Command added to clipboard!")
 
 	// Update the command's usage statistics
-	data_access_layer.UpdateCommandLastUsedById(commands[item].Id)
+	dataAccessLayer.UpdateCommandLastUsedById(commands[item].Id)
 }

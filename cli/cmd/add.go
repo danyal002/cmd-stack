@@ -27,14 +27,14 @@ var addCmd = &cobra.Command{
 			alias = cmdText
 		}
 
-		data_access_layer, err := dal.NewDataAccessLayer()
+		dataAccessLayer, err := dal.NewDataAccessLayer()
 		if err != nil {
 			log.Fatal(err)
 			return
 		}
-		defer data_access_layer.CloseDataAccessLayer()
+		defer dataAccessLayer.CloseDataAccessLayer()
 
-		err = data_access_layer.AddCommand(alias, cmdText, tags, note)
+		err = dataAccessLayer.AddCommand(alias, cmdText, tags, note)
 		if err != nil {
 			log.Fatal(err)
 			return

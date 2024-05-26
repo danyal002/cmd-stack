@@ -24,14 +24,14 @@ var deleteCmd = &cobra.Command{
 			return
 		}
 
-		data_access_layer, err := dal.NewDataAccessLayer()
+		dataAccessLayer, err := dal.NewDataAccessLayer()
 		if err != nil {
 			log.Fatal("Delete Cmd: Failed to create data access layer:", err)
 			return
 		}
-		defer data_access_layer.CloseDataAccessLayer()
+		defer dataAccessLayer.CloseDataAccessLayer()
 
-		err = data_access_layer.DeleteCommandById(id)
+		err = dataAccessLayer.DeleteCommandById(id)
 		if errors.Is(err, dal.MissingCommandError) {
 			fmt.Println("The command with ID", id, "does not exist")
 			return
