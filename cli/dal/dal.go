@@ -2,6 +2,7 @@ package dal
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"time"
 
@@ -33,6 +34,8 @@ CREATE TABLE IF NOT EXISTS param (
 );
 `
 
+var MissingCommandError = errors.New("The command with the given ID does not exist")
+
 // Create a new data access layer and initialize the database if required
 func NewDataAccessLayer() (*DataAccessLayer, error) {
 	db, err := sql.Open("sqlite3", DATABASE_NAME)
@@ -57,6 +60,32 @@ func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string
 	last_used := time.Now().Unix()
 	_, err := dal.db.Exec("INSERT INTO command (alias, command, tags, note, last_used) VALUES (?, ?, ?, ?, ?)", alias, command, tags, note, last_used)
 	return err
+}
+
+// Get a command by the given id
+func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
+	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE id = ?")
+	if err != nil {
+		log.Fatal("GetCommandById: Failed to prepare statement:", err)
+		return nil, err
+	}
+
+	rows, err := stmt.Query(id)
+	if err != nil {
+		log.Fatal("GetCommandById: Failed to execute query:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var command Command
+	if !rows.Next() {
+		log.Println("The command with ID", id, "does not exist")
+		return nil, MissingCommandError
+	} else if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
+		log.Fatal("GetCommandById: Failed to scan row:", err)
+		return nil, err
+	}
+	return &command, nil
 }
 
 // Search for a command by the given text
@@ -118,4 +147,27 @@ func (dal *DataAccessLayer) GetCommands(limit int, order_by_recent_usage bool) (
 		commands = append(commands, command)
 	}
 	return commands, nil
+}
+
+func (dal *DataAccessLayer) DeleteCommandById(id int) error {
+	// Determine if the id exists
+	_, err := dal.GetCommandById(id)
+	if err != nil {
+		log.Fatal("DeleteCommandById: failed to get command by id:", err)
+		return err
+	}
+
+	// Delete the id
+	stmt, err := dal.db.Prepare("DELETE FROM command WHERE id = ?")
+	if err != nil {
+		log.Fatal("DeleteCommandById: Failed to prepare delete statement:", err)
+		return err
+	}
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		log.Fatal("DeleteCommandById: failed to execute delete statement:", err)
+		return err
+	}
+	return nil
 }

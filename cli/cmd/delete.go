@@ -4,9 +4,11 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"cmdstack/dal"
+	"errors"
 	"fmt"
-
 	"github.com/spf13/cobra"
+	"log"
 )
 
 // deleteCmd represents the delete command
@@ -15,20 +17,34 @@ var deleteCmd = &cobra.Command{
 	Short: "Search for and delete a command in your command stack",
 	Long:  `missing_docs`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("delete called")
+		id, _ := cmd.Flags().GetInt("id")
+
+		if id == -1 {
+			log.Fatal("Delete Cmd: You must provide an ID to delete a command")
+			return
+		}
+
+		data_access_layer, err := dal.NewDataAccessLayer()
+		if err != nil {
+			log.Fatal("Delete Cmd: Failed to create data access layer:", err)
+			return
+		}
+		defer data_access_layer.CloseDataAccessLayer()
+
+		err = data_access_layer.DeleteCommandById(id)
+		if errors.Is(err, dal.MissingCommandError) {
+			fmt.Println("The command with ID", id, "does not exist")
+			return
+		} else if err != nil {
+			log.Fatal("Delete Cmd: An error occurred while deleting the command with ID", id, ":", err)
+			return
+		} else {
+			fmt.Println("Command with ID", id, "deleted successfully")
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(deleteCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deleteCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deleteCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	deleteCmd.Flags().IntP("id", "i", -1, "ID of the command to delete")
 }
