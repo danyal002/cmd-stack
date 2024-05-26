@@ -2,6 +2,7 @@ package dal
 
 import (
 	"encoding/json"
+	"strings"
 )
 
 type Command struct {
@@ -58,7 +59,7 @@ func FormatCommands(commands []Command, printOption string) []string {
 func FilterCommandsByCommand(commands []Command, command string) []Command {
 	var filtered []Command
 	for _, cmd := range commands {
-		if cmd.Command == command {
+		if strings.Contains(cmd.Command, command) {
 			filtered = append(filtered, cmd)
 		}
 	}
@@ -69,7 +70,7 @@ func FilterCommandsByCommand(commands []Command, command string) []Command {
 func FilterCommandsByAlias(commands []Command, alias string) []Command {
 	var filtered []Command
 	for _, cmd := range commands {
-		if cmd.Alias == alias {
+		if strings.Contains(cmd.Alias, alias) {
 			filtered = append(filtered, cmd)
 		}
 	}
