@@ -54,6 +54,8 @@ func (dal *DataAccessLayer) CloseDataAccessLayer() {
 	dal.db.Close()
 }
 
+/****** CREATE ******/
+
 // Add a command to the database with the given information
 func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string, note string) error {
 	last_used := time.Now().Unix()
@@ -61,12 +63,15 @@ func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string
 	return err
 }
 
+/****** READ ******/
+
 // Extract list of commands from supplied rows
 func (dal *DataAccessLayer) getCommandsFromRows(rows *sql.Rows) ([]Command, error) {
 	var commands []Command
 	for rows.Next() {
 		var command Command
 		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
+			log.Fatal("getCommandsFromRows: Failed to scan row:", err)
 			return nil, err
 		}
 		commands = append(commands, command)
@@ -104,20 +109,20 @@ func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
 func (dal *DataAccessLayer) SearchByTag(tag string) ([]Command, error) {
 	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE tags LIKE ?")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByTag: Failed to create prepared statement:", err)
 		return nil, err
 	}
 
 	rows, err := stmt.Query("%" + tag + "%")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByTag: Failed to perform query:", err)
 		return nil, err
 	}
 	defer rows.Close()
 
 	commands, err := dal.getCommandsFromRows(rows)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByTag: Failed to extract commands from rows", err)
 		return nil, err
 	}
 	return commands, nil
@@ -127,20 +132,20 @@ func (dal *DataAccessLayer) SearchByTag(tag string) ([]Command, error) {
 func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE command LIKE ?")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByCommand: Failed to create prepared statement:", err)
 		return nil, err
 	}
 
 	rows, err := stmt.Query("%" + command + "%")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByCommand: Failed to perform query:", err)
 		return nil, err
 	}
 	defer rows.Close()
 
 	commands, err := dal.getCommandsFromRows(rows)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByCommand: Failed to extract commands from rows", err)
 		return nil, err
 	}
 	return commands, nil
@@ -150,24 +155,49 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 func (dal *DataAccessLayer) SearchByAlias(alias string) ([]Command, error) {
 	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE alias LIKE ?")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByAlias: Failed to create prepared statement:", err)
 		return nil, err
 	}
 
 	rows, err := stmt.Query("%" + alias + "%")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByAlias: Failed to perform query:", err)
 		return nil, err
 	}
 	defer rows.Close()
 
 	commands, err := dal.getCommandsFromRows(rows)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByAlias: Failed to extract commands from rows", err)
 		return nil, err
 	}
 	return commands, nil
 }
+
+/****** UPDATE ******/
+
+// Update the last used time of a command
+func (dal *DataAccessLayer) UpdateCommandLastUsedById(id *uint64) error {
+	if id == nil {
+		log.Fatal("UpdateCommandLastUsedById: id cannot be nil")
+		return errors.New("UpdateCommandLastUsedById: id cannot be nil")
+	}
+
+	stmt, err := dal.db.Prepare("UPDATE command SET last_used = ? WHERE id = ?")
+	if err != nil {
+		log.Fatal("UpdateCommandLastUsedById: Failed to prepare update statement:", err)
+		return err
+	}
+
+	_, err = stmt.Exec(time.Now().Unix(), id)
+	if err != nil {
+		log.Fatal("UpdateCommandLastUsedById: failed to execute update statement:", err)
+		return err
+	}
+	return nil
+}
+
+/****** DELETE ******/
 
 func (dal *DataAccessLayer) DeleteCommandById(id int) error {
 	// Determine if the id exists

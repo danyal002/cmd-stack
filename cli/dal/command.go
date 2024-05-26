@@ -17,28 +17,59 @@ type Command struct {
 
 var CmdPrintingOptions = []string{"all", "command", "alias"}
 
-const MaxCharsPrinted = 50
-
 func (c Command) String() string {
+	const MaxCharsPrintedAlias = 25
+	const MaxCharsPrintedCommand = 50
+	const MaxCharsPrintedTags = 10
+	const MaxCharsPrintedNote = 50
+
+	var alias string
 	var command string
+	var tags string
 	var note string
-	if len(c.Command) > MaxCharsPrinted {
-		command = c.Command[:MaxCharsPrinted] + "..."
+
+	if len(c.Alias) > MaxCharsPrintedAlias {
+		alias = c.Alias[:MaxCharsPrintedAlias-3] + "..."
 	} else {
-		command = c.Command
+		alias = c.Alias + strings.Repeat(" ", MaxCharsPrintedAlias-len(c.Alias))
 	}
 
-	if len(c.Note) > MaxCharsPrinted {
-		note = c.Note[:MaxCharsPrinted] + "..."
+	if len(c.Command) > MaxCharsPrintedCommand {
+		command = c.Command[:MaxCharsPrintedCommand-3] + "..."
 	} else {
-		note = c.Note
+		command = c.Command + strings.Repeat(" ", MaxCharsPrintedCommand-len(c.Command))
 	}
 
-	return c.Alias + " | " + command + " | " + c.Tags + " | " + note
+	if len(c.Tags) > MaxCharsPrintedTags {
+		tags = c.Tags[:MaxCharsPrintedTags-3] + "..."
+	} else {
+		tags = c.Tags + strings.Repeat(" ", MaxCharsPrintedTags-len(c.Tags))
+	}
+
+	if len(c.Note) > MaxCharsPrintedNote {
+		note = c.Note[:MaxCharsPrintedNote-3] + "..."
+	} else {
+		note = c.Note + strings.Repeat(" ", MaxCharsPrintedNote-len(c.Note))
+	}
+
+	return alias + " | " + command + " | " + tags + " | " + note
 }
 
 func (c Command) Serialize() ([]byte, error) {
 	return json.Marshal(c)
+}
+
+// Returns the properties of a command that are printed based on the selected print option
+func GetPrintedValues(printOption string) string {
+	switch printOption {
+	case "all":
+		return "Alias | Command | Tags | Note"
+	case "command":
+		return "Command"
+	case "alias":
+		return "Alias"
+	}
+	return ""
 }
 
 func FormatCommands(commands []Command, printOption string) []string {
