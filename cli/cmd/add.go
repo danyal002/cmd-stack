@@ -19,7 +19,7 @@ var addCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cmdText := args[0]
 		alias, _ := cmd.Flags().GetString("alias")
-		tags, _ := cmd.Flags().GetString("tag")
+		tags, _ := cmd.Flags().GetString("tags")
 		note, _ := cmd.Flags().GetString("note")
 
 		// We must always have an alias. If one is not provided
