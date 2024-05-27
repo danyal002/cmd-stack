@@ -5,8 +5,9 @@ package cmd
 
 import (
 	"cmdstack/dal"
-	"github.com/spf13/cobra"
 	"log"
+
+	"github.com/spf13/cobra"
 )
 
 // addCmd represents the add command
@@ -29,14 +30,14 @@ var addCmd = &cobra.Command{
 
 		dataAccessLayer, err := dal.NewDataAccessLayer()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Add Command: Failed to get Data Access Layer: ", err)
 			return
 		}
 		defer dataAccessLayer.CloseDataAccessLayer()
 
 		err = dataAccessLayer.AddCommand(alias, cmdText, tags, note)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Add Command: Failed to add command to the database: ", err)
 			return
 		}
 	},
@@ -45,6 +46,6 @@ var addCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(addCmd)
 	addCmd.Flags().StringP("alias", "a", "", "Name for the command")
-	addCmd.Flags().StringP("tag", "t", "", "Tag for the command")
+	addCmd.Flags().StringP("tags", "t", "", "Tag for the command")
 	addCmd.Flags().StringP("note", "n", "", "Note for the command")
 }

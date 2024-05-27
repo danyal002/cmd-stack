@@ -4,9 +4,9 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
+	"cmdstack/dal"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 // listCmd represents the list command
@@ -15,20 +15,28 @@ var listCmd = &cobra.Command{
 	Short: "List your most recently used commands in command stack",
 	Long:  `missing_docs`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		use_recent, _ := cmd.Flags().GetBool("recent")
+		limit, _ := cmd.Flags().GetInt("limit")
+
+		data_access_layer, err := dal.NewDataAccessLayer()
+		if err != nil {
+			log.Fatal("List Command: Failed to get Data Access Layer: ", err)
+			return
+		}
+		defer data_access_layer.CloseDataAccessLayer()
+
+		commands, err := data_access_layer.GetCommands(limit, use_recent)
+		if err != nil {
+			log.Fatal("List Command: Failed to retrieve commands from the database: ", err)
+			return
+		}
+
+		dal.PrintCommands(commands)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(listCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	listCmd.Flags().BoolP("recent", "r", false, "List most recently used commands")
+	listCmd.Flags().IntP("limit", "l", 25, "Limit the number of commands listed")
 }

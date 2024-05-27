@@ -3,9 +3,10 @@ package dal
 import (
 	"database/sql"
 	"errors"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type DataAccessLayer struct {
@@ -139,6 +140,36 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 	rows, err := stmt.Query("%" + command + "%")
 	if err != nil {
 		log.Fatal("SearchByCommand: Failed to perform query:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	commands, err := dal.getCommandsFromRows(rows)
+	if err != nil {
+		log.Fatal("SearchByCommand: Failed to extract commands from rows", err)
+		return nil, err
+	}
+	return commands, nil
+}
+
+// Get all commands from the database, limiting and/or ordering results based on the supplied parameters
+func (dal *DataAccessLayer) GetCommands(limit int, order_by_recent_usage bool) ([]Command, error) {
+	var stmt *sql.Stmt
+	var err error
+
+	if order_by_recent_usage {
+		stmt, err = dal.db.Prepare("SELECT * FROM command ORDER BY last_used DESC LIMIT ?")
+	} else {
+		stmt, err = dal.db.Prepare("SELECT * FROM command LIMIT ?")
+	}
+	if err != nil {
+		log.Fatal("GetCommands: Failed to construct Prepared Statement: ", err)
+		return nil, err
+	}
+
+	rows, err := stmt.Query(limit)
+	if err != nil {
+		log.Fatal("GetCommands: Failed to execute query: ", err)
 		return nil, err
 	}
 	defer rows.Close()
