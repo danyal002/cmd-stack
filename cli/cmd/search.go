@@ -29,43 +29,40 @@ func init() {
 	searchCmd.Flags().StringP("alias", "a", "", "Search by alias")
 	searchCmd.Flags().StringP("tag", "t", "", "Search by tag")
 	searchCmd.Flags().StringP("print", "p", "all", "Select how commands are presented to you (all, command, alias)")
-	searchCmd.Flags().IntP("limit", "l", 10, "Limit the number of commands to display before scrolling (defaults to 10)")
+	searchCmd.Flags().IntP("limit", "l", 5, "Limit the number of commands to display before scrolling (defaults to 10)")
 }
 
-func searchArgsWizard(cur_tag string, cur_command string, cur_alias string) (string, string, string, string, error) {
+func searchArgsWizard() (*string, *string, *string, *string, error) {
 	fmt.Println("Specify the tags, commands, and/or aliases you'd like to see:")
 
 	prompt := promptui.Prompt{
 		Label:     "Tag",
 		AllowEdit: true,
-		Default:   cur_tag,
 	}
 	tag, err := prompt.Run()
 	if err != nil {
 		log.Fatal("Search Cmd: Failed to prompt for tag", err)
-		return "", "", "", "", err
+		return nil, nil, nil, nil, err
 	}
 
 	prompt = promptui.Prompt{
 		Label:     "Command",
 		AllowEdit: true,
-		Default:   cur_command,
 	}
 	command, err := prompt.Run()
 	if err != nil {
 		log.Fatal("Search Cmd: Failed to prompt for command", err)
-		return "", "", "", "", err
+		return nil, nil, nil, nil, err
 	}
 
 	prompt = promptui.Prompt{
 		Label:     "Alias",
 		AllowEdit: true,
-		Default:   cur_alias,
 	}
 	alias, err := prompt.Run()
 	if err != nil {
 		log.Fatal("Search Cmd: Failed to prompt for alias", err)
-		return "", "", "", "", err
+		return nil, nil, nil, nil, err
 	}
 
 	printOption := "all"
@@ -77,13 +74,13 @@ func searchArgsWizard(cur_tag string, cur_command string, cur_alias string) (str
 	//_, printOption, err := sel.Run()
 	//if err != nil {
 	//	log.Fatal("Search Cmd: Failed to prompt for print option", err)
-	//	return "", "", "", "", err
+	//	return nil, nil, nil, nil, err
 	//}
 
-	return tag, command, alias, printOption, nil
+	return &tag, &command, &alias, &printOption, nil
 }
 
-func extractAndValidateArgs(cmd *cobra.Command) (string, string, string, string, int, error) {
+func extractAndValidateArgs(cmd *cobra.Command) (*string, *string, *string, *string, *int, error) {
 	tag, _ := cmd.Flags().GetString("tag")
 	command, _ := cmd.Flags().GetString("command")
 	alias, _ := cmd.Flags().GetString("alias")
@@ -91,26 +88,29 @@ func extractAndValidateArgs(cmd *cobra.Command) (string, string, string, string,
 	limit, _ := cmd.Flags().GetInt("limit")
 
 	// If no arguments are provided, we will present the user with a form
-	var err error
 	if tag == "" && command == "" && alias == "" {
-		tag, command, alias, printOption, err = searchArgsWizard(tag, command, alias)
+		newTag, newCommand, newAlias, newPrintOption, err := searchArgsWizard()
 		if err != nil {
 			log.Fatal("Search Cmd: Failed to prompt for search args", err)
-			return "", "", "", "", 0, err
+			return nil, nil, nil, nil, nil, err
 		}
+		tag = *newTag
+		command = *newCommand
+		alias = *newAlias
+		printOption = *newPrintOption
 	}
 
 	if !slices.Contains(dal.CmdPrintingOptions, printOption) {
 		fmt.Println("Invalid print argument")
 		log.Fatal("Search Cmd: Invalid print argument")
-		return "", "", "", "", 0, errors.New("Invalid print argument")
+		return nil, nil, nil, nil, nil, errors.New("Invalid print argument")
 	} else if limit < 5 || limit > 200 {
 		fmt.Println("Invalid limit argument")
 		log.Fatal("Search Cmd: Invalid limit argument")
-		return "", "", "", "", 0, errors.New("Invalid limit argument")
+		return nil, nil, nil, nil, nil, errors.New("Invalid limit argument")
 	}
 
-	return tag, command, alias, printOption, limit, nil
+	return &tag, &command, &alias, &printOption, &limit, nil
 }
 
 // Get an initial set of commands from the database based on the CLI command arguments
@@ -132,7 +132,7 @@ func getInitialCommands(command string, alias string, tag string, dataAccessLaye
 	}
 
 	if len(commands) > 0 && command != "" {
-		commands = dal.FilterCommandsByCommand(commands, command)
+		commands = dal.FilterCommandsByCommandContent(commands, command)
 	} else if command != "" {
 		commands, err = dataAccessLayer.SearchByCommand(command)
 		if err != nil {
@@ -168,7 +168,7 @@ func runSearch(cmd *cobra.Command, args []string) {
 	}
 
 	// Get the initial set of commands
-	commands, err := getInitialCommands(command, alias, tag, dataAccessLayer)
+	commands, err := getInitialCommands(*command, *alias, *tag, dataAccessLayer)
 	if err != nil {
 		log.Fatal("Search Cmd:", err)
 		return
@@ -178,13 +178,13 @@ func runSearch(cmd *cobra.Command, args []string) {
 	}
 
 	// Format the commands for printing
-	formattedCommands := dal.FormatCommands(commands, printOption)
+	formattedCommands := dal.FormatCommands(commands, *printOption)
 
 	// Prompt the user to select a command
 	prompt := promptui.Select{
-		Label: "Select Command (" + dal.GetPrintedValues(printOption) + ")",
+		Label: "Select Command (" + dal.GetPrintedValues(*printOption) + ")",
 		Items: formattedCommands,
-		Size:  limit,
+		Size:  *limit,
 	}
 	item, _, err := prompt.Run()
 	if err != nil {

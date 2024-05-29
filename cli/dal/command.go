@@ -88,7 +88,7 @@ func FormatCommands(commands []Command, printOption string) []string {
 }
 
 // Filter a list of commands using the given command string
-func FilterCommandsByCommand(commands []Command, command string) []Command {
+func FilterCommandsByCommandContent(commands []Command, command string) []Command {
 	var filtered []Command
 	for _, cmd := range commands {
 		if strings.Contains(cmd.Command, command) || fuzzy.MatchFold(command, cmd.Command) {

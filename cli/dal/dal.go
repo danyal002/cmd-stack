@@ -116,7 +116,7 @@ func (dal *DataAccessLayer) SearchByTag(tag string) ([]Command, error) {
 
 	rows, err := stmt.Query("%" + tag + "%")
 	if err != nil {
-		log.Fatal("SearchByTag: Failed to perform query:", err)
+		log.Fatal("SearchByTag: Failed to execute query:", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -139,7 +139,7 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 
 	rows, err := stmt.Query("%" + command + "%")
 	if err != nil {
-		log.Fatal("SearchByCommand: Failed to perform query:", err)
+		log.Fatal("SearchByCommand: Failed to execute query:", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -192,7 +192,7 @@ func (dal *DataAccessLayer) SearchByAlias(alias string) ([]Command, error) {
 
 	rows, err := stmt.Query("%" + alias + "%")
 	if err != nil {
-		log.Fatal("SearchByAlias: Failed to perform query:", err)
+		log.Fatal("SearchByAlias: Failed to execute query:", err)
 		return nil, err
 	}
 	defer rows.Close()
