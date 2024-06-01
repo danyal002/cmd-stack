@@ -188,6 +188,23 @@ func (dal *DataAccessLayer) GetCommands(limit int, order_by_recent_usage bool) (
 
 /****** UPDATE ******/
 
+// Update command by ID
+func (dal *DataAccessLayer) UpdateCommandById(id *uint64, alias string, command string, tags string, note string) error {
+	stmt, err := dal.db.Prepare("UPDATE command SET alias = ?, command = ?, tags = ?, note = ?, last_used = ? WHERE id = ?")
+	if err != nil {
+		log.Fatal("UpdateCommandById: Failed to prepare update statement:", err)
+		return err
+	}
+
+	_, err = stmt.Exec(alias, command, tags, note, time.Now().Unix(), id)
+	if err != nil {
+		log.Fatal("UpdateCommandById: failed to execute update statement:", err)
+		return err
+	}
+
+	return nil
+}
+
 // Update the last used time of a command
 func (dal *DataAccessLayer) UpdateCommandLastUsedById(id *uint64) error {
 	if id == nil {
