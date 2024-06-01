@@ -3,9 +3,10 @@ package dal
 import (
 	"database/sql"
 	"errors"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type DataAccessLayer struct {
@@ -91,13 +92,13 @@ func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
 func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE command LIKE ?")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByCommand: Failed to construct Prepared Statement: ", err)
 		return nil, err
 	}
 
 	rows, err := stmt.Query("%" + command + "%")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SearchByCommand: Failed to execute query: ", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -106,6 +107,41 @@ func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
 	for rows.Next() {
 		var command Command
 		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
+			log.Fatal("SearchByCommand: Failed to scan row: ", err)
+			return nil, err
+		}
+		commands = append(commands, command)
+	}
+	return commands, nil
+}
+
+// Get all commands from the database, limiting and/or ordering results based on the supplied parameters
+func (dal *DataAccessLayer) GetCommands(limit int, order_by_recent_usage bool) ([]Command, error) {
+	var stmt *sql.Stmt
+	var err error
+
+	if order_by_recent_usage {
+		stmt, err = dal.db.Prepare("SELECT * FROM command ORDER BY last_used DESC LIMIT ?")
+	} else {
+		stmt, err = dal.db.Prepare("SELECT * FROM command LIMIT ?")
+	}
+	if err != nil {
+		log.Fatal("GetCommands: Failed to construct Prepared Statement: ", err)
+		return nil, err
+	}
+
+	rows, err := stmt.Query(limit)
+	if err != nil {
+		log.Fatal("GetCommands: Failed to execute query: ", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var commands []Command
+	for rows.Next() {
+		var command Command
+		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
+			log.Fatal("GetCommands: Failed to extract Command: ", err)
 			return nil, err
 		}
 		commands = append(commands, command)
