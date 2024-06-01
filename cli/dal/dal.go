@@ -139,27 +139,13 @@ func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string
 
 /****** READ ******/
 
-// Extract list of commands from supplied rows from the command table
+// Extract list of commands from supplied rows
 func (dal *DataAccessLayer) getCommandsFromRows(rows *sql.Rows) ([]Command, error) {
 	var commands []Command
 	for rows.Next() {
 		var command Command
 		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
 			log.Fatal("getCommandsFromRows: Failed to scan row:", err)
-			return nil, err
-		}
-		commands = append(commands, command)
-	}
-	return commands, nil
-}
-
-// Extract list of commands from supplied rows from the command_fts table
-func (dal *DataAccessLayer) getFtsCommandsFromRows(rows *sql.Rows) ([]Command, error) {
-	var commands []Command
-	for rows.Next() {
-		var command Command
-		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags); err != nil {
-			log.Fatal("getFtsCommandsFromRows: Failed to scan row:", err)
 			return nil, err
 		}
 		commands = append(commands, command)
@@ -199,15 +185,15 @@ func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Com
 		return nil, InvalidSearchFiltersError
 	}
 
-	commands := sq.Select("*").From("command_fts")
+	commands := sq.Select("*").From("command")
 	if searchFilters.Command != "" {
-		commands = commands.Where("command MATCH ?", searchFilters.Command)
+		commands = commands.Where("command LIKE ?", "%"+searchFilters.Command+"%")
 	}
 	if searchFilters.Alias != "" {
-		commands = commands.Where("alias MATCH ?", searchFilters.Alias)
+		commands = commands.Where("alias LIKE ?", "%"+searchFilters.Alias+"%")
 	}
 	if searchFilters.Tag != "" {
-		commands = commands.Where("tags MATCH ?", "^"+searchFilters.Tag+"*")
+		commands = commands.Where("tags LIKE ?", "%"+searchFilters.Tag+"%")
 	}
 
 	sql, args, err := commands.ToSql()
@@ -228,7 +214,7 @@ func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Com
 		return nil, err
 	}
 
-	commandsList, err := dal.getFtsCommandsFromRows(rows)
+	commandsList, err := dal.getCommandsFromRows(rows)
 	if err != nil {
 		log.Fatal("searchForCommand: Failed to extract commands from rows", err)
 		return nil, err
