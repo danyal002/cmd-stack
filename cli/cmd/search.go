@@ -68,7 +68,7 @@ func searchArgsWizard() (*string, *string, *string, error) {
 	return &tag, &command, &alias, nil
 }
 
-func extractAndValidateArgs(cmd *cobra.Command) (*string, *string, *string, *string, *int, error) {
+func extractAndValidateArgs(cmd *cobra.Command) (*dal.SearchFilters, *string, *int, error) {
 	tag, _ := cmd.Flags().GetString("tag")
 	command, _ := cmd.Flags().GetString("command")
 	alias, _ := cmd.Flags().GetString("alias")
@@ -80,7 +80,7 @@ func extractAndValidateArgs(cmd *cobra.Command) (*string, *string, *string, *str
 		newTag, newCommand, newAlias, err := searchArgsWizard()
 		if err != nil {
 			log.Fatal("Search Cmd: Failed to prompt for search args", err)
-			return nil, nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 		tag = *newTag
 		command = *newCommand
@@ -90,14 +90,18 @@ func extractAndValidateArgs(cmd *cobra.Command) (*string, *string, *string, *str
 	if !slices.Contains(dal.CmdPrintingOptions, printOption) {
 		fmt.Println("Invalid print argument")
 		log.Fatal("Search Cmd: Invalid print argument")
-		return nil, nil, nil, nil, nil, errors.New("Invalid print argument")
+		return nil, nil, nil, errors.New("Invalid print argument")
 	} else if limit < 5 || limit > 200 {
 		fmt.Println("Invalid limit argument")
 		log.Fatal("Search Cmd: Invalid limit argument")
-		return nil, nil, nil, nil, nil, errors.New("Invalid limit argument")
+		return nil, nil, nil, errors.New("Invalid limit argument")
 	}
 
-	return &tag, &command, &alias, &printOption, &limit, nil
+	return &dal.SearchFilters{
+		Tag:     tag,
+		Command: command,
+		Alias:   alias,
+	}, &printOption, &limit, nil
 }
 
 func runSearch(cmd *cobra.Command, args []string) {
@@ -108,17 +112,13 @@ func runSearch(cmd *cobra.Command, args []string) {
 	}
 	defer dataAccessLayer.CloseDataAccessLayer()
 
-	tag, command, alias, printOption, limit, err := extractAndValidateArgs(cmd)
+	searchFilters, printOption, limit, err := extractAndValidateArgs(cmd)
 	if err != nil {
 		log.Fatal("Search Cmd: Invalid args", err)
 		return
 	}
 
-	commands, err := dataAccessLayer.SearchForCommand(dal.SearchFilters{
-		Command: *command,
-		Alias:   *alias,
-		Tag:     *tag,
-	})
+	commands, err := dataAccessLayer.SearchForCommand(*searchFilters)
 	if err == dal.InvalidSearchFiltersError {
 		fmt.Println("Invalid search filters provided")
 		return
