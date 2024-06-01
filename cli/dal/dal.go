@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS param (
     default_value TEXT,
     note TEXT
 );
+
+CREATE VIRTUAL TABLE IF NOT EXISTS command_fts USING fts4(id, alias, command, tags);
 `
 
 var MissingCommandError = errors.New("The command with the given ID does not exist")
@@ -67,20 +69,97 @@ func (dal *DataAccessLayer) CloseDataAccessLayer() {
 
 // Add a command to the database with the given information
 func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string, note string) error {
+	tx, err := dal.db.Begin()
+	if err != nil {
+		log.Fatal("AddCommand: failed to begin transaction:", err)
+		return err
+	}
+
+	// Add to command table
+	stmt, err := tx.Prepare("INSERT INTO command (alias, command, tags, note, last_used) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		log.Println("AddCommand: failed to prepare statement:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("AddCommand: failed to rollback transaction:", err)
+			return err
+		}
+		return err
+	}
+
 	last_used := time.Now().Unix()
-	_, err := dal.db.Exec("INSERT INTO command (alias, command, tags, note, last_used) VALUES (?, ?, ?, ?, ?)", alias, command, tags, note, last_used)
-	return err
+	_, err = stmt.Exec(alias, command, tags, note, last_used)
+	if err != nil {
+		log.Println("AddCommand: failed to execute statement:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("AddCommand: failed to rollback transaction:", err)
+			return err
+		}
+		return err
+	}
+
+	// Get the id of the command that was just inserted
+	var lastid int
+	err = tx.QueryRow("SELECT max(id) FROM command").Scan(&lastid)
+	if err != nil {
+		log.Println("AddCommand: failed to get last inserted id:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("AddCommand: failed to rollback transaction:", err)
+			return err
+		}
+		return err
+	}
+
+	// Add to command_fts table
+	stmt, err = tx.Prepare("INSERT INTO command_fts (id, alias, command, tags) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		log.Println("AddCommand: failed to prepare statement for fts:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("AddCommand: failed to rollback transaction:", err)
+			return err
+		}
+		return err
+	}
+
+	_, err = stmt.Exec(lastid, alias, command, tags)
+	if err != nil {
+		log.Println("AddCommand: failed to execute statement for fts:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("AddCommand: failed to rollback transaction:", err)
+			return err
+		}
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		log.Fatal("AddCommand: failed to commit transaction:", err)
+		return err
+	}
+	return nil
 }
 
 /****** READ ******/
 
-// Extract list of commands from supplied rows
+// Extract list of commands from supplied rows from the command table
 func (dal *DataAccessLayer) getCommandsFromRows(rows *sql.Rows) ([]Command, error) {
 	var commands []Command
 	for rows.Next() {
 		var command Command
 		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags, &command.Note, &command.LastUsed); err != nil {
 			log.Fatal("getCommandsFromRows: Failed to scan row:", err)
+			return nil, err
+		}
+		commands = append(commands, command)
+	}
+	return commands, nil
+}
+
+// Extract list of commands from supplied rows from the command_fts table
+func (dal *DataAccessLayer) getFtsCommandsFromRows(rows *sql.Rows) ([]Command, error) {
+	var commands []Command
+	for rows.Next() {
+		var command Command
+		if err := rows.Scan(&command.Id, &command.Alias, &command.Command, &command.Tags); err != nil {
+			log.Fatal("getFtsCommandsFromRows: Failed to scan row:", err)
 			return nil, err
 		}
 		commands = append(commands, command)
@@ -120,15 +199,15 @@ func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Com
 		return nil, InvalidSearchFiltersError
 	}
 
-	commands := sq.Select("*").From("command")
+	commands := sq.Select("*").From("command_fts")
 	if searchFilters.Command != "" {
-		commands = commands.Where("command LIKE ?", "%"+searchFilters.Command+"%")
+		commands = commands.Where("command MATCH ?", searchFilters.Command)
 	}
 	if searchFilters.Alias != "" {
-		commands = commands.Where("alias LIKE ?", "%"+searchFilters.Alias+"%")
+		commands = commands.Where("alias MATCH ?", searchFilters.Alias)
 	}
 	if searchFilters.Tag != "" {
-		commands = commands.Where("tags LIKE ?", "%"+searchFilters.Tag+"%")
+		commands = commands.Where("tags MATCH ?", "^"+searchFilters.Tag+"*")
 	}
 
 	sql, args, err := commands.ToSql()
@@ -136,6 +215,7 @@ func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Com
 		log.Fatal("searchForCommand: Failed to construct SQL query:", err)
 		return nil, err
 	}
+
 	stmt, err := dal.db.Prepare(sql)
 	if err != nil {
 		log.Fatal("searchForCommand: Failed to prepare statement:", err)
@@ -148,7 +228,7 @@ func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Com
 		return nil, err
 	}
 
-	commandsList, err := dal.getCommandsFromRows(rows)
+	commandsList, err := dal.getFtsCommandsFromRows(rows)
 	if err != nil {
 		log.Fatal("searchForCommand: Failed to extract commands from rows", err)
 		return nil, err
@@ -219,17 +299,58 @@ func (dal *DataAccessLayer) DeleteCommandById(id int) error {
 		return err
 	}
 
-	// Delete the id
-	stmt, err := dal.db.Prepare("DELETE FROM command WHERE id = ?")
+	tx, err := dal.db.Begin()
 	if err != nil {
-		log.Fatal("DeleteCommandById: Failed to prepare delete statement:", err)
+		log.Fatal("DeleteCommandById: failed to begin transaction:", err)
+		return err
+	}
+
+	// Delete from command table
+	stmt, err := tx.Prepare("DELETE FROM command WHERE id = ?")
+	if err != nil {
+		log.Println("DeleteCommandById: failed to prepare statement:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("DeleteCommandById: failed to rollback transaction:", err)
+			return err
+		}
 		return err
 	}
 
 	_, err = stmt.Exec(id)
 	if err != nil {
-		log.Fatal("DeleteCommandById: failed to execute delete statement:", err)
+		log.Println("DeleteCommandById: failed to execute statement:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("DeleteCommandById: failed to rollback transaction:", err)
+			return err
+		}
 		return err
 	}
+
+	// Delete from command_fts table
+	stmt, err = tx.Prepare("DELETE FROM command_fts WHERE id = ?")
+	if err != nil {
+		log.Println("DeleteCommandById: failed to prepare statement for fts:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("DeleteCommandById: failed to rollback transaction:", err)
+			return err
+		}
+		return err
+	}
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		log.Println("DeleteCommandById: failed to execute statement for fts:", err)
+		if err = tx.Rollback(); err != nil {
+			log.Fatal("DeleteCommandById: failed to rollback transaction:", err)
+			return err
+		}
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		log.Fatal("DeleteCommandById: failed to commit transaction", err)
+		return err
+	}
+
 	return nil
 }
