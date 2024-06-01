@@ -32,7 +32,7 @@ func init() {
 	searchCmd.Flags().IntP("limit", "l", 5, "Limit the number of commands to display before scrolling (defaults to 10)")
 }
 
-func searchArgsWizard() (*string, *string, *string, *string, error) {
+func searchArgsWizard() (*string, *string, *string, error) {
 	fmt.Println("Specify the tags, commands, and/or aliases you'd like to see:")
 
 	prompt := promptui.Prompt{
@@ -42,7 +42,7 @@ func searchArgsWizard() (*string, *string, *string, *string, error) {
 	tag, err := prompt.Run()
 	if err != nil {
 		log.Fatal("Search Cmd: Failed to prompt for tag", err)
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	prompt = promptui.Prompt{
@@ -52,7 +52,7 @@ func searchArgsWizard() (*string, *string, *string, *string, error) {
 	command, err := prompt.Run()
 	if err != nil {
 		log.Fatal("Search Cmd: Failed to prompt for command", err)
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	prompt = promptui.Prompt{
@@ -62,22 +62,10 @@ func searchArgsWizard() (*string, *string, *string, *string, error) {
 	alias, err := prompt.Run()
 	if err != nil {
 		log.Fatal("Search Cmd: Failed to prompt for alias", err)
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	printOption := "all"
-	// TODO: Decide if we want to show this option
-	//sel := promptui.Select{
-	//	Label: "Select printing style",
-	//	Items: dal.CmdPrintingOptions,
-	//}
-	//_, printOption, err := sel.Run()
-	//if err != nil {
-	//	log.Fatal("Search Cmd: Failed to prompt for print option", err)
-	//	return nil, nil, nil, nil, err
-	//}
-
-	return &tag, &command, &alias, &printOption, nil
+	return &tag, &command, &alias, nil
 }
 
 func extractAndValidateArgs(cmd *cobra.Command) (*string, *string, *string, *string, *int, error) {
@@ -89,7 +77,7 @@ func extractAndValidateArgs(cmd *cobra.Command) (*string, *string, *string, *str
 
 	// If no arguments are provided, we will present the user with a form
 	if tag == "" && command == "" && alias == "" {
-		newTag, newCommand, newAlias, newPrintOption, err := searchArgsWizard()
+		newTag, newCommand, newAlias, err := searchArgsWizard()
 		if err != nil {
 			log.Fatal("Search Cmd: Failed to prompt for search args", err)
 			return nil, nil, nil, nil, nil, err
@@ -97,7 +85,6 @@ func extractAndValidateArgs(cmd *cobra.Command) (*string, *string, *string, *str
 		tag = *newTag
 		command = *newCommand
 		alias = *newAlias
-		printOption = *newPrintOption
 	}
 
 	if !slices.Contains(dal.CmdPrintingOptions, printOption) {
@@ -132,7 +119,10 @@ func runSearch(cmd *cobra.Command, args []string) {
 		Alias:   *alias,
 		Tag:     *tag,
 	})
-	if err != nil {
+	if err == dal.InvalidSearchFiltersError {
+		fmt.Println("Invalid search filters provided")
+		return
+	} else if err != nil {
 		log.Fatal("Search Cmd: Failed to search for command", err)
 		return
 	}

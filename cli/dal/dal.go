@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS param (
 `
 
 var MissingCommandError = errors.New("The command with the given ID does not exist")
+var InvalidSearchFiltersError = errors.New("Provided search filters are invalid")
 
 // Create a new data access layer and initialize the database if required
 func NewDataAccessLayer() (*DataAccessLayer, error) {
@@ -116,8 +117,7 @@ func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
 // Search for a command by the given search filters
 func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Command, error) {
 	if searchFilters.Command == "" && searchFilters.Alias == "" && searchFilters.Tag == "" {
-		log.Fatal("searchForCommand: At least one search filter must be provided")
-		return nil, errors.New("At least one search filter must be provided")
+		return nil, InvalidSearchFiltersError
 	}
 
 	commands := sq.Select("*").From("command")
@@ -181,29 +181,6 @@ func (dal *DataAccessLayer) GetCommands(limit int, order_by_recent_usage bool) (
 	commands, err := dal.getCommandsFromRows(rows)
 	if err != nil {
 		log.Fatal("SearchByCommand: Failed to extract commands from rows", err)
-		return nil, err
-	}
-	return commands, nil
-}
-
-// Search for a command by the given alias text
-func (dal *DataAccessLayer) SearchByAlias(alias string) ([]Command, error) {
-	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE alias LIKE ?")
-	if err != nil {
-		log.Fatal("SearchByAlias: Failed to create prepared statement:", err)
-		return nil, err
-	}
-
-	rows, err := stmt.Query("%" + alias + "%")
-	if err != nil {
-		log.Fatal("SearchByAlias: Failed to execute query:", err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	commands, err := dal.getCommandsFromRows(rows)
-	if err != nil {
-		log.Fatal("SearchByAlias: Failed to extract commands from rows", err)
 		return nil, err
 	}
 	return commands, nil
