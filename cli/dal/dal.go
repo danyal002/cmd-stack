@@ -285,58 +285,17 @@ func (dal *DataAccessLayer) DeleteCommandById(id int) error {
 		return err
 	}
 
-	tx, err := dal.db.Begin()
+	// Delete the id
+	stmt, err := dal.db.Prepare("DELETE FROM command WHERE id = ?")
 	if err != nil {
-		log.Fatal("DeleteCommandById: failed to begin transaction:", err)
-		return err
-	}
-
-	// Delete from command table
-	stmt, err := tx.Prepare("DELETE FROM command WHERE id = ?")
-	if err != nil {
-		log.Println("DeleteCommandById: failed to prepare statement:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("DeleteCommandById: failed to rollback transaction:", err)
-			return err
-		}
+		log.Fatal("DeleteCommandById: Failed to prepare delete statement:", err)
 		return err
 	}
 
 	_, err = stmt.Exec(id)
 	if err != nil {
-		log.Println("DeleteCommandById: failed to execute statement:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("DeleteCommandById: failed to rollback transaction:", err)
-			return err
-		}
+		log.Fatal("DeleteCommandById: failed to execute delete statement:", err)
 		return err
 	}
-
-	// Delete from command_fts table
-	stmt, err = tx.Prepare("DELETE FROM command_fts WHERE id = ?")
-	if err != nil {
-		log.Println("DeleteCommandById: failed to prepare statement for fts:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("DeleteCommandById: failed to rollback transaction:", err)
-			return err
-		}
-		return err
-	}
-
-	_, err = stmt.Exec(id)
-	if err != nil {
-		log.Println("DeleteCommandById: failed to execute statement for fts:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("DeleteCommandById: failed to rollback transaction:", err)
-			return err
-		}
-		return err
-	}
-
-	if err = tx.Commit(); err != nil {
-		log.Fatal("DeleteCommandById: failed to commit transaction", err)
-		return err
-	}
-
 	return nil
 }
