@@ -39,8 +39,6 @@ CREATE TABLE IF NOT EXISTS param (
     default_value TEXT,
     note TEXT
 );
-
-CREATE VIRTUAL TABLE IF NOT EXISTS command_fts USING fts4(id, alias, command, tags);
 `
 
 var MissingCommandError = errors.New("The command with the given ID does not exist")
@@ -69,72 +67,9 @@ func (dal *DataAccessLayer) CloseDataAccessLayer() {
 
 // Add a command to the database with the given information
 func (dal *DataAccessLayer) AddCommand(alias string, command string, tags string, note string) error {
-	tx, err := dal.db.Begin()
-	if err != nil {
-		log.Fatal("AddCommand: failed to begin transaction:", err)
-		return err
-	}
-
-	// Add to command table
-	stmt, err := tx.Prepare("INSERT INTO command (alias, command, tags, note, last_used) VALUES (?, ?, ?, ?, ?)")
-	if err != nil {
-		log.Println("AddCommand: failed to prepare statement:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("AddCommand: failed to rollback transaction:", err)
-			return err
-		}
-		return err
-	}
-
 	last_used := time.Now().Unix()
-	_, err = stmt.Exec(alias, command, tags, note, last_used)
-	if err != nil {
-		log.Println("AddCommand: failed to execute statement:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("AddCommand: failed to rollback transaction:", err)
-			return err
-		}
-		return err
-	}
-
-	// Get the id of the command that was just inserted
-	var lastid int
-	err = tx.QueryRow("SELECT max(id) FROM command").Scan(&lastid)
-	if err != nil {
-		log.Println("AddCommand: failed to get last inserted id:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("AddCommand: failed to rollback transaction:", err)
-			return err
-		}
-		return err
-	}
-
-	// Add to command_fts table
-	stmt, err = tx.Prepare("INSERT INTO command_fts (id, alias, command, tags) VALUES (?, ?, ?, ?)")
-	if err != nil {
-		log.Println("AddCommand: failed to prepare statement for fts:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("AddCommand: failed to rollback transaction:", err)
-			return err
-		}
-		return err
-	}
-
-	_, err = stmt.Exec(lastid, alias, command, tags)
-	if err != nil {
-		log.Println("AddCommand: failed to execute statement for fts:", err)
-		if err = tx.Rollback(); err != nil {
-			log.Fatal("AddCommand: failed to rollback transaction:", err)
-			return err
-		}
-		return err
-	}
-
-	if err = tx.Commit(); err != nil {
-		log.Fatal("AddCommand: failed to commit transaction:", err)
-		return err
-	}
-	return nil
+	_, err := dal.db.Exec("INSERT INTO command (alias, command, tags, note, last_used) VALUES (?, ?, ?, ?, ?)", alias, command, tags, note, last_used)
+	return err
 }
 
 /****** READ ******/
@@ -201,7 +136,6 @@ func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Com
 		log.Fatal("searchForCommand: Failed to construct SQL query:", err)
 		return nil, err
 	}
-
 	stmt, err := dal.db.Prepare(sql)
 	if err != nil {
 		log.Fatal("searchForCommand: Failed to prepare statement:", err)
