@@ -113,46 +113,6 @@ func extractAndValidateArgs(cmd *cobra.Command) (*string, *string, *string, *str
 	return &tag, &command, &alias, &printOption, &limit, nil
 }
 
-// Get an initial set of commands from the database based on the CLI command arguments
-func getInitialCommands(command string, alias string, tag string, dataAccessLayer *dal.DataAccessLayer) ([]dal.Command, error) {
-	/*
-		We search in the following order:
-		1. Search by tag
-		2. Search by command
-		3. Search by alias
-	*/
-	commands := []dal.Command{}
-	var err error
-	if tag != "" {
-		commands, err = dataAccessLayer.SearchByTag(tag)
-		if err != nil {
-			log.Fatal("Search Cmd: Failed to search for command by tag", err)
-			return nil, err
-		}
-	}
-
-	if len(commands) > 0 && command != "" {
-		commands = dal.FilterCommandsByCommandContent(commands, command)
-	} else if command != "" {
-		commands, err = dataAccessLayer.SearchByCommand(command)
-		if err != nil {
-			log.Fatal("Search Cmd: Failed to search for command by command", err)
-			return nil, err
-		}
-	}
-
-	if len(commands) > 0 && alias != "" {
-		commands = dal.FilterCommandsByAlias(commands, alias)
-	} else if alias != "" {
-		commands, err = dataAccessLayer.SearchByAlias(alias)
-		if err != nil {
-			log.Fatal("Search Cmd: failed to search for command by alias", err)
-			return nil, err
-		}
-	}
-	return commands, nil
-}
-
 func runSearch(cmd *cobra.Command, args []string) {
 	dataAccessLayer, err := dal.NewDataAccessLayer()
 	if err != nil {
@@ -167,13 +127,13 @@ func runSearch(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// Get the initial set of commands
-	commands, err := getInitialCommands(*command, *alias, *tag, dataAccessLayer)
+	commands, err := dataAccessLayer.SearchForCommand(dal.SearchFilters{
+		Command: *command,
+		Alias:   *alias,
+		Tag:     *tag,
+	})
 	if err != nil {
-		log.Fatal("Search Cmd:", err)
-		return
-	} else if len(commands) == 0 {
-		fmt.Println("No Commands Found...")
+		log.Fatal("Search Cmd: Failed to search for command", err)
 		return
 	}
 

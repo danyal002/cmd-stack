@@ -6,11 +6,18 @@ import (
 	"log"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type DataAccessLayer struct {
 	db *sql.DB
+}
+
+type SearchFilters struct {
+	Command string
+	Alias   string
+	Tag     string
 }
 
 const DATABASE_NAME string = "cmdstack.db"
@@ -106,50 +113,47 @@ func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
 	return &command, nil
 }
 
-// Search for a command by the given tag text
-func (dal *DataAccessLayer) SearchByTag(tag string) ([]Command, error) {
-	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE tags LIKE ?")
+// Search for a command by the given search filters
+func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Command, error) {
+	if searchFilters.Command == "" && searchFilters.Alias == "" && searchFilters.Tag == "" {
+		log.Fatal("searchForCommand: At least one search filter must be provided")
+		return nil, errors.New("At least one search filter must be provided")
+	}
+
+	commands := sq.Select("*").From("command")
+	if searchFilters.Command != "" {
+		commands = commands.Where("command LIKE ?", "%"+searchFilters.Command+"%")
+	}
+	if searchFilters.Alias != "" {
+		commands = commands.Where("alias LIKE ?", "%"+searchFilters.Alias+"%")
+	}
+	if searchFilters.Tag != "" {
+		commands = commands.Where("tags LIKE ?", "%"+searchFilters.Tag+"%")
+	}
+
+	sql, args, err := commands.ToSql()
 	if err != nil {
-		log.Fatal("SearchByTag: Failed to create prepared statement:", err)
+		log.Fatal("searchForCommand: Failed to construct SQL query:", err)
+		return nil, err
+	}
+	stmt, err := dal.db.Prepare(sql)
+	if err != nil {
+		log.Fatal("searchForCommand: Failed to prepare statement:", err)
 		return nil, err
 	}
 
-	rows, err := stmt.Query("%" + tag + "%")
+	rows, err := stmt.Query(args...)
 	if err != nil {
-		log.Fatal("SearchByTag: Failed to execute query:", err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	commands, err := dal.getCommandsFromRows(rows)
-	if err != nil {
-		log.Fatal("SearchByTag: Failed to extract commands from rows", err)
-		return nil, err
-	}
-	return commands, nil
-}
-
-// Search for a command by the given command text
-func (dal *DataAccessLayer) SearchByCommand(command string) ([]Command, error) {
-	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE command LIKE ?")
-	if err != nil {
-		log.Fatal("SearchByCommand: Failed to create prepared statement:", err)
+		log.Fatal("searchForCommand: Failed to execute query:", err)
 		return nil, err
 	}
 
-	rows, err := stmt.Query("%" + command + "%")
+	commandsList, err := dal.getCommandsFromRows(rows)
 	if err != nil {
-		log.Fatal("SearchByCommand: Failed to execute query:", err)
+		log.Fatal("searchForCommand: Failed to extract commands from rows", err)
 		return nil, err
 	}
-	defer rows.Close()
-
-	commands, err := dal.getCommandsFromRows(rows)
-	if err != nil {
-		log.Fatal("SearchByCommand: Failed to extract commands from rows", err)
-		return nil, err
-	}
-	return commands, nil
+	return commandsList, nil
 }
 
 // Get all commands from the database, limiting and/or ordering results based on the supplied parameters
