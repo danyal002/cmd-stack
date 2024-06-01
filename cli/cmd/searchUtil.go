@@ -82,3 +82,31 @@ func ExtractAndValidateSearchArgs(cmd *cobra.Command) (*dal.SearchFilters, *stri
 		Alias:   alias,
 	}, &printOption, &limit, nil
 }
+
+func GetSelectedItemFromUser(dataAccessLayer *dal.DataAccessLayer, searchFilters *dal.SearchFilters, printOption *string, limit *int) (*dal.Command, error) {
+	commands, err := dataAccessLayer.SearchForCommand(*searchFilters)
+	if err == dal.InvalidSearchFiltersError {
+		fmt.Println("Invalid search filters provided")
+		return nil, err
+	} else if err != nil {
+		log.Fatal("Update Cmd: Failed to search for command", err)
+		return nil, err
+	}
+
+	// Format the commands for printing
+	formattedCommands := dal.FormatCommands(commands, *printOption)
+
+	// Prompt the user to select a command
+	sel := promptui.Select{
+		Label: "Select Command (" + dal.GetPrintedValues(*printOption) + ")",
+		Items: formattedCommands,
+		Size:  *limit,
+	}
+	item, _, err := sel.Run()
+	if err != nil {
+		fmt.Printf("Search Comd: Prompt failed %v\n", err)
+		return nil, err
+	}
+
+	return &commands[item], nil
+}

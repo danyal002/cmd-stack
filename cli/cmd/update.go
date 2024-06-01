@@ -31,44 +31,25 @@ func init() {
 func runUpdate(cmd *cobra.Command, args []string) {
 	dataAccessLayer, err := dal.NewDataAccessLayer()
 	if err != nil {
-		log.Fatal("Search Cmd: Failed to create dal", err)
+		log.Fatal("Update Cmd: Failed to create dal", err)
 		return
 	}
 	defer dataAccessLayer.CloseDataAccessLayer()
 
 	searchFilters, printOption, limit, err := ExtractAndValidateSearchArgs(cmd)
 	if err != nil {
-		log.Fatal("Search Cmd: Invalid args", err)
+		log.Fatal("Update Cmd: Invalid args", err)
 		return
 	}
 
-	commands, err := dataAccessLayer.SearchForCommand(*searchFilters)
-	if err == dal.InvalidSearchFiltersError {
-		fmt.Println("Invalid search filters provided")
-		return
-	} else if err != nil {
-		log.Fatal("Search Cmd: Failed to search for command", err)
-		return
-	}
-
-	// Format the commands for printing
-	formattedCommands := dal.FormatCommands(commands, *printOption)
-
-	// Prompt the user to select a command
-	sel := promptui.Select{
-		Label: "Select Command (" + dal.GetPrintedValues(*printOption) + ")",
-		Items: formattedCommands,
-		Size:  *limit,
-	}
-	item, _, err := sel.Run()
+	command, err := GetSelectedItemFromUser(dataAccessLayer, searchFilters, printOption, limit)
 	if err != nil {
-		fmt.Printf("Search Comd: Prompt failed %v\n", err)
+		log.Fatal("Update Cmd: Failed to get selected item from user", err)
 		return
 	}
 
 	// Present the user with a form to update the command
 	fmt.Println("Edit the fields you would like to update. Press Enter to keep the current value.")
-	command := commands[item]
 	prompt := promptui.Prompt{
 		Label:     "Command",
 		Default:   command.Command,

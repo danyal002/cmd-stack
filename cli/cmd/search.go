@@ -6,7 +6,6 @@ package cmd
 import (
 	"cmdstack/dal"
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"golang.design/x/clipboard"
 	"log"
@@ -43,27 +42,9 @@ func runSearch(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	commands, err := dataAccessLayer.SearchForCommand(*searchFilters)
-	if err == dal.InvalidSearchFiltersError {
-		fmt.Println("Invalid search filters provided")
-		return
-	} else if err != nil {
-		log.Fatal("Search Cmd: Failed to search for command", err)
-		return
-	}
-
-	// Format the commands for printing
-	formattedCommands := dal.FormatCommands(commands, *printOption)
-
-	// Prompt the user to select a command
-	prompt := promptui.Select{
-		Label: "Select Command (" + dal.GetPrintedValues(*printOption) + ")",
-		Items: formattedCommands,
-		Size:  *limit,
-	}
-	item, _, err := prompt.Run()
+	command, err := GetSelectedItemFromUser(dataAccessLayer, searchFilters, printOption, limit)
 	if err != nil {
-		fmt.Printf("Search Comd: Prompt failed %v\n", err)
+		log.Fatal("Update Cmd: Failed to get selected item from user", err)
 		return
 	}
 
@@ -71,9 +52,9 @@ func runSearch(cmd *cobra.Command, args []string) {
 	if err = clipboard.Init(); err != nil {
 		panic(err)
 	}
-	clipboard.Write(clipboard.FmtText, []byte(commands[item].Command))
+	clipboard.Write(clipboard.FmtText, []byte(command.Command))
 	fmt.Println("Command added to clipboard!")
 
 	// Update the command's usage statistics
-	dataAccessLayer.UpdateCommandLastUsedById(commands[item].Id)
+	dataAccessLayer.UpdateCommandLastUsedById(command.Id)
 }
