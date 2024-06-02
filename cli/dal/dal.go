@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	sq "github.com/Masterminds/squirrel"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -120,40 +119,28 @@ func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Com
 		return nil, InvalidSearchFiltersError
 	}
 
-	commands := sq.Select("*").From("command")
-	if searchFilters.Command != "" {
-		commands = commands.Where("command LIKE ?", "%"+searchFilters.Command+"%")
-	}
-	if searchFilters.Alias != "" {
-		commands = commands.Where("alias LIKE ?", "%"+searchFilters.Alias+"%")
-	}
-	if searchFilters.Tag != "" {
-		commands = commands.Where("tags LIKE ?", "%"+searchFilters.Tag+"%")
-	}
-
-	sql, args, err := commands.ToSql()
+	stmt, err := dal.db.Prepare("SELECT * FROM command")
 	if err != nil {
-		log.Fatal("searchForCommand: Failed to construct SQL query:", err)
-		return nil, err
-	}
-	stmt, err := dal.db.Prepare(sql)
-	if err != nil {
-		log.Fatal("searchForCommand: Failed to prepare statement:", err)
+		log.Fatal("SearchForCommand: Failed to prepare statement:", err)
 		return nil, err
 	}
 
-	rows, err := stmt.Query(args...)
+	rows, err := stmt.Query()
 	if err != nil {
-		log.Fatal("searchForCommand: Failed to execute query:", err)
+		log.Fatal("SearchForCommand: Failed to execute query:", err)
 		return nil, err
 	}
 
-	commandsList, err := dal.getCommandsFromRows(rows)
+	commands, err := dal.getCommandsFromRows(rows)
 	if err != nil {
-		log.Fatal("searchForCommand: Failed to extract commands from rows", err)
+		log.Fatal("SearchForCommand: Failed to extract commands from rows", err)
 		return nil, err
 	}
-	return commandsList, nil
+
+	// Filter commands using fuzzy search or other methods
+	commands = FilterCommandsBySearchFilters(commands, &searchFilters)
+
+	return commands, nil
 }
 
 // Get all commands from the database, limiting and/or ordering results based on the supplied parameters

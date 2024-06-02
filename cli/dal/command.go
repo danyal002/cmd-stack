@@ -2,6 +2,7 @@ package dal
 
 import (
 	"encoding/json"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"strings"
 )
 
@@ -84,4 +85,17 @@ func FormatCommands(commands []Command, printOption string) []string {
 		}
 	}
 	return formattedCommands
+}
+
+// Filter a list of commands using the given search filters
+func FilterCommandsBySearchFilters(commands []Command, searchFilters *SearchFilters) []Command {
+	var filtered []Command
+	for _, cmd := range commands {
+		if (searchFilters.Command == "" || (strings.Contains(cmd.Command, searchFilters.Command) || fuzzy.MatchFold(searchFilters.Command, cmd.Command))) &&
+			(searchFilters.Alias == "" || (strings.Contains(cmd.Alias, searchFilters.Alias) || fuzzy.MatchFold(searchFilters.Alias, cmd.Alias))) &&
+			(searchFilters.Tag == "" || (strings.Contains(cmd.Tags, searchFilters.Tag) || fuzzy.MatchFold(searchFilters.Tag, cmd.Tags))) {
+			filtered = append(filtered, cmd)
+		}
+	}
+	return filtered
 }
