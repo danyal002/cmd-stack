@@ -89,7 +89,7 @@ func (dal *DataAccessLayer) getCommandsFromRows(rows *sql.Rows) ([]Command, erro
 }
 
 // Get a command by the given id
-func (dal *DataAccessLayer) GetCommandById(id int) (*Command, error) {
+func (dal *DataAccessLayer) GetCommandById(id *uint64) (*Command, error) {
 	stmt, err := dal.db.Prepare("SELECT * FROM command WHERE id = ?")
 	if err != nil {
 		log.Fatal("GetCommandById: Failed to prepare statement:", err)
@@ -228,7 +228,7 @@ func (dal *DataAccessLayer) UpdateCommandLastUsedById(id *uint64) error {
 
 /****** DELETE ******/
 
-func (dal *DataAccessLayer) DeleteCommandById(id int) error {
+func (dal *DataAccessLayer) DeleteCommandById(id *uint64) error {
 	// Determine if the id exists
 	_, err := dal.GetCommandById(id)
 	if err != nil {
