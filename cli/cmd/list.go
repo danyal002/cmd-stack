@@ -19,10 +19,10 @@ var listCmd = &cobra.Command{
 	Short: "List your most recently used commands in command stack",
 	Long:  `missing_docs`,
 	Run: func(cmd *cobra.Command, args []string) {
-		use_recent, _ := cmd.Flags().GetBool("recent")
-		resultLimit, _ := cmd.Flags().GetInt("result-limit")
+		useRecent, _ := cmd.Flags().GetBool("recent")
+		maxResultsFromDb, _ := cmd.Flags().GetInt("result-limit")
 		printOption, _ := cmd.Flags().GetString("print")
-		printLimit, _ := cmd.Flags().GetInt("print-limit")
+		maxResultsPrinted, _ := cmd.Flags().GetInt("print-limit")
 		if !slices.Contains(dal.CmdPrintingOptions, printOption) {
 			fmt.Println("Invalid print argument")
 			log.Fatal("Search Cmd: Invalid print argument")
@@ -36,7 +36,7 @@ var listCmd = &cobra.Command{
 		}
 		defer dataAccessLayer.CloseDataAccessLayer()
 
-		commands, err := dataAccessLayer.GetCommands(resultLimit, use_recent)
+		commands, err := dataAccessLayer.GetCommands(maxResultsFromDb, useRecent)
 		if err != nil {
 			log.Fatal("List Command: Failed to retrieve commands from the database: ", err)
 			return
@@ -49,7 +49,7 @@ var listCmd = &cobra.Command{
 		prompt := promptui.Select{
 			Label: "Select Command (" + dal.GetPrintedValues(printOption) + ")",
 			Items: formattedCommands,
-			Size:  printLimit,
+			Size:  maxResultsPrinted,
 		}
 		item, _, err := prompt.Run()
 		if err != nil {
