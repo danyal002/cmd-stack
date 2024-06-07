@@ -157,11 +157,11 @@ func (dal *DataAccessLayer) SearchForCommand(searchFilters SearchFilters) ([]Com
 }
 
 // Get all commands from the database, limiting and/or ordering results based on the supplied parameters
-func (dal *DataAccessLayer) GetCommands(limit int, order_by_recent_usage bool) ([]Command, error) {
+func (dal *DataAccessLayer) GetCommands(limit int, orderByRecentUsage bool) ([]Command, error) {
 	var stmt *sql.Stmt
 	var err error
 
-	if order_by_recent_usage {
+	if orderByRecentUsage {
 		stmt, err = dal.db.Prepare("SELECT * FROM command ORDER BY last_used DESC LIMIT ?")
 	} else {
 		stmt, err = dal.db.Prepare("SELECT * FROM command LIMIT ?")
