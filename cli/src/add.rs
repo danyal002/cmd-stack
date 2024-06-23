@@ -48,5 +48,10 @@ pub fn handle_add(args: AddArgs) {
         note = command_properties.note;
     }
 
+    println!("Command: {}", command);
+    println!("Alias: {:?}", alias);
+    println!("Tag: {:?}", tag);
+    println!("Note: {:?}", note);
+
     //TODO - Add the command to the database
 }

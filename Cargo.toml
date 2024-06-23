@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "cli", "data",
+    "logic",
+]
+resolver="2"
