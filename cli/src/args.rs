@@ -40,16 +40,19 @@ pub struct AddArgs {
     pub command: String,
 
     /// The command alias
+    #[clap(long="alias", short='a')]
     pub alias: Option<String>,
 
     /// The command description
+    #[clap(long="note", short='n')]
     pub note: Option<String>,
 
     /// The command tag
+    #[clap(long="tag", short='t')]
     pub tag: Option<String>,
 
     /// Add the command to your favourites
-    #[clap(long, short, action)]
+    #[clap(long="favourite", short='f', action)]
     pub favourite: bool
 }
 
@@ -68,39 +71,42 @@ pub enum PrintStyle {
 #[derive(Debug, Args)]
 pub struct SearchAndPrintArgs {
     /// The command to add
+    #[clap(long="command", short='c')]
     pub command: Option<String>,
 
     /// The command alias
+    #[clap(long="alias", short='a')]
     pub alias: Option<String>,
 
     /// The command tag
+    #[clap(long="tag", short='t')]
     pub tag: Option<String>,
 
     /// How commands should be displayed
-    #[clap(value_enum, default_value_t=PrintStyle::All)]
+    #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
     pub print_style: PrintStyle,
 
     /// The number of commands to list at a time
-    #[clap(default_value="10")]
+    #[clap(long="display-limit", default_value="10")]
     pub display_limit: u32,
 }
 
 #[derive(Debug, Args)]
 pub struct ListArgs {
     /// Choose how the commands should be displayed
-    #[clap(value_enum, default_value_t=PrintStyle::All)]
+    #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
     pub print_style: PrintStyle,
 
     /// The number of commands to list at a time
-    #[clap(default_value="10")]
+    #[clap(long="display-limit", default_value="10")]
     pub display_limit: u32,
 
     /// Order the commands by most recent use
-    #[clap(long, short, action)]
+    #[clap(long="recent", short='r', action)]
     pub recent: bool,
 
     /// Only display your favourite commands
-    #[clap(long, short, action)]
+    #[clap(long="favourite", short='f', action)]
     pub favourite: bool 
 }
 
