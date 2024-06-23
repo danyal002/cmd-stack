@@ -1,9 +1,4 @@
-use clap:: {
-    Args,
-    Parser,
-    Subcommand,
-    ValueEnum,
-};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 
 #[derive(Debug, Parser)]
 #[clap(version, about)]
@@ -15,7 +10,7 @@ pub struct CmdStackArgs {
 #[derive(Debug, Subcommand)]
 /// Different commands that can be executed
 pub enum Command {
-    /// Add a command 
+    /// Add a command
     Add(AddArgs),
 
     /// Update a command
@@ -32,30 +27,30 @@ pub enum Command {
 
     /// Parameter generation management
     #[clap(subcommand)]
-    Param(ParamCommands)
+    Param(ParamCommands),
 }
 
 #[derive(Debug, Args)]
-/// Arguments for adding a command 
+/// Arguments for adding a command
 pub struct AddArgs {
     /// The command to add
     pub command: String,
 
     /// The command alias
-    #[clap(long="alias", short='a')]
+    #[clap(long = "alias", short = 'a')]
     pub alias: Option<String>,
 
     /// The command description
-    #[clap(long="note", short='n')]
+    #[clap(long = "note", short = 'n')]
     pub note: Option<String>,
 
     /// The command tag
-    #[clap(long="tag", short='t')]
+    #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
     /// Add the command to your favourites
-    #[clap(long="favourite", short='f', action)]
-    pub favourite: bool
+    #[clap(long = "favourite", short = 'f', action)]
+    pub favourite: bool,
 }
 
 #[derive(Debug, ValueEnum, Clone)]
@@ -68,22 +63,22 @@ pub enum PrintStyle {
     Command,
 
     /// Only display the alias
-    Alias
+    Alias,
 }
 
 #[derive(Debug, Args)]
 /// Arguments for searching and printing commands
 pub struct SearchAndPrintArgs {
     /// The command to add
-    #[clap(long="command", short='c')]
+    #[clap(long = "command", short = 'c')]
     pub command: Option<String>,
 
     /// The command alias
-    #[clap(long="alias", short='a')]
+    #[clap(long = "alias", short = 'a')]
     pub alias: Option<String>,
 
     /// The command tag
-    #[clap(long="tag", short='t')]
+    #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
     /// How commands should be displayed
@@ -91,7 +86,7 @@ pub struct SearchAndPrintArgs {
     pub print_style: PrintStyle,
 
     /// The number of commands to list at a time
-    #[clap(long="display-limit", default_value="10")]
+    #[clap(long = "display-limit", default_value = "10")]
     pub display_limit: u32,
 }
 
@@ -103,16 +98,16 @@ pub struct ListArgs {
     pub print_style: PrintStyle,
 
     /// The number of commands to list at a time
-    #[clap(long="display-limit", default_value="10")]
+    #[clap(long = "display-limit", default_value = "10")]
     pub display_limit: u32,
 
     /// Order the commands by most recent use
-    #[clap(long="recent", short='r', action)]
+    #[clap(long = "recent", short = 'r', action)]
     pub recent: bool,
 
     /// Only display your favourite commands
-    #[clap(long="favourite", short='f', action)]
-    pub favourite: bool 
+    #[clap(long = "favourite", short = 'f', action)]
+    pub favourite: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -128,5 +123,5 @@ pub enum ParamCommands {
     Delete(SearchAndPrintArgs),
 
     /// List all parameters
-    List(SearchAndPrintArgs)
+    List(SearchAndPrintArgs),
 }

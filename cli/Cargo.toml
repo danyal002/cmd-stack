@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+logic = { path = "../logic" }
 clap = { version = "4.5.7", features = ["derive"] }
 inquire = "0.7.5"

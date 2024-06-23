@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "cli", "data",
+    "cli", 
+    "data",
     "logic",
 ]
 resolver="2"

@@ -1,13 +1,13 @@
 //! # CLI
-//! 
-//! This crate handles user interaction in the terminal 
+//!
+//! This crate handles user interaction in the terminal
 
-mod args;
 mod add;
+mod args;
 
+use crate::add::handle_add;
 use args::{CmdStackArgs, Command};
 use clap::Parser;
-use crate::add::handle_add;
 
 fn main() {
     let args = CmdStackArgs::parse();
