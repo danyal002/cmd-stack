@@ -13,6 +13,7 @@ pub struct CmdStackArgs {
 }
 
 #[derive(Debug, Subcommand)]
+/// Different commands that can be executed
 pub enum Command {
     /// Add a command 
     Add(AddArgs),
@@ -35,6 +36,7 @@ pub enum Command {
 }
 
 #[derive(Debug, Args)]
+/// Arguments for adding a command 
 pub struct AddArgs {
     /// The command to add
     pub command: String,
@@ -57,6 +59,7 @@ pub struct AddArgs {
 }
 
 #[derive(Debug, ValueEnum, Clone)]
+/// Different supported printing methods
 pub enum PrintStyle {
     /// Display the alias, value, tag, and notes
     All,
@@ -69,6 +72,7 @@ pub enum PrintStyle {
 }
 
 #[derive(Debug, Args)]
+/// Arguments for searching and printing commands
 pub struct SearchAndPrintArgs {
     /// The command to add
     #[clap(long="command", short='c')]
@@ -92,6 +96,7 @@ pub struct SearchAndPrintArgs {
 }
 
 #[derive(Debug, Args)]
+/// Arguments for listing commands
 pub struct ListArgs {
     /// Choose how the commands should be displayed
     #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
@@ -111,6 +116,7 @@ pub struct ListArgs {
 }
 
 #[derive(Debug, Subcommand)]
+/// Parameter management commands
 pub enum ParamCommands {
     /// Add a parameter
     Add(SearchAndPrintArgs),
