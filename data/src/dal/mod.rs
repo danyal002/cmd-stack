@@ -2,7 +2,7 @@ pub mod sqlite;
 
 use async_trait::async_trait;
 use sea_query::{Query, SqliteQueryBuilder};
-use sqlite::{Command, SqliteDatabase};
+use sqlite::SqliteDatabase;
 use sqlx::sqlite::SqliteRow;
 use thiserror::Error;
 

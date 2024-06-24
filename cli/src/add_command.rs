@@ -9,11 +9,6 @@ pub struct CommandProperties {
     note: Option<String>,
 }
 
-#[derive(Debug)]
-pub struct AddCommandRequest {
-
-}
-
 /// Generates a wizard to set the properties of a command
 ///
 /// Arguments:
@@ -36,13 +31,13 @@ fn set_command_properties_wizard(command: &str) -> Result<CommandProperties, Inq
     });
 }
 
-pub async fn handle_add(args: AddArgs) {
+pub fn handle_add(args: AddArgs) {
     let command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
     let mut note = args.note;
 
-    if alias.is_none() && tag.is_none() && note.is_none() {        
+    if alias.is_none() && tag.is_none() && note.is_none() {
         let command_properties = match set_command_properties_wizard(&command) {
             Ok(properties) => properties,
             Err(e) => {
@@ -64,7 +59,7 @@ pub async fn handle_add(args: AddArgs) {
         alias: alias.unwrap(),
         tag: tag,
         note: note,
-    }).await;
+    });
 
     match add_result {
         Ok(_) => println!("Command added successfully"),
