@@ -3,6 +3,7 @@ use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
 use thiserror::Error;
+use prettytable::{Table, Row, Cell, format};
 
 pub fn display_search_args_wizard(alias: &Option<String>, command: &Option<String>, tag: &Option<String>) -> bool {
     return alias.is_none() && command.is_none() && tag.is_none();
@@ -94,9 +95,10 @@ fn get_selected_item_from_user(
         return Err(GetSelectedItemFromUserError::NoCommandsFound);
     }
 
+    let (formatted_commands, columns) = format_commands_for_printing(&commands, print_style);
     let selected_command = match Select::new(
-        "Select a command:",
-        format_commands_for_printing(&commands, print_style),
+        &("Select a command ".to_owned() + columns + ":"),
+        formatted_commands,
     )
     .with_page_size(display_limit as usize)
     .raw_prompt()
@@ -110,20 +112,35 @@ fn get_selected_item_from_user(
     return Ok(commands[selected_command.index].clone());
 }
 
-/// Formats the commands for printing based on the user's preferred style
-fn format_commands_for_printing(commands: &Vec<Command>, print_style: PrintStyle) -> Vec<String> {
+/// Formats the commands for printing based on the user's preferred style. Also returns the columns printed
+fn format_commands_for_printing(commands: &Vec<Command>, print_style: PrintStyle) -> (Vec<String>, &str) {
     return match print_style {
-        PrintStyle::All => commands
-            .into_iter()
-            .map(|c| c.internal_command.command.clone() + " | " + &c.internal_command.alias)
-            .collect(),
-        PrintStyle::Alias => commands
+        PrintStyle::All => (format_internal_commands(commands), "(Alias | Command | Tag | Note | Favourite)"),
+        PrintStyle::Alias => (commands
             .into_iter()
             .map(|c| c.internal_command.alias.clone())
-            .collect(),
-        PrintStyle::Command => commands
+            .collect(), "(Alias)"),
+        PrintStyle::Command => (commands
             .into_iter()
             .map(|c| c.internal_command.command.clone())
-            .collect(),
-    };
+            .collect(), "(Command)"),
+    }
+}
+
+fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+
+    for command in commands {
+        table.add_row(Row::new(vec![
+            Cell::new(&command.internal_command.alias),
+            Cell::new(&command.internal_command.command),
+            Cell::new(command.internal_command.tag.as_deref().unwrap_or("")),
+            Cell::new(command.internal_command.note.as_deref().unwrap_or("")),
+            Cell::new(if command.internal_command.favourite { "Yes" } else { "No" }),
+        ]));
+    }
+
+    let table_str = table.to_string();
+    return table_str.lines().map(|s| s.to_string()).collect();
 }
