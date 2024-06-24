@@ -1,6 +1,6 @@
 use crate::args::AddArgs;
 use data::models::InternalCommand;
-use inquire::{InquireError, Text, Select};
+use inquire::{InquireError, Select, Text};
 
 #[derive(Debug)]
 /// The properties of a command
@@ -23,7 +23,8 @@ fn set_command_properties_wizard(command: &str) -> Result<AddCommandProperties, 
 
     let favourite = Select::new("Favourite:", vec!["Yes", "No"])
         .with_starting_cursor(1)
-        .prompt()? == "Yes";
+        .prompt()?
+        == "Yes";
 
     return Ok(AddCommandProperties {
         alias: alias,

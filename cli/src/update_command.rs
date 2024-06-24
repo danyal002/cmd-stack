@@ -3,8 +3,8 @@ use crate::{
     search_utils::{display_search_args_wizard, get_searched_commands, search_args_wizard},
 };
 use data::models::InternalCommand;
+use inquire::{InquireError, Select, Text};
 use logic::command::SearchCommandArgs;
-use inquire::{InquireError, Text, Select};
 
 /// Generates a wizard to set the properties of a command
 ///
@@ -24,7 +24,7 @@ pub fn set_command_properties_wizard(
     let command = Text::new("Command:")
         .with_initial_value(&cur_command)
         .prompt()?;
-    
+
     let alias = Text::new("Alias:")
         .with_initial_value(&cur_alias)
         .prompt()?;
@@ -39,7 +39,8 @@ pub fn set_command_properties_wizard(
 
     let favourite = Select::new("Favourite:", vec!["Yes", "No"])
         .with_starting_cursor(if cur_favourite { 0 } else { 1 })
-        .prompt()? == "Yes";
+        .prompt()?
+        == "Yes";
 
     return Ok(InternalCommand {
         command: command,
@@ -91,6 +92,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
     };
 
     // Get the new command properties from the user
+    println!("\nUpdate Command:");
     let new_command_properties = match set_command_properties_wizard(
         selected_command.internal_command.command,
         selected_command.internal_command.alias,

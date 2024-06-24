@@ -1,11 +1,15 @@
 use crate::args::PrintStyle;
 use data::models::Command;
-use inquire::{InquireError, Select, Text};
+use inquire::{formatter::OptionFormatter, list_option::ListOption, InquireError, Select, Text};
 use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
+use prettytable::{format, Cell, Row, Table};
 use thiserror::Error;
-use prettytable::{Table, Row, Cell, format};
 
-pub fn display_search_args_wizard(alias: &Option<String>, command: &Option<String>, tag: &Option<String>) -> bool {
+pub fn display_search_args_wizard(
+    alias: &Option<String>,
+    command: &Option<String>,
+    tag: &Option<String>,
+) -> bool {
     return alias.is_none() && command.is_none() && tag.is_none();
 }
 
@@ -96,10 +100,14 @@ fn get_selected_item_from_user(
     }
 
     let (formatted_commands, columns) = format_commands_for_printing(&commands, print_style);
+
+    println!(); // Spacing
     let selected_command = match Select::new(
         &("Select a command ".to_owned() + columns + ":"),
         formatted_commands,
     )
+    // Only display the command once the user makes a selection
+    .with_formatter(&|i| format!("{}", &commands[i.index].internal_command.command))
     .with_page_size(display_limit as usize)
     .raw_prompt()
     {
@@ -113,18 +121,30 @@ fn get_selected_item_from_user(
 }
 
 /// Formats the commands for printing based on the user's preferred style. Also returns the columns printed
-fn format_commands_for_printing(commands: &Vec<Command>, print_style: PrintStyle) -> (Vec<String>, &str) {
+fn format_commands_for_printing(
+    commands: &Vec<Command>,
+    print_style: PrintStyle,
+) -> (Vec<String>, &str) {
     return match print_style {
-        PrintStyle::All => (format_internal_commands(commands), "(Alias | Command | Tag | Note | Favourite)"),
-        PrintStyle::Alias => (commands
-            .into_iter()
-            .map(|c| c.internal_command.alias.clone())
-            .collect(), "(Alias)"),
-        PrintStyle::Command => (commands
-            .into_iter()
-            .map(|c| c.internal_command.command.clone())
-            .collect(), "(Command)"),
-    }
+        PrintStyle::All => (
+            format_internal_commands(commands),
+            "(Alias | Command | Tag | Note | Favourite)",
+        ),
+        PrintStyle::Alias => (
+            commands
+                .into_iter()
+                .map(|c| c.internal_command.alias.clone())
+                .collect(),
+            "(Alias)",
+        ),
+        PrintStyle::Command => (
+            commands
+                .into_iter()
+                .map(|c| c.internal_command.command.clone())
+                .collect(),
+            "(Command)",
+        ),
+    };
 }
 
 fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
@@ -137,7 +157,11 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
             Cell::new(&command.internal_command.command),
             Cell::new(command.internal_command.tag.as_deref().unwrap_or("")),
             Cell::new(command.internal_command.note.as_deref().unwrap_or("")),
-            Cell::new(if command.internal_command.favourite { "Yes" } else { "No" }),
+            Cell::new(if command.internal_command.favourite {
+                "Yes"
+            } else {
+                "No"
+            }),
         ]));
     }
 
