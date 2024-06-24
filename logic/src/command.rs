@@ -12,7 +12,7 @@ use data::dal::{sqlite::SqliteDatabase, SqlDal};
 #[derive(Error, Debug)]
 pub enum AddCommandError {
     #[error("Invalid command")]
-    InvalidCommand, 
+    InvalidCommand,
     #[error("database creation error")]
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
     #[error("unknown data store error")]
@@ -89,28 +89,36 @@ pub async fn handle_search_command(
         Err(_) => return Err(SearchCommandError::Query),
     };
 
-    // Filter the commands based on the search parameters
+    // Filter the commands based on the search parameters using fuzzy matching
     let matcher = SkimMatcherV2::default();
     let filtered_commands: Vec<Command> = commands
         .into_iter()
         .filter(|command| {
+            // The minimum threshold for a match to be considered valid
+            let min_threshold = 50; // TODO: Adjust this threshold
+
             let alias_match = match &params.alias {
-                Some(a) => matcher
-                    .fuzzy_match(&command.internal_command.alias, a)
-                    .is_some(),
+                Some(a) => {
+                    let res = matcher.fuzzy_match(&command.internal_command.alias, a);
+                    res.is_some() && res.unwrap() > min_threshold
+                }
                 None => false,
             };
 
             let command_match = match &params.command {
-                Some(c) => matcher
-                    .fuzzy_match(&command.internal_command.command, c)
-                    .is_some(),
+                Some(c) => {
+                    let res = matcher.fuzzy_match(&command.internal_command.command, c);
+                    res.is_some() && res.unwrap() > min_threshold
+                }
                 None => false,
             };
 
             let tag_match = match &params.tag {
                 Some(t) => match &command.internal_command.tag {
-                    Some(tag) => matcher.fuzzy_match(tag, t).is_some(),
+                    Some(tag) => {
+                        let res = matcher.fuzzy_match(tag, t);
+                        res.is_some() && res.unwrap() > min_threshold
+                    }
                     None => false,
                 },
                 None => false,
@@ -151,7 +159,7 @@ pub async fn handle_list_commands(
 pub enum UpdateCommandError {
     #[error("Invalid command")]
     InvalidCommand,
-    
+
     #[error("database creation error")]
     DbConnection(data::dal::sqlite::SQliteDatabaseConnectionError),
 

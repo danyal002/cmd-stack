@@ -1,6 +1,9 @@
 use crate::{
     args::SearchAndPrintArgs,
-    search_utils::{display_search_args_wizard, get_searched_commands, search_args_wizard, GetSelectedItemFromUserError},
+    search_utils::{
+        display_search_args_wizard, get_searched_commands, search_args_wizard,
+        GetSelectedItemFromUserError,
+    },
 };
 use logic::command::SearchCommandArgs;
 
@@ -47,7 +50,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
                 println!("Delete Cmd: Failed to get selected command: {:?}", e);
                 return;
             }
-        }
+        },
     };
 
     // Delete the selected command

@@ -1,4 +1,7 @@
-use crate::{args::ListArgs, search_utils::{get_listed_commands, GetSelectedItemFromUserError}};
+use crate::{
+    args::ListArgs,
+    search_utils::{get_listed_commands, GetSelectedItemFromUserError},
+};
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use logic::command::handle_update_command_last_used_prop;
 
@@ -21,7 +24,7 @@ pub fn handle_list_commands(args: ListArgs) {
                 println!("List Cmd: Failed to get selected command: {:?}", e);
                 return;
             }
-        }
+        },
     };
 
     // Copy the selected command to the clipboard

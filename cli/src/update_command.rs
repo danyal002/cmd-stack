@@ -1,6 +1,9 @@
 use crate::{
     args::SearchAndPrintArgs,
-    search_utils::{display_search_args_wizard, get_searched_commands, search_args_wizard, GetSelectedItemFromUserError},
+    search_utils::{
+        display_search_args_wizard, get_searched_commands, search_args_wizard,
+        GetSelectedItemFromUserError,
+    },
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -94,7 +97,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
                 println!("Update Cmd: Failed to get selected command: {:?}", e);
                 return;
             }
-        }
+        },
     };
 
     // Get the new command properties from the user
