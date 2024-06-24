@@ -1,9 +1,9 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqlitePoolOptions;
-use thiserror::Error;
-use std::path::PathBuf;
-use std::path::Path;
 use std::fs::File;
+use std::path::Path;
+use std::path::PathBuf;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SQliteDatabaseConnectionError {
@@ -32,7 +32,7 @@ impl SqliteDatabase {
                 return Err(SQliteDatabaseConnectionError::CurDir(e));
             }
         };
-        
+
         let mut db_path = PathBuf::from(cur_dir);
         db_path.pop();
         db_path.push("data/cmdstack_db.db");
@@ -86,11 +86,7 @@ impl SqliteDatabase {
                     .primary_key()
                     .auto_increment(),
             )
-            .col(
-                ColumnDef::new(Parameter::CommandId)
-                    .integer()
-                    .not_null(),
-            )
+            .col(ColumnDef::new(Parameter::CommandId).integer().not_null())
             .col(ColumnDef::new(Parameter::Name).string().not_null())
             .col(ColumnDef::new(Parameter::Symbol).string().not_null())
             .col(ColumnDef::new(Parameter::DefaultValue).string())

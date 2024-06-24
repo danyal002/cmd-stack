@@ -1,6 +1,6 @@
 use crate::args::AddArgs;
 use inquire::{InquireError, Text};
-use logic::command::{handle_add_command, AddCommandParams};
+use logic::command::AddCommandParams;
 
 #[derive(Debug)]
 pub struct CommandProperties {
@@ -31,7 +31,7 @@ fn set_command_properties_wizard(command: &str) -> Result<CommandProperties, Inq
     });
 }
 
-pub fn handle_add(args: AddArgs) {
+pub fn handle_add_command(args: AddArgs) {
     let command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
@@ -54,7 +54,7 @@ pub fn handle_add(args: AddArgs) {
         alias = Some(command.clone());
     }
 
-    let add_result = handle_add_command(AddCommandParams {
+    let add_result = logic::command::handle_add_command(AddCommandParams {
         command: command,
         alias: alias.unwrap(),
         tag: tag,

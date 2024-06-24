@@ -5,5 +5,8 @@ edition = "2021"
 
 [dependencies]
 logic = { path = "../logic" }
+data = { path = "../data" } 
 clap = { version = "4.5.7", features = ["derive"] }
 inquire = "0.7.5"
+thiserror = "1.0.61"
+cli-clipboard = "0.4.0"
