@@ -1,12 +1,17 @@
 use crate::args::AddArgs;
 use inquire::{InquireError, Text};
-use logic::{handle_logic_request, AddCommandParams, LogicRequest};
+use logic::command::{handle_add_command, AddCommandParams};
 
 #[derive(Debug)]
 pub struct CommandProperties {
     alias: String,
     tag: Option<String>,
     note: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct AddCommandRequest {
+
 }
 
 /// Generates a wizard to set the properties of a command
@@ -31,14 +36,21 @@ fn set_command_properties_wizard(command: &str) -> Result<CommandProperties, Inq
     });
 }
 
-pub fn handle_add(args: AddArgs) {
+pub async fn handle_add(args: AddArgs) {
     let command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
     let mut note = args.note;
 
     if alias.is_none() && tag.is_none() && note.is_none() {        
-        let command_properties = set_command_properties_wizard(&command).unwrap();
+        let command_properties = match set_command_properties_wizard(&command) {
+            Ok(properties) => properties,
+            Err(e) => {
+                println!("Add Cmd: Error setting command properties: {:?}", e);
+                return;
+            }
+        };
+
         alias = Some(command_properties.alias);
         tag = command_properties.tag;
         note = command_properties.note;
@@ -47,11 +59,15 @@ pub fn handle_add(args: AddArgs) {
         alias = Some(command.clone());
     }
 
-    handle_logic_request(LogicRequest::AddCommand(AddCommandParams {
+    let add_result = handle_add_command(AddCommandParams {
         command: command,
         alias: alias.unwrap(),
         tag: tag,
         note: note,
-    }))
-    .unwrap();
+    }).await;
+
+    match add_result {
+        Ok(_) => println!("Command added successfully"),
+        Err(e) => println!("Add Cmd: Error adding command: {:?}", e),
+    }
 }

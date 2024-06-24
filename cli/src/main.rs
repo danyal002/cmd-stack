@@ -2,10 +2,10 @@
 //!
 //! This crate handles user interaction in the terminal
 
-mod add;
+mod add_command;
 mod args;
 
-use crate::add::handle_add;
+use crate::add_command::handle_add;
 use args::{CmdStackArgs, Command};
 use clap::Parser;
 
@@ -31,3 +31,5 @@ fn main() {
         }
     }
 }
+
+

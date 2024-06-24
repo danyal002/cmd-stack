@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 data = { path = "../data" }
+thiserror = "1.0"
