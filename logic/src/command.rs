@@ -9,15 +9,6 @@ use thiserror::Error;
 
 use data::dal::{sqlite::SqliteDatabase, SqlDal};
 
-#[derive(Debug)]
-pub struct AddCommandParams {
-    pub command: String,
-    pub alias: String,
-    pub tag: Option<String>,
-    pub note: Option<String>,
-    pub favourite: bool,
-}
-
 #[derive(Error, Debug)]
 pub enum AddCommandError {
     #[error("Invalid command")]
@@ -30,7 +21,7 @@ pub enum AddCommandError {
 
 #[tokio::main]
 /// Handles the addition of a command
-pub async fn handle_add_command(params: AddCommandParams) -> Result<(), AddCommandError> {
+pub async fn handle_add_command(params: InternalCommand) -> Result<(), AddCommandError> {
     if params.command.trim().is_empty() || params.alias.trim().is_empty() {
         return Err(AddCommandError::InvalidCommand);
     }

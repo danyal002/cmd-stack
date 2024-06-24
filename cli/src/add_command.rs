@@ -1,6 +1,6 @@
 use crate::args::AddArgs;
+use data::models::InternalCommand;
 use inquire::{InquireError, Text};
-use logic::command::AddCommandParams;
 
 #[derive(Debug)]
 /// The properties of a command
@@ -54,7 +54,7 @@ pub fn handle_add_command(args: AddArgs) {
     }
 
     // Add the command to the database
-    let add_result = logic::command::handle_add_command(AddCommandParams {
+    let add_result = logic::command::handle_add_command(InternalCommand {
         command: command,
         alias: alias.unwrap(),
         tag: tag,
