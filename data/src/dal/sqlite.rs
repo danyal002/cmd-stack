@@ -1,79 +1,129 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqlitePoolOptions;
-use std::error::Error;
+use thiserror::Error;
 use std::path::PathBuf;
+use std::path::Path;
+use std::fs::File;
 
-
-pub struct SqliteDatabase {
-    pool: sqlx::SqlitePool,
+#[derive(Error, Debug)]
+pub enum SQliteDatabaseConnectionError {
+    #[error("Could not get the current directory")]
+    CurDir(#[source] std::io::Error),
+    #[error("Could not create the database file")]
+    CreatingDatabase(#[source] std::io::Error),
+    #[error("Could not connect to the file")]
+    PoolInitialization(#[source] sqlx::Error),
+    #[error("Could not create command table")]
+    Command(#[source] sqlx::Error),
+    #[error("Could not create parameter table")]
+    Parameter(#[source] sqlx::Error),
 }
 
-pub struct SqlDal {
-    pub sql: Box<SqliteDatabase>,
+pub struct SqliteDatabase {
+    pub pool: sqlx::SqlitePool,
 }
 
 impl SqliteDatabase {
-    pub async fn new() -> Result<Self, Box<dyn Error>> {
+    pub async fn new() -> Result<Self, SQliteDatabaseConnectionError> {
         // Create a connection pool
-        let mut db_path = PathBuf::from(std::env::current_dir()?);
-        db_path.push("cmdstack_db.db");
-    
-        let pool = SqlitePoolOptions::new()
+        let cur_dir = match std::env::current_dir() {
+            Ok(dir) => dir,
+            Err(e) => {
+                return Err(SQliteDatabaseConnectionError::CurDir(e));
+            }
+        };
+        
+        let mut db_path = PathBuf::from(cur_dir);
+        db_path.pop();
+        db_path.push("data/cmdstack_db.db");
+
+        // Check if the database file exists
+        if !Path::new(&db_path).exists() {
+            // Create the database file
+            match File::create(&db_path) {
+                Ok(_) => {}
+                Err(e) => {
+                    return Err(SQliteDatabaseConnectionError::CreatingDatabase(e));
+                }
+            }
+        }
+
+        let pool = match SqlitePoolOptions::new()
             .connect(&format!("sqlite://{}", db_path.to_str().unwrap()))
-            .await?;
-    
-        // Create the tables 
+            .await
+        {
+            Ok(pool) => pool,
+            Err(e) => {
+                return Err(SQliteDatabaseConnectionError::PoolInitialization(e));
+            }
+        };
+
+        // Create the tables
         let command_table_sql = Table::create()
-            .table(CommandSchema::Table)
+            .table(Command::Table)
             .if_not_exists()
             .col(
-                ColumnDef::new(CommandSchema::Id)
+                ColumnDef::new(Command::Id)
                     .integer()
                     .not_null()
                     .primary_key()
                     .auto_increment(),
             )
-            .col(ColumnDef::new(CommandSchema::Alias).string().not_null())
-            .col(ColumnDef::new(CommandSchema::Command).string().not_null())
-            .col(ColumnDef::new(CommandSchema::Tag).string())
-            .col(ColumnDef::new(CommandSchema::Note).string())
-            .col(ColumnDef::new(CommandSchema::LastUsed).integer().default(0))
+            .col(ColumnDef::new(Command::Alias).string().not_null())
+            .col(ColumnDef::new(Command::Command).string().not_null())
+            .col(ColumnDef::new(Command::Tag).string())
+            .col(ColumnDef::new(Command::Note).string())
+            .col(ColumnDef::new(Command::LastUsed).integer().default(0))
             .build(SqliteQueryBuilder);
-    
+
         let parameter_table_sql = Table::create()
-            .table(ParameterSchema::Table)
+            .table(Parameter::Table)
             .if_not_exists()
             .col(
-                ColumnDef::new(ParameterSchema::Id)
+                ColumnDef::new(Parameter::Id)
                     .integer()
                     .not_null()
                     .primary_key()
                     .auto_increment(),
             )
-            .col(ColumnDef::new(ParameterSchema::CommandId).integer().not_null())
-            .col(ColumnDef::new(ParameterSchema::Name).string().not_null())
-            .col(ColumnDef::new(ParameterSchema::Symbol).string().not_null())
-            .col(ColumnDef::new(ParameterSchema::DefaultValue).string())
-            .col(ColumnDef::new(ParameterSchema::Note).string())
+            .col(
+                ColumnDef::new(Parameter::CommandId)
+                    .integer()
+                    .not_null(),
+            )
+            .col(ColumnDef::new(Parameter::Name).string().not_null())
+            .col(ColumnDef::new(Parameter::Symbol).string().not_null())
+            .col(ColumnDef::new(Parameter::DefaultValue).string())
+            .col(ColumnDef::new(Parameter::Note).string())
             .foreign_key(
                 ForeignKey::create()
                     .name("fk_69420")
-                    .from(ParameterSchema::Table, ParameterSchema::Id)
-                    .to(CommandSchema::Table, CommandSchema::Id)
+                    .from(Parameter::Table, Parameter::Id)
+                    .to(Command::Table, Command::Id)
                     .on_delete(ForeignKeyAction::Cascade),
             )
             .build(SqliteQueryBuilder);
-    
-        sqlx::query(&command_table_sql).execute(&pool).await?;
-        sqlx::query(&parameter_table_sql).execute(&pool).await?;
-    
+
+        match sqlx::query(&command_table_sql).execute(&pool).await {
+            Ok(_) => {}
+            Err(e) => {
+                return Err(SQliteDatabaseConnectionError::Command(e));
+            }
+        }
+        match sqlx::query(&parameter_table_sql).execute(&pool).await {
+            Ok(_) => {}
+            Err(e) => {
+                return Err(SQliteDatabaseConnectionError::Parameter(e));
+            }
+        }
+
         Ok(Self { pool })
     }
 }
 
 /// Command Table Schema
 #[derive(Iden)]
-pub enum CommandSchema {
+pub enum Command {
     Table,
     Id,
     Alias,
@@ -85,7 +135,7 @@ pub enum CommandSchema {
 
 // Parameter Table Schema
 #[derive(Iden)]
-pub enum ParameterSchema {
+pub enum Parameter {
     Table,
     Id,
     CommandId,
