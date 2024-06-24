@@ -1,6 +1,6 @@
 use crate::{
     args::SearchAndPrintArgs,
-    search_utils::{display_search_args_wizard, get_searched_commands, search_args_wizard},
+    search_utils::{display_search_args_wizard, get_searched_commands, search_args_wizard, GetSelectedItemFromUserError},
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use logic::command::{handle_update_command_last_used_prop, SearchCommandArgs};
@@ -39,9 +39,15 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         print_limit,
     ) {
         Ok(c) => c,
-        Err(e) => {
-            println!("Search Cmd: Failed to get selected command: {:?}", e);
-            return;
+        Err(e) => match e {
+            GetSelectedItemFromUserError::NoCommandsFound => {
+                println!("No commands found");
+                return;
+            }
+            _ => {
+                println!("Search Cmd: Failed to get selected command: {:?}", e);
+                return;
+            }
         }
     };
 

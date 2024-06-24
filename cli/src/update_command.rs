@@ -1,6 +1,6 @@
 use crate::{
     args::SearchAndPrintArgs,
-    search_utils::{display_search_args_wizard, get_searched_commands, search_args_wizard},
+    search_utils::{display_search_args_wizard, get_searched_commands, search_args_wizard, GetSelectedItemFromUserError},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -85,9 +85,15 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         print_limit,
     ) {
         Ok(c) => c,
-        Err(e) => {
-            println!("Delete Cmd: Failed to get selected command: {:?}", e);
-            return;
+        Err(e) => match e {
+            GetSelectedItemFromUserError::NoCommandsFound => {
+                println!("No commands found");
+                return;
+            }
+            _ => {
+                println!("Update Cmd: Failed to get selected command: {:?}", e);
+                return;
+            }
         }
     };
 

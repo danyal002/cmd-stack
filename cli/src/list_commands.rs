@@ -1,4 +1,4 @@
-use crate::{args::ListArgs, search_utils::get_listed_commands};
+use crate::{args::ListArgs, search_utils::{get_listed_commands, GetSelectedItemFromUserError}};
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use logic::command::handle_update_command_last_used_prop;
 
@@ -12,9 +12,15 @@ pub fn handle_list_commands(args: ListArgs) {
     // Get the selected command
     let selected_command = match get_listed_commands(recent, favourite, print_style, print_limit) {
         Ok(c) => c,
-        Err(e) => {
-            println!("List Cmd: Failed to get commands: {:?}", e);
-            return;
+        Err(e) => match e {
+            GetSelectedItemFromUserError::NoCommandsFound => {
+                println!("No commands found");
+                return;
+            }
+            _ => {
+                println!("List Cmd: Failed to get selected command: {:?}", e);
+                return;
+            }
         }
     };
 
