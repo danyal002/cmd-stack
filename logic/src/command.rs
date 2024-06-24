@@ -1,5 +1,5 @@
 //! Handles all requests for commands
-use data::{dal::Dal, models::InternalCommand};
+use data::{dal::Dal, models::{InternalCommand, Command}};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
@@ -61,14 +61,15 @@ pub struct SearchCommandArgs {
 pub enum SearchCommandError {
     #[error("database creation error")]
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
-    #[error("unknown data store error")]
+
+    #[error("Error querying the database")]
     Query,
 }
 
 #[tokio::main]
 pub async fn handle_search_command(
     params: SearchCommandArgs,
-) -> Result<Vec<InternalCommand>, SearchCommandError> {
+) -> Result<Vec<Command>, SearchCommandError> {
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
         Err(e) => return Err(SearchCommandError::DbConnection(e)),
@@ -83,21 +84,21 @@ pub async fn handle_search_command(
     };
 
     let matcher = SkimMatcherV2::default();
-    let filtered_commands: Vec<InternalCommand> = commands
+    let filtered_commands: Vec<Command> = commands
         .into_iter()
         .filter(|command| {
             let alias_match = match &params.alias {
-                Some(a) => matcher.fuzzy_match(&command.alias, a).is_some(),
+                Some(a) => matcher.fuzzy_match(&command.internal_command.alias, a).is_some(),
                 None => false,
             };
 
             let command_match = match &params.command {
-                Some(c) => matcher.fuzzy_match(&command.command, c).is_some(),
+                Some(c) => matcher.fuzzy_match(&command.internal_command.command, c).is_some(),
                 None => false,
             };
 
             let tag_match = match &params.tag {
-                Some(t) => match &command.tag {
+                Some(t) => match &command.internal_command.tag {
                     Some(tag) => matcher.fuzzy_match(tag, t).is_some(),
                     None => false,
                 },
@@ -115,8 +116,8 @@ pub async fn handle_search_command(
 pub async fn handle_list_commands(
     order_by_use: bool,
     favourite: bool,
-) -> Result<Vec<InternalCommand>, SearchCommandError> {
-    let sqlite_db = match SqliteDatabase::new().await {
+) -> Result<Vec<Command>, SearchCommandError> {
+    let sqlite_db: SqliteDatabase = match SqliteDatabase::new().await {
         Ok(db) => db,
         Err(e) => return Err(SearchCommandError::DbConnection(e)),
     };
@@ -130,4 +131,31 @@ pub async fn handle_list_commands(
     };
 
     Ok(commands)
+}
+
+#[derive(Error, Debug)]
+pub enum UpdateCommandError {
+    #[error("database creation error")]
+    DbConnection(data::dal::sqlite::SQliteDatabaseConnectionError),
+
+    #[error("Error updating command last used property")]
+    Query,
+}
+
+#[tokio::main]
+pub async fn handle_update_command_last_used_prop(command_id: u64) -> Result<(), UpdateCommandError> {
+    let sqlite_db = match SqliteDatabase::new().await {
+        Ok(db) => db,
+        Err(e) => return Err(UpdateCommandError::DbConnection(e)),
+    };
+    let dal = SqlDal {
+        sql: Box::new(sqlite_db),
+    };
+
+    match dal.update_command_last_used_prop(command_id).await {
+        Ok(_) => {}
+        Err(_) => return Err(UpdateCommandError::Query),
+    };
+
+    Ok(())
 }

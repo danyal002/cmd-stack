@@ -3,7 +3,7 @@ use crate::{
     search_utils::{get_searched_commands, search_args_wizard},
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
-use logic::command::SearchCommandArgs;
+use logic::command::{handle_update_command_last_used_prop, SearchCommandArgs};
 
 pub fn handle_search_commands(args: SearchAndPrintArgs) {
     let mut command = args.command;
@@ -44,8 +44,17 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
 
     let mut clipboard = ClipboardContext::new().unwrap();
     clipboard
-        .set_contents(selected_command.command.clone())
+        .set_contents(selected_command.internal_command.command.clone())
         .unwrap();
 
-    println!("Command copied to clipboard: {}", selected_command.command)
+    println!("Command copied to clipboard: {}", selected_command.internal_command.command);
+
+    match handle_update_command_last_used_prop(selected_command.id) {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Search Cmd: Failed to update command last used prop: {:?}", e);
+            return;
+        }
+    
+    };   
 }

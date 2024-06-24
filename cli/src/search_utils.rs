@@ -1,5 +1,5 @@
 use crate::args::PrintStyle;
-use data::models::InternalCommand;
+use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
 use thiserror::Error;
@@ -35,7 +35,7 @@ pub fn get_searched_commands(
     search_args: SearchCommandArgs,
     print_style: PrintStyle,
     display_limit: u32,
-) -> Result<InternalCommand, GetSelectedItemFromUserError> {
+) -> Result<Command, GetSelectedItemFromUserError> {
     let commands = match handle_search_command(search_args) {
         Ok(c) => c,
         Err(e) => {
@@ -59,7 +59,7 @@ pub fn get_listed_commands(
     favourite: bool,
     print_style: PrintStyle,
     display_limit: u32,
-) -> Result<InternalCommand, GetSelectedItemFromUserError> {
+) -> Result<Command, GetSelectedItemFromUserError> {
     let commands = match handle_list_commands(order_by_use, favourite) {
         Ok(c) => c,
         Err(e) => {
@@ -78,10 +78,10 @@ pub fn get_listed_commands(
 }
 
 fn get_selected_item_from_user(
-    commands: Vec<InternalCommand>,
+    commands: Vec<Command>,
     print_style: PrintStyle,
     display_limit: u32,
-) -> Result<InternalCommand, GetSelectedItemFromUserError> {
+) -> Result<Command, GetSelectedItemFromUserError> {
     if commands.len() == 0 {
         return Err(GetSelectedItemFromUserError::NoCommandsFound);
     }
@@ -103,15 +103,15 @@ fn get_selected_item_from_user(
 }
 
 fn format_commands_for_printing(
-    commands: &Vec<InternalCommand>,
+    commands: &Vec<Command>,
     print_style: PrintStyle,
 ) -> Vec<String> {
     return match print_style {
         PrintStyle::All => commands
             .into_iter()
-            .map(|c| c.command.clone() + " | " + &c.alias)
+            .map(|c| c.internal_command.command.clone() + " | " + &c.internal_command.alias)
             .collect(),
-        PrintStyle::Alias => commands.into_iter().map(|c| c.alias.clone()).collect(),
-        PrintStyle::Command => commands.into_iter().map(|c| c.command.clone()).collect(),
+        PrintStyle::Alias => commands.into_iter().map(|c| c.internal_command.alias.clone()).collect(),
+        PrintStyle::Command => commands.into_iter().map(|c| c.internal_command.command.clone()).collect(),
     };
 }
