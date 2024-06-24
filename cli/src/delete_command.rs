@@ -2,11 +2,10 @@ use crate::{
     args::SearchAndPrintArgs,
     search_utils::{get_searched_commands, search_args_wizard},
 };
-use cli_clipboard::{ClipboardContext, ClipboardProvider};
-use logic::command::{handle_update_command_last_used_prop, SearchCommandArgs};
+use logic::command::SearchCommandArgs;
 
-/// UI handler for the search command
-pub fn handle_search_commands(args: SearchAndPrintArgs) {
+/// UI handler for the delete command
+pub fn handle_delete_command(args: SearchAndPrintArgs) {
     let mut command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
@@ -40,30 +39,19 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     ) {
         Ok(c) => c,
         Err(e) => {
-            println!("Search Cmd: Failed to get selected command: {:?}", e);
+            println!("Delete Cmd: Failed to get selected command: {:?}", e);
             return;
         }
     };
 
-    // Copy the selected command to the clipboard
-    let mut clipboard = ClipboardContext::new().unwrap();
-    clipboard
-        .set_contents(selected_command.internal_command.command.clone())
-        .unwrap();
-
-    println!(
-        "Command copied to clipboard: {}",
-        selected_command.internal_command.command
-    );
-
-    match handle_update_command_last_used_prop(selected_command.id) {
+    // Delete the selected command
+    match logic::command::handle_delete_command(selected_command.id) {
         Ok(_) => {}
         Err(e) => {
-            println!(
-                "Search Cmd: Failed to update command last used prop: {:?}",
-                e
-            );
+            println!("Delete Cmd: Failed to delete command: {:?}", e);
             return;
         }
     };
+
+    println!("Command deleted successfully");
 }

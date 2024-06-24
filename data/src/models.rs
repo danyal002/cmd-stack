@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
-/// Represents the properties of a command that the user will 
-/// have knowledge about 
+/// Represents the properties of a command that the user will
+/// have knowledge about
 pub struct InternalCommand {
     pub alias: String,
     pub command: String,
@@ -18,8 +18,8 @@ pub struct Command {
 }
 
 #[derive(Debug, Clone)]
-/// Represents the properties of a parameter that the user will 
-/// have knowledge about 
+/// Represents the properties of a parameter that the user will
+/// have knowledge about
 pub struct InternalParameter {
     pub name: String,
     pub symbol: String,

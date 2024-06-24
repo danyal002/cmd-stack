@@ -55,7 +55,7 @@ pub fn get_searched_commands(
     return Ok(selected_command);
 }
 
-/// Gets all commands from the database in the user's preferred format 
+/// Gets all commands from the database in the user's preferred format
 /// and prompts the user to select one
 pub fn get_listed_commands(
     order_by_use: bool,
@@ -107,16 +107,19 @@ fn get_selected_item_from_user(
 }
 
 /// Formats the commands for printing based on the user's preferred style
-fn format_commands_for_printing(
-    commands: &Vec<Command>,
-    print_style: PrintStyle,
-) -> Vec<String> {
+fn format_commands_for_printing(commands: &Vec<Command>, print_style: PrintStyle) -> Vec<String> {
     return match print_style {
         PrintStyle::All => commands
             .into_iter()
             .map(|c| c.internal_command.command.clone() + " | " + &c.internal_command.alias)
             .collect(),
-        PrintStyle::Alias => commands.into_iter().map(|c| c.internal_command.alias.clone()).collect(),
-        PrintStyle::Command => commands.into_iter().map(|c| c.internal_command.command.clone()).collect(),
+        PrintStyle::Alias => commands
+            .into_iter()
+            .map(|c| c.internal_command.alias.clone())
+            .collect(),
+        PrintStyle::Command => commands
+            .into_iter()
+            .map(|c| c.internal_command.command.clone())
+            .collect(),
     };
 }

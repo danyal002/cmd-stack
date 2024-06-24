@@ -24,7 +24,10 @@ pub fn handle_list_commands(args: ListArgs) {
         .set_contents(selected_command.internal_command.command.clone())
         .unwrap();
 
-    println!("Command copied to clipboard: {}", selected_command.internal_command.command);
+    println!(
+        "Command copied to clipboard: {}",
+        selected_command.internal_command.command
+    );
 
     match handle_update_command_last_used_prop(selected_command.id) {
         Ok(_) => {}
@@ -32,5 +35,5 @@ pub fn handle_list_commands(args: ListArgs) {
             println!("List Cmd: Failed to update command last used prop: {:?}", e);
             return;
         }
-    };  
+    };
 }

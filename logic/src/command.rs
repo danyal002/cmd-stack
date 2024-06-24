@@ -1,5 +1,8 @@
 //! Handles all requests for commands
-use data::{dal::Dal, models::{InternalCommand, Command}};
+use data::{
+    dal::Dal,
+    models::{Command, InternalCommand},
+};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
@@ -95,12 +98,16 @@ pub async fn handle_search_command(
         .into_iter()
         .filter(|command| {
             let alias_match = match &params.alias {
-                Some(a) => matcher.fuzzy_match(&command.internal_command.alias, a).is_some(),
+                Some(a) => matcher
+                    .fuzzy_match(&command.internal_command.alias, a)
+                    .is_some(),
                 None => false,
             };
 
             let command_match = match &params.command {
-                Some(c) => matcher.fuzzy_match(&command.internal_command.command, c).is_some(),
+                Some(c) => matcher
+                    .fuzzy_match(&command.internal_command.command, c)
+                    .is_some(),
                 None => false,
             };
 
@@ -154,7 +161,9 @@ pub enum UpdateCommandError {
 
 #[tokio::main]
 /// Handles the updating of the last used property of a command
-pub async fn handle_update_command_last_used_prop(command_id: u64) -> Result<(), UpdateCommandError> {
+pub async fn handle_update_command_last_used_prop(
+    command_id: u64,
+) -> Result<(), UpdateCommandError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
@@ -168,6 +177,38 @@ pub async fn handle_update_command_last_used_prop(command_id: u64) -> Result<(),
     match dal.update_command_last_used_prop(command_id).await {
         Ok(_) => {}
         Err(_) => return Err(UpdateCommandError::Query),
+    };
+
+    Ok(())
+}
+
+#[derive(Error, Debug)]
+pub enum DeleteCommandError {
+    #[error("database creation error")]
+    DbConnection(data::dal::sqlite::SQliteDatabaseConnectionError),
+
+    #[error("Error deleting command")]
+    Query,
+}
+
+#[tokio::main]
+/// Handles deleting a command
+pub async fn handle_delete_command(
+    command_id: u64,
+) -> Result<(), DeleteCommandError> {
+    // Set up database connection
+    let sqlite_db = match SqliteDatabase::new().await {
+        Ok(db) => db,
+        Err(e) => return Err(DeleteCommandError::DbConnection(e)),
+    };
+    let dal = SqlDal {
+        sql: Box::new(sqlite_db),
+    };
+
+    // Delete the selected command
+    match dal.delete_command(command_id).await {
+        Ok(_) => {}
+        Err(_) => return Err(DeleteCommandError::Query),
     };
 
     Ok(())

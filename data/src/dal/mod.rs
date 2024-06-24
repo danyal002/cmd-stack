@@ -41,6 +41,9 @@ pub trait Dal: Sync + Send {
 
     /// Updates the last used property of a command to the current time
     async fn update_command_last_used_prop(&self, command_id: u64) -> Result<(), SqliteQueryError>;
+
+    /// Deletes a command from the database
+    async fn delete_command(&self, command_id: u64) -> Result<(), SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -166,6 +169,20 @@ impl Dal for SqlDal {
         let query = Query::update()
             .table(sqlite::Command::Table)
             .values([(sqlite::Command::LastUsed, current_time.into())])
+            .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
+            .to_string(SqliteQueryBuilder);
+
+        match self.execute(&query).await {
+            Ok(_) => {}
+            Err(e) => return Err(SqliteQueryError::UpdateCommandLastUsed(e)),
+        };
+
+        Ok(())
+    }
+
+    async fn delete_command(&self, command_id: u64) -> Result<(), SqliteQueryError> {
+        let query = Query::delete()
+            .from_table(sqlite::Command::Table)
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
