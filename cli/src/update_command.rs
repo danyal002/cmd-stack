@@ -1,6 +1,6 @@
 use crate::{
     args::SearchAndPrintArgs,
-    search_utils::{get_searched_commands, search_args_wizard},
+    search_utils::{display_search_args_wizard, get_searched_commands, search_args_wizard},
 };
 use data::models::InternalCommand;
 use logic::command::SearchCommandArgs;
@@ -59,7 +59,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
     let print_limit = args.display_limit;
 
     // If no search arguments are provided, generate a wizard to get them
-    if alias.is_none() && tag.is_none() && command.is_none() {
+    if display_search_args_wizard(&alias, &command, &tag) {
         let command_properties = match search_args_wizard() {
             Ok(properties) => properties,
             Err(e) => {

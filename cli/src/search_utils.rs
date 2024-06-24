@@ -4,6 +4,10 @@ use inquire::{InquireError, Select, Text};
 use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
 use thiserror::Error;
 
+pub fn display_search_args_wizard(alias: &Option<String>, command: &Option<String>, tag: &Option<String>) -> bool {
+    return alias.is_none() && command.is_none() && tag.is_none();
+}
+
 /// Generates a wizard to set the properties for command searching
 pub fn search_args_wizard() -> Result<SearchCommandArgs, InquireError> {
     let command = Text::new("Command").prompt()?;
