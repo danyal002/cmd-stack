@@ -1,6 +1,6 @@
 use crate::args::PrintStyle;
 use data::models::Command;
-use inquire::{formatter::OptionFormatter, list_option::ListOption, InquireError, Select, Text};
+use inquire::{InquireError, Select, Text};
 use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
 use prettytable::{format, Cell, Row, Table};
 use thiserror::Error;
