@@ -21,23 +21,23 @@ pub fn set_command_properties_wizard(
     cur_note: Option<String>,
     cur_favourite: bool,
 ) -> Result<InternalCommand, InquireError> {
-    let command = Text::new("Command")
+    let command = Text::new("Command:")
         .with_initial_value(&cur_command)
         .prompt()?;
     
-    let alias = Text::new("Alias")
+    let alias = Text::new("Alias:")
         .with_initial_value(&cur_alias)
         .prompt()?;
 
-    let tag = Text::new("Tag")
+    let tag = Text::new("Tag:")
         .with_initial_value(&cur_tag.unwrap_or(String::from("")))
         .prompt()?;
 
-    let note = Text::new("Note")
+    let note = Text::new("Note:")
         .with_initial_value(&cur_note.unwrap_or(String::from("")))
         .prompt()?;
 
-    let favourite = Select::new("Favourite", vec!["Yes", "No"])
+    let favourite = Select::new("Favourite:", vec!["Yes", "No"])
         .with_starting_cursor(if cur_favourite { 0 } else { 1 })
         .prompt()? == "Yes";
 

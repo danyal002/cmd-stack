@@ -12,13 +12,13 @@ struct AddCommandProperties {
 
 /// Generates a wizard to set the properties of a command
 fn set_command_properties_wizard(command: &str) -> Result<AddCommandProperties, InquireError> {
-    let alias = Text::new("Alias (Default is the command text)")
+    let alias = Text::new("Alias (Default is the command text):")
         .with_default(command)
         .prompt()?;
 
-    let tag = Text::new("Tag").prompt()?;
+    let tag = Text::new("Tag:").prompt()?;
 
-    let note = Text::new("Note").prompt()?;
+    let note = Text::new("Note:").prompt()?;
 
     return Ok(AddCommandProperties {
         alias: alias,

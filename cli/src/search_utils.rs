@@ -91,7 +91,7 @@ fn get_selected_item_from_user(
     }
 
     let selected_command = match Select::new(
-        "Select a command",
+        "Select a command:",
         format_commands_for_printing(&commands, print_style),
     )
     .with_page_size(display_limit as usize)

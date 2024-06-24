@@ -21,6 +21,11 @@ use clap::Parser;
 fn main() {
     let args = CmdStackArgs::parse();
 
+    inquire::set_global_render_config(inquire::ui::RenderConfig {
+        prompt: inquire::ui::StyleSheet::default().with_fg(inquire::ui::Color::DarkBlue),
+        ..Default::default()
+    });
+
     match args.command {
         Command::Add(add_args) => handle_add_command(add_args),
         Command::Update(update_args) => handle_update_command(update_args),
