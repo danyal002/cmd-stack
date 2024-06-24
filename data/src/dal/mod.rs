@@ -1,11 +1,12 @@
 pub mod sqlite;
 
 use async_trait::async_trait;
-use sea_query::{Query, SqliteQueryBuilder};
+use sea_query::{Query, SqliteQueryBuilder, Expr};
 use sqlite::SqliteDatabase;
 use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 use thiserror::Error;
+use std::sync::Arc;
 
 use crate::models::InternalCommand;
 
@@ -20,7 +21,7 @@ pub trait Dal: Sync + Send {
     async fn execute(&self, query: &str) -> Result<(), sqlx::Error>;
     async fn query(&self, query: &str) -> Result<Vec<Self::Row>, sqlx::Error>;
     async fn add_command(&self, command: InternalCommand) -> Result<(), SqliteQueryError>;
-    async fn get_all_commands(&self) -> Result<Vec<InternalCommand>, SqliteQueryError>;
+    async fn get_all_commands(&self, order_by_use: bool, favourites_only: bool) -> Result<Vec<InternalCommand>, SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -52,12 +53,14 @@ impl Dal for SqlDal {
                 sqlite::Command::Command,
                 sqlite::Command::Tag,
                 sqlite::Command::Note,
+                sqlite::Command::Favourite,
             ])
             .values_panic([
                 command.alias.into(),
                 command.command.into(),
                 command.tag.into(),
                 command.note.into(),
+                command.favourite.into(),
             ])
             .to_string(SqliteQueryBuilder);
 
@@ -69,17 +72,32 @@ impl Dal for SqlDal {
         Ok(())
     }
 
-    async fn get_all_commands(&self) -> Result<Vec<InternalCommand>, SqliteQueryError> {
+    async fn get_all_commands(&self, order_by_use: bool, favourites_only: bool) -> Result<Vec<InternalCommand>, SqliteQueryError> {
         let query = Query::select()
             .columns([
                 sqlite::Command::Alias,
                 sqlite::Command::Command,
                 sqlite::Command::Tag,
                 sqlite::Command::Note,
+                sqlite::Command::Favourite,
             ])
+            .conditions( // Ternary operator that allows us to add expressions at runtime
+                order_by_use,
+                |q| {
+                    q.order_by(sqlite::Command::LastUsed, sea_query::Order::Desc);
+                },
+                |_| {},
+            )
+            .conditions(
+                favourites_only,
+                |q| {
+                    q.and_where(Expr::col(sqlite::Command::Favourite).is_in([true]));
+                },
+                |_| {},
+            )
             .from(sqlite::Command::Table)
             .to_string(SqliteQueryBuilder);
-
+        
         let rows = match self.query(&query).await {
             Ok(rows) => rows,
             Err(e) => return Err(SqliteQueryError::SearchCommand(e)),
@@ -92,6 +110,7 @@ impl Dal for SqlDal {
                 command: row.get(1),
                 tag: row.get(2),
                 note: row.get(3),
+                favourite: row.get(4),
             });
         }
 

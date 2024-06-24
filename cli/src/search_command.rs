@@ -1,8 +1,11 @@
-use crate::{args::SearchAndPrintArgs, search_utils::{get_selected_item_from_user, search_args_wizard, GetSelectedItemFromUserArgs}};
-use logic::command::SearchCommandArgs;
+use crate::{
+    args::SearchAndPrintArgs,
+    search_utils::{get_searched_commands, search_args_wizard},
+};
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
+use logic::command::SearchCommandArgs;
 
-pub fn handle_search_command(args: SearchAndPrintArgs) {
+pub fn handle_search_commands(args: SearchAndPrintArgs) {
     let mut command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
@@ -23,24 +26,26 @@ pub fn handle_search_command(args: SearchAndPrintArgs) {
         command = command_properties.command;
     }
 
-    let selected_command = match get_selected_item_from_user(GetSelectedItemFromUserArgs {
-        search_args: SearchCommandArgs {
+    let selected_command = match get_searched_commands(
+        SearchCommandArgs {
             alias: alias,
             command: command,
             tag: tag,
         },
-        print_style: print_style,
-        display_limit: print_limit,
-    }) {
+        print_style,
+        print_limit,
+    ) {
         Ok(c) => c,
         Err(e) => {
-            println!("Search: Failed to get selected command: {:?}", e);
+            println!("Search Cmd: Failed to get selected command: {:?}", e);
             return;
         }
     };
 
     let mut clipboard = ClipboardContext::new().unwrap();
-    clipboard.set_contents(selected_command.command.clone()).unwrap();
+    clipboard
+        .set_contents(selected_command.command.clone())
+        .unwrap();
 
     println!("Command copied to clipboard: {}", selected_command.command)
 }

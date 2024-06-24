@@ -4,6 +4,7 @@ pub struct InternalCommand {
     pub command: String,
     pub tag: Option<String>,
     pub note: Option<String>,
+    pub favourite: bool,
 }
 
 #[derive(Debug, Clone)]

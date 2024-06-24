@@ -74,6 +74,7 @@ impl SqliteDatabase {
             .col(ColumnDef::new(Command::Tag).string())
             .col(ColumnDef::new(Command::Note).string())
             .col(ColumnDef::new(Command::LastUsed).integer().default(0))
+            .col(ColumnDef::new(Command::Favourite).boolean().default(false))
             .build(SqliteQueryBuilder);
 
         let parameter_table_sql = Table::create()
@@ -127,6 +128,7 @@ pub enum Command {
     Tag,
     Note,
     LastUsed,
+    Favourite,
 }
 
 // Parameter Table Schema
