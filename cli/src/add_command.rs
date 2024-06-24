@@ -4,19 +4,14 @@ use logic::command::AddCommandParams;
 
 #[derive(Debug)]
 /// The properties of a command
-pub struct CommandProperties {
+struct AddCommandProperties {
     alias: String,
     tag: Option<String>,
     note: Option<String>,
 }
 
 /// Generates a wizard to set the properties of a command
-///
-/// Arguments:
-/// - cur_alias: Option<String> - The current alias of the command
-/// - cur_note: Option<String> - The current note of the command
-/// - cur_tag: Option<String> - The current tag of the command
-fn set_command_properties_wizard(command: &str) -> Result<CommandProperties, InquireError> {
+fn set_command_properties_wizard(command: &str) -> Result<AddCommandProperties, InquireError> {
     let alias = Text::new("Alias (Default is the command text)")
         .with_default(command)
         .prompt()?;
@@ -25,7 +20,7 @@ fn set_command_properties_wizard(command: &str) -> Result<CommandProperties, Inq
 
     let note = Text::new("Note").prompt()?;
 
-    return Ok(CommandProperties {
+    return Ok(AddCommandProperties {
         alias: alias,
         tag: if tag != "" { Some(tag) } else { None },
         note: if note != "" { Some(note) } else { None },

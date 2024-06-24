@@ -20,6 +20,8 @@ pub struct AddCommandParams {
 
 #[derive(Error, Debug)]
 pub enum AddCommandError {
+    #[error("Invalid command")]
+    InvalidCommand, 
     #[error("database creation error")]
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
     #[error("unknown data store error")]
@@ -29,6 +31,10 @@ pub enum AddCommandError {
 #[tokio::main]
 /// Handles the addition of a command
 pub async fn handle_add_command(params: AddCommandParams) -> Result<(), AddCommandError> {
+    if params.command.trim().is_empty() || params.alias.trim().is_empty() {
+        return Err(AddCommandError::InvalidCommand);
+    }
+
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
@@ -152,6 +158,9 @@ pub async fn handle_list_commands(
 
 #[derive(Error, Debug)]
 pub enum UpdateCommandError {
+    #[error("Invalid command")]
+    InvalidCommand,
+    
     #[error("database creation error")]
     DbConnection(data::dal::sqlite::SQliteDatabaseConnectionError),
 
@@ -182,6 +191,34 @@ pub async fn handle_update_command_last_used_prop(
     Ok(())
 }
 
+#[tokio::main]
+/// Handles the updating of a command
+pub async fn handle_update_command(
+    command_id: u64,
+    new_command_props: InternalCommand,
+) -> Result<(), UpdateCommandError> {
+    if new_command_props.command.trim().is_empty() || new_command_props.alias.trim().is_empty() {
+        return Err(UpdateCommandError::InvalidCommand);
+    }
+
+    // Set up database connection
+    let sqlite_db = match SqliteDatabase::new().await {
+        Ok(db) => db,
+        Err(e) => return Err(UpdateCommandError::DbConnection(e)),
+    };
+    let dal = SqlDal {
+        sql: Box::new(sqlite_db),
+    };
+
+    // Update the command
+    match dal.update_command(command_id, new_command_props).await {
+        Ok(_) => {}
+        Err(_) => return Err(UpdateCommandError::Query),
+    };
+
+    Ok(())
+}
+
 #[derive(Error, Debug)]
 pub enum DeleteCommandError {
     #[error("database creation error")]
@@ -193,9 +230,7 @@ pub enum DeleteCommandError {
 
 #[tokio::main]
 /// Handles deleting a command
-pub async fn handle_delete_command(
-    command_id: u64,
-) -> Result<(), DeleteCommandError> {
+pub async fn handle_delete_command(command_id: u64) -> Result<(), DeleteCommandError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,

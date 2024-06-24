@@ -44,6 +44,9 @@ pub trait Dal: Sync + Send {
 
     /// Deletes a command from the database
     async fn delete_command(&self, command_id: u64) -> Result<(), SqliteQueryError>;
+
+    // Update a command
+    async fn update_command(&self, command_id: u64, new_command_props: InternalCommand) -> Result<(), SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -183,6 +186,27 @@ impl Dal for SqlDal {
     async fn delete_command(&self, command_id: u64) -> Result<(), SqliteQueryError> {
         let query = Query::delete()
             .from_table(sqlite::Command::Table)
+            .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
+            .to_string(SqliteQueryBuilder);
+
+        match self.execute(&query).await {
+            Ok(_) => {}
+            Err(e) => return Err(SqliteQueryError::UpdateCommandLastUsed(e)),
+        };
+
+        Ok(())
+    }
+
+    async fn update_command(&self, command_id: u64, new_command_props: InternalCommand) -> Result<(), SqliteQueryError> {
+        let query = Query::update()
+            .table(sqlite::Command::Table)
+            .values([
+                (sqlite::Command::Alias, new_command_props.alias.into()),
+                (sqlite::Command::Command, new_command_props.command.into()),
+                (sqlite::Command::Tag, new_command_props.tag.into()),
+                (sqlite::Command::Note, new_command_props.note.into()),
+                (sqlite::Command::Favourite, new_command_props.favourite.into()),
+            ])
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
