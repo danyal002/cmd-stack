@@ -3,6 +3,7 @@ use inquire::{InquireError, Text};
 use logic::command::AddCommandParams;
 
 #[derive(Debug)]
+/// The properties of a command
 pub struct CommandProperties {
     alias: String,
     tag: Option<String>,
@@ -31,6 +32,7 @@ fn set_command_properties_wizard(command: &str) -> Result<CommandProperties, Inq
     });
 }
 
+/// UI handler for the add command
 pub fn handle_add_command(args: AddArgs) {
     let command = args.command;
     let mut alias = args.alias;
@@ -38,6 +40,7 @@ pub fn handle_add_command(args: AddArgs) {
     let mut note = args.note;
     let favourite = args.favourite;
 
+    // If no alias, tag, or note is provided, generate a wizard to get them
     if alias.is_none() && tag.is_none() && note.is_none() {
         let command_properties = match set_command_properties_wizard(&command) {
             Ok(properties) => properties,
@@ -55,6 +58,7 @@ pub fn handle_add_command(args: AddArgs) {
         alias = Some(command.clone());
     }
 
+    // Add the command to the database
     let add_result = logic::command::handle_add_command(AddCommandParams {
         command: command,
         alias: alias.unwrap(),

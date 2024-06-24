@@ -10,23 +10,36 @@ use thiserror::Error;
 
 use crate::models::{Command, InternalCommand};
 
+/// Data Access Layer for Sqlite
 pub struct SqlDal {
     pub sql: Box<SqliteDatabase>,
 }
 
 #[async_trait]
+/// Data Access Layer trait that includes all the methods required to interact with the database
 pub trait Dal: Sync + Send {
     type Row;
 
+    /// Gets the current Unix timestamp
     async fn get_unix_timestamp() -> i64;
+
+    /// Executes a query
     async fn execute(&self, query: &str) -> Result<(), sqlx::Error>;
+
+    /// Queries the database and returns the rows
     async fn query(&self, query: &str) -> Result<Vec<Self::Row>, sqlx::Error>;
+
+    /// Adds a command to the database
     async fn add_command(&self, command: InternalCommand) -> Result<(), SqliteQueryError>;
+
+    /// Gets all commands from the database
     async fn get_all_commands(
         &self,
         order_by_use: bool,
         favourites_only: bool,
     ) -> Result<Vec<Command>, SqliteQueryError>;
+
+    /// Updates the last used property of a command to the current time
     async fn update_command_last_used_prop(&self, command_id: u64) -> Result<(), SqliteQueryError>;
 }
 

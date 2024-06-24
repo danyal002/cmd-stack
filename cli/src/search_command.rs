@@ -5,6 +5,7 @@ use crate::{
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use logic::command::{handle_update_command_last_used_prop, SearchCommandArgs};
 
+/// UI handler for the search command
 pub fn handle_search_commands(args: SearchAndPrintArgs) {
     let mut command = args.command;
     let mut alias = args.alias;
@@ -12,6 +13,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     let print_style = args.print_style;
     let print_limit = args.display_limit;
 
+    // If no search arguments are provided, generate a wizard to get them
     if alias.is_none() && tag.is_none() && command.is_none() {
         let command_properties = match search_args_wizard() {
             Ok(properties) => properties,
@@ -26,6 +28,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         command = command_properties.command;
     }
 
+    // Get the selected command
     let selected_command = match get_searched_commands(
         SearchCommandArgs {
             alias: alias,
@@ -42,6 +45,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         }
     };
 
+    // Copy the selected command to the clipboard
     let mut clipboard = ClipboardContext::new().unwrap();
     clipboard
         .set_contents(selected_command.internal_command.command.clone())

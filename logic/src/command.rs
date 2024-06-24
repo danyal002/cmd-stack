@@ -24,7 +24,9 @@ pub enum AddCommandError {
 }
 
 #[tokio::main]
+/// Handles the addition of a command
 pub async fn handle_add_command(params: AddCommandParams) -> Result<(), AddCommandError> {
+    // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
         Err(e) => return Err(AddCommandError::DbConnection(e)),
@@ -33,6 +35,7 @@ pub async fn handle_add_command(params: AddCommandParams) -> Result<(), AddComma
         sql: Box::new(sqlite_db),
     };
 
+    // Add the command to the database
     match dal
         .add_command(InternalCommand {
             alias: params.alias,
@@ -67,9 +70,11 @@ pub enum SearchCommandError {
 }
 
 #[tokio::main]
+/// Handles the search for a command
 pub async fn handle_search_command(
     params: SearchCommandArgs,
 ) -> Result<Vec<Command>, SearchCommandError> {
+    // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
         Err(e) => return Err(SearchCommandError::DbConnection(e)),
@@ -78,11 +83,13 @@ pub async fn handle_search_command(
         sql: Box::new(sqlite_db),
     };
 
+    // Get all commands from the database
     let commands = match dal.get_all_commands(false, false).await {
         Ok(results) => results,
         Err(_) => return Err(SearchCommandError::Query),
     };
 
+    // Filter the commands based on the search parameters
     let matcher = SkimMatcherV2::default();
     let filtered_commands: Vec<Command> = commands
         .into_iter()
@@ -113,10 +120,12 @@ pub async fn handle_search_command(
 }
 
 #[tokio::main]
+/// Handles the listing of all commands
 pub async fn handle_list_commands(
     order_by_use: bool,
     favourite: bool,
 ) -> Result<Vec<Command>, SearchCommandError> {
+    // Set up database connection
     let sqlite_db: SqliteDatabase = match SqliteDatabase::new().await {
         Ok(db) => db,
         Err(e) => return Err(SearchCommandError::DbConnection(e)),
@@ -125,6 +134,7 @@ pub async fn handle_list_commands(
         sql: Box::new(sqlite_db),
     };
 
+    // Get all commands from the database
     let commands = match dal.get_all_commands(order_by_use, favourite).await {
         Ok(results) => results,
         Err(_) => return Err(SearchCommandError::Query),
@@ -143,7 +153,9 @@ pub enum UpdateCommandError {
 }
 
 #[tokio::main]
+/// Handles the updating of the last used property of a command
 pub async fn handle_update_command_last_used_prop(command_id: u64) -> Result<(), UpdateCommandError> {
+    // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
         Err(e) => return Err(UpdateCommandError::DbConnection(e)),
@@ -152,6 +164,7 @@ pub async fn handle_update_command_last_used_prop(command_id: u64) -> Result<(),
         sql: Box::new(sqlite_db),
     };
 
+    // Update the last used property of the command
     match dal.update_command_last_used_prop(command_id).await {
         Ok(_) => {}
         Err(_) => return Err(UpdateCommandError::Query),

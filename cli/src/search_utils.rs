@@ -31,6 +31,7 @@ pub enum GetSelectedItemFromUserError {
     InquireError(#[from] InquireError),
 }
 
+/// Gets search candidates for the user from the database and prompts the user to select one
 pub fn get_searched_commands(
     search_args: SearchCommandArgs,
     print_style: PrintStyle,
@@ -54,6 +55,8 @@ pub fn get_searched_commands(
     return Ok(selected_command);
 }
 
+/// Gets all commands from the database in the user's preferred format 
+/// and prompts the user to select one
 pub fn get_listed_commands(
     order_by_use: bool,
     favourite: bool,
@@ -77,6 +80,7 @@ pub fn get_listed_commands(
     return Ok(selected_command);
 }
 
+/// Generates a wizard to prompt the user to select a command from a list of commands
 fn get_selected_item_from_user(
     commands: Vec<Command>,
     print_style: PrintStyle,
@@ -102,6 +106,7 @@ fn get_selected_item_from_user(
     return Ok(commands[selected_command.index].clone());
 }
 
+/// Formats the commands for printing based on the user's preferred style
 fn format_commands_for_printing(
     commands: &Vec<Command>,
     print_style: PrintStyle,

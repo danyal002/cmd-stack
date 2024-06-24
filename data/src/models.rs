@@ -1,4 +1,6 @@
 #[derive(Debug, Clone)]
+/// Represents the properties of a command that the user will 
+/// have knowledge about 
 pub struct InternalCommand {
     pub alias: String,
     pub command: String,
@@ -8,6 +10,7 @@ pub struct InternalCommand {
 }
 
 #[derive(Debug, Clone)]
+/// Stores all properties of a command in the database
 pub struct Command {
     pub id: u64,
     pub last_used: u64,
@@ -15,6 +18,8 @@ pub struct Command {
 }
 
 #[derive(Debug, Clone)]
+/// Represents the properties of a parameter that the user will 
+/// have knowledge about 
 pub struct InternalParameter {
     pub name: String,
     pub symbol: String,
@@ -23,6 +28,7 @@ pub struct InternalParameter {
 }
 
 #[derive(Debug, Clone)]
+/// Stores all properties of a parameter in the database
 pub struct Parameter {
     pub id: u64,
     pub command_id: u64,

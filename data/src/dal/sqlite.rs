@@ -19,11 +19,14 @@ pub enum SQliteDatabaseConnectionError {
     Parameter(#[source] sqlx::Error),
 }
 
+/// Represents a connection to a SQLite database
 pub struct SqliteDatabase {
     pub pool: sqlx::SqlitePool,
 }
 
 impl SqliteDatabase {
+    /// Creates a new connection to a SQLite database and initializes the tables
+    /// if required
     pub async fn new() -> Result<Self, SQliteDatabaseConnectionError> {
         // Create a connection pool
         let cur_dir = match std::env::current_dir() {
