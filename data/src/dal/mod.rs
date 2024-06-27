@@ -52,7 +52,12 @@ pub trait Dal: Sync + Send {
         new_command_props: InternalCommand,
     ) -> Result<(), SqliteQueryError>;
 
+    /// Adds parameters to the database
     async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqliteQueryError>;
+
+    /// Get parameters for a command
+    async fn get_params(&self, command_id: u64)
+        -> Result<Vec<InternalParameter>, SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -261,5 +266,33 @@ impl Dal for SqlDal {
         }
 
         Ok(())
+    }
+
+    async fn get_params(
+        &self,
+        command_id: u64,
+    ) -> Result<Vec<InternalParameter>, SqliteQueryError> {
+        let query = Query::select()
+            .columns([sqlite::Parameter::Symbol, sqlite::Parameter::Regex])
+            .and_where(Expr::col(sqlite::Parameter::CommandId).eq(command_id))
+            .from(sqlite::Parameter::Table)
+            .to_string(SqliteQueryBuilder);
+
+        let rows = match self.query(&query).await {
+            Ok(rows) => rows,
+            Err(e) => return Err(SqliteQueryError::SearchCommand(e)),
+        };
+
+        let mut params = Vec::new();
+        for row in rows {
+            params.push(InternalParameter {
+                command_id: command_id,
+                symbol: row.get("symbol"),
+                regex: row.get("regex"),
+                note: None,
+            });
+        }
+
+        Ok(params)
     }
 }

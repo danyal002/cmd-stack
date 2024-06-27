@@ -6,5 +6,8 @@ edition = "2021"
 [dependencies]
 data = { path = "../data" }
 fuzzy-matcher = "0.3.7"
+rand = "0.8.5"
+rand_regex = "0.17.0"
+regex-syntax = "0.8.4"
 thiserror = "1.0"
 tokio = { version = "1", features = ["full"] }

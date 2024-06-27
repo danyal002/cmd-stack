@@ -36,10 +36,7 @@ pub async fn handle_add_command(command: InternalCommand) -> Result<(), AddComma
     };
 
     // Add the command to the database
-    match dal
-        .add_command(command)
-        .await
-    {
+    match dal.add_command(command).await {
         Ok(_) => {}
         Err(_) => return Err(AddCommandError::Query),
     };
