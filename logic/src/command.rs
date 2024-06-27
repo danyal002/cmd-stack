@@ -21,8 +21,8 @@ pub enum AddCommandError {
 
 #[tokio::main]
 /// Handles the addition of a command
-pub async fn handle_add_command(params: InternalCommand) -> Result<(), AddCommandError> {
-    if params.command.trim().is_empty() || params.alias.trim().is_empty() {
+pub async fn handle_add_command(command: InternalCommand) -> Result<(), AddCommandError> {
+    if command.command.trim().is_empty() || command.alias.trim().is_empty() {
         return Err(AddCommandError::InvalidCommand);
     }
 
@@ -37,13 +37,7 @@ pub async fn handle_add_command(params: InternalCommand) -> Result<(), AddComman
 
     // Add the command to the database
     match dal
-        .add_command(InternalCommand {
-            alias: params.alias,
-            command: params.command,
-            tag: params.tag,
-            note: params.note,
-            favourite: params.favourite,
-        })
+        .add_command(command)
         .await
     {
         Ok(_) => {}

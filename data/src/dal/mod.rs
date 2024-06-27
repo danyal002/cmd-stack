@@ -8,7 +8,7 @@ use sqlx::Row;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
-use crate::models::{Command, InternalCommand};
+use crate::models::*;
 
 /// Data Access Layer for Sqlite
 pub struct SqlDal {
@@ -51,6 +51,8 @@ pub trait Dal: Sync + Send {
         command_id: u64,
         new_command_props: InternalCommand,
     ) -> Result<(), SqliteQueryError>;
+
+    async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -61,6 +63,8 @@ pub enum SqliteQueryError {
     SearchCommand(#[source] sqlx::Error),
     #[error("failed to update command last used property")]
     UpdateCommandLastUsed(#[source] sqlx::Error),
+    #[error("failed to add parameter")]
+    AddParam(#[source] sqlx::Error),
 }
 
 #[async_trait]
@@ -225,6 +229,36 @@ impl Dal for SqlDal {
             Ok(_) => {}
             Err(e) => return Err(SqliteQueryError::UpdateCommandLastUsed(e)),
         };
+
+        Ok(())
+    }
+
+    async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqliteQueryError> {
+        let mut builder = Query::insert()
+            .into_table(sqlite::Parameter::Table)
+            .columns([
+                sqlite::Parameter::CommandId,
+                sqlite::Parameter::Symbol,
+                sqlite::Parameter::Regex,
+                sqlite::Parameter::Note,
+            ])
+            .to_owned();
+
+        for param in params.into_iter() {
+            builder.values_panic(vec![
+                param.command_id.into(),
+                param.symbol.into(),
+                param.regex.into(),
+                param.note.into(),
+            ]);
+        }
+
+        let query = builder.to_string(SqliteQueryBuilder);
+
+        match self.execute(&query).await {
+            Ok(_) => {}
+            Err(e) => return Err(SqliteQueryError::AddParam(e)),
+        }
 
         Ok(())
     }
