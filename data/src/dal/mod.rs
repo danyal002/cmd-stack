@@ -59,7 +59,11 @@ pub trait Dal: Sync + Send {
     async fn get_params(&self, command_id: u64) -> Result<Vec<Parameter>, SqliteQueryError>;
 
     /// Update a parameter
-    async fn update_param(&self, param_id: u64, param: InternalParameter) -> Result<(), SqliteQueryError>;
+    async fn update_param(
+        &self,
+        param_id: u64,
+        param: InternalParameter,
+    ) -> Result<(), SqliteQueryError>;
 
     /// Delete a parameter
     async fn delete_param(&self, param_id: u64) -> Result<(), SqliteQueryError>;
@@ -273,10 +277,7 @@ impl Dal for SqlDal {
         Ok(())
     }
 
-    async fn get_params(
-        &self,
-        command_id: u64,
-    ) -> Result<Vec<Parameter>, SqliteQueryError> {
+    async fn get_params(&self, command_id: u64) -> Result<Vec<Parameter>, SqliteQueryError> {
         let query = Query::select()
             .columns([
                 sqlite::Parameter::Id,

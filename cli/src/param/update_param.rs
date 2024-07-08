@@ -1,11 +1,15 @@
 //! Add a parameter to a command
 
-use data::models::{Command, InternalParameter};
-use inquire::{InquireError, Text};
 use super::param_utils::{select_parameters, ParamUtilError};
+use data::models::{InternalParameter, Parameter};
+use inquire::{InquireError, Text};
 
-
-fn update_param_wizard(cmd_id: u64, cur_symbol: String, cur_regex: String, cur_note: Option<String>) -> Result<InternalParameter, InquireError> {
+fn update_param_wizard(
+    cmd_id: u64,
+    cur_symbol: String,
+    cur_regex: String,
+    cur_note: Option<String>,
+) -> Result<InternalParameter, InquireError> {
     let symbol = Text::new("Symbol:")
         .with_initial_value(&cur_symbol)
         .prompt()?;
@@ -26,15 +30,7 @@ fn update_param_wizard(cmd_id: u64, cur_symbol: String, cur_regex: String, cur_n
     });
 }
 
-pub fn handle_update_param_command(command: Command, print_limit: u32) {
-    let params = match logic::param::get_params(command.id) {
-        Ok(params) => params,
-        Err(e) => {
-            println!("Param Update Cmd: Error getting parameters: {:?}", e);
-            return;
-        }
-    };
-
+pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
     let param_to_update = match select_parameters(&params, print_limit) {
         Ok(param) => param,
         Err(e) => match e {
@@ -50,14 +46,17 @@ pub fn handle_update_param_command(command: Command, print_limit: u32) {
     };
 
     let updated_internal_params = match update_param_wizard(
-        param_to_update.internal_parameter.command_id, 
-        param_to_update.internal_parameter.symbol, 
-        param_to_update.internal_parameter.regex, 
-        param_to_update.internal_parameter.note
+        param_to_update.internal_parameter.command_id,
+        param_to_update.internal_parameter.symbol,
+        param_to_update.internal_parameter.regex,
+        param_to_update.internal_parameter.note,
     ) {
         Ok(properties) => properties,
         Err(e) => {
-            println!("Param Update Cmd: Error setting command properties: {:?}", e);
+            println!(
+                "Param Update Cmd: Error setting command properties: {:?}",
+                e
+            );
             return;
         }
     };

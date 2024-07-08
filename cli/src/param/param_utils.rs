@@ -1,8 +1,8 @@
 use data::models::Parameter;
 use inquire::InquireError;
+use inquire::Select;
 use prettytable::{format, Cell, Row, Table};
 use thiserror::Error;
-use inquire::Select;
 
 #[derive(Error, Debug)]
 pub enum ParamUtilError {
@@ -21,24 +21,22 @@ pub fn list_parameters(params: Vec<Parameter>, print_limit: u32) -> Result<(), P
     let formatted_params = format_params_for_printing(&params);
 
     println!(); // Spacing
-    match Select::new(
-        "Parameters (Symbol | Regex | Note):",
-        formatted_params
-    )
-    .with_formatter(&|_| "".to_string())
-    .with_page_size(print_limit as usize)
-    .raw_prompt()
+    match Select::new("Parameters (Symbol | Regex | Note):", formatted_params)
+        .with_formatter(&|_| "".to_string())
+        .with_page_size(print_limit as usize)
+        .raw_prompt()
     {
-        Ok(_) => {},
-        Err(e) => {
-            return Err(ParamUtilError::GetSelectedItemFromUserError(e))
-        }
+        Ok(_) => {}
+        Err(e) => return Err(ParamUtilError::GetSelectedItemFromUserError(e)),
     };
 
     return Ok(());
 }
 
-pub fn select_parameters(params: &Vec<Parameter>, print_limit: u32) -> Result<Parameter, ParamUtilError> {
+pub fn select_parameters(
+    params: &Vec<Parameter>,
+    print_limit: u32,
+) -> Result<Parameter, ParamUtilError> {
     if params.len() == 0 {
         return Err(ParamUtilError::NoParams);
     }
@@ -48,16 +46,14 @@ pub fn select_parameters(params: &Vec<Parameter>, print_limit: u32) -> Result<Pa
     println!(); // Spacing
     let selected_param = match Select::new(
         "Select a parameter (Symbol | Regex | Note):",
-        formatted_params
+        formatted_params,
     )
     .with_formatter(&|i| format!("{}", &params[i.index].internal_parameter.symbol))
     .with_page_size(print_limit as usize)
     .raw_prompt()
     {
         Ok(p) => p,
-        Err(e) => {
-            return Err(ParamUtilError::GetSelectedItemFromUserError(e))
-        }
+        Err(e) => return Err(ParamUtilError::GetSelectedItemFromUserError(e)),
     };
 
     return Ok(params[selected_param.index].clone());

@@ -64,10 +64,19 @@ pub fn handle_param_command(param_command: ParamCommands) {
         },
     };
 
+    // Get the parameters for the selected command
+    let params = match logic::param::get_params(selected_command.id) {
+        Ok(params) => params,
+        Err(e) => {
+            println!("Param Cmd: Error getting parameters: {:?}", e);
+            return;
+        }
+    };
+
     match param_command {
-        ParamCommands::List(_) => list_param::handle_list_param_command(selected_command, print_limit),
+        ParamCommands::List(_) => list_param::handle_list_param_command(params, print_limit),
         ParamCommands::Add(_) => add_param::handle_add_param_command(selected_command),
-        ParamCommands::Update(_) => update_param::handle_update_param_command(selected_command, print_limit),
-        ParamCommands::Delete(_) => delete_param::handle_delete_param_command(selected_command, print_limit),
+        ParamCommands::Update(_) => update_param::handle_update_param_command(params, print_limit),
+        ParamCommands::Delete(_) => delete_param::handle_delete_param_command(params, print_limit),
     }
 }

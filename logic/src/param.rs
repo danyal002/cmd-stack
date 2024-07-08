@@ -101,14 +101,17 @@ pub async fn handle_generate_param(command: Command) -> Result<String, GenerateP
             .take(1)
             .collect::<Vec<String>>();
 
-        param_string.push_str(&format!("{} {} ", param.internal_parameter.symbol, param_value[0]));
+        param_string.push_str(&format!(
+            "{} {} ",
+            param.internal_parameter.symbol, param_value[0]
+        ));
     }
 
     Ok(command.internal_command.command + " " + &param_string)
 }
 
 #[derive(Error, Debug)]
-pub enum GetParameterError {
+pub enum ParameterLogicError {
     #[error("database creation error")]
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
     #[error("unknown data store error")]
@@ -116,11 +119,11 @@ pub enum GetParameterError {
 }
 
 #[tokio::main]
-pub async fn get_params(command_id: u64) -> Result<Vec<Parameter>, GetParameterError> {
+pub async fn get_params(command_id: u64) -> Result<Vec<Parameter>, ParameterLogicError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
-        Err(e) => return Err(GetParameterError::DbConnection(e)),
+        Err(e) => return Err(ParameterLogicError::DbConnection(e)),
     };
     let dal = SqlDal {
         sql: Box::new(sqlite_db),
@@ -129,26 +132,21 @@ pub async fn get_params(command_id: u64) -> Result<Vec<Parameter>, GetParameterE
     // Get the parameters for the command from the database
     let params: Vec<Parameter> = match dal.get_params(command_id).await {
         Ok(p) => p,
-        Err(e) => return Err(GetParameterError::Query(e)),
+        Err(e) => return Err(ParameterLogicError::Query(e)),
     };
 
     Ok(params)
 }
 
-#[derive(Error, Debug)]
-pub enum UpdateParameterError {
-    #[error("database creation error")]
-    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
-    #[error("unknown data store error")]
-    Query,
-}
-
 #[tokio::main]
-pub async fn update_param(param_id: u64, param: InternalParameter) -> Result<(), UpdateParameterError> {
+pub async fn update_param(
+    param_id: u64,
+    param: InternalParameter,
+) -> Result<(), ParameterLogicError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
-        Err(e) => return Err(UpdateParameterError::DbConnection(e)),
+        Err(e) => return Err(ParameterLogicError::DbConnection(e)),
     };
     let dal = SqlDal {
         sql: Box::new(sqlite_db),
@@ -157,26 +155,18 @@ pub async fn update_param(param_id: u64, param: InternalParameter) -> Result<(),
     // Update the parameter in the database
     match dal.update_param(param_id, param).await {
         Ok(_) => {}
-        Err(_) => return Err(UpdateParameterError::Query),
+        Err(e) => return Err(ParameterLogicError::Query(e)),
     };
 
     Ok(())
 }
 
-#[derive(Error, Debug)]
-pub enum DeleteParameterError {
-    #[error("database creation error")]
-    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
-    #[error("unknown data store error")]
-    Query,
-}
-
 #[tokio::main]
-pub async fn delete_param(param_id: u64) -> Result<(), DeleteParameterError> {
+pub async fn delete_param(param_id: u64) -> Result<(), ParameterLogicError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
-        Err(e) => return Err(DeleteParameterError::DbConnection(e)),
+        Err(e) => return Err(ParameterLogicError::DbConnection(e)),
     };
     let dal = SqlDal {
         sql: Box::new(sqlite_db),
@@ -185,7 +175,7 @@ pub async fn delete_param(param_id: u64) -> Result<(), DeleteParameterError> {
     // Delete the parameter from the database
     match dal.delete_param(param_id).await {
         Ok(_) => {}
-        Err(_) => return Err(DeleteParameterError::Query),
+        Err(e) => return Err(ParameterLogicError::Query(e)),
     };
 
     Ok(())
