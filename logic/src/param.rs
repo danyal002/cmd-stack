@@ -162,3 +162,31 @@ pub async fn update_param(param_id: u64, param: InternalParameter) -> Result<(),
 
     Ok(())
 }
+
+#[derive(Error, Debug)]
+pub enum DeleteParameterError {
+    #[error("database creation error")]
+    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
+    #[error("unknown data store error")]
+    Query,
+}
+
+#[tokio::main]
+pub async fn delete_param(param_id: u64) -> Result<(), DeleteParameterError> {
+    // Set up database connection
+    let sqlite_db = match SqliteDatabase::new().await {
+        Ok(db) => db,
+        Err(e) => return Err(DeleteParameterError::DbConnection(e)),
+    };
+    let dal = SqlDal {
+        sql: Box::new(sqlite_db),
+    };
+
+    // Delete the parameter from the database
+    match dal.delete_param(param_id).await {
+        Ok(_) => {}
+        Err(_) => return Err(DeleteParameterError::Query),
+    };
+
+    Ok(())
+}

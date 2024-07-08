@@ -60,6 +60,9 @@ pub trait Dal: Sync + Send {
 
     /// Update a parameter
     async fn update_param(&self, param_id: u64, param: InternalParameter) -> Result<(), SqliteQueryError>;
+
+    /// Delete a parameter
+    async fn delete_param(&self, param_id: u64) -> Result<(), SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -318,6 +321,20 @@ impl Dal for SqlDal {
                 (sqlite::Parameter::Regex, param.regex.into()),
                 (sqlite::Parameter::Note, param.note.into()),
             ])
+            .and_where(Expr::col(sqlite::Parameter::Id).eq(param_id))
+            .to_string(SqliteQueryBuilder);
+
+        match self.execute(&query).await {
+            Ok(_) => {}
+            Err(e) => return Err(SqliteQueryError::UpdateCommandLastUsed(e)),
+        };
+
+        Ok(())
+    }
+
+    async fn delete_param(&self, param_id: u64) -> Result<(), SqliteQueryError> {
+        let query = Query::delete()
+            .from_table(sqlite::Parameter::Table)
             .and_where(Expr::col(sqlite::Parameter::Id).eq(param_id))
             .to_string(SqliteQueryBuilder);
 

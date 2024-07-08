@@ -65,9 +65,9 @@ pub fn handle_param_command(param_command: ParamCommands) {
     };
 
     match param_command {
-        ParamCommands::List(_) => list_param::handle_list_param_command(selected_command),
+        ParamCommands::List(_) => list_param::handle_list_param_command(selected_command, print_limit),
         ParamCommands::Add(_) => add_param::handle_add_param_command(selected_command),
         ParamCommands::Update(_) => update_param::handle_update_param_command(selected_command, print_limit),
-        ParamCommands::Delete(_) => delete_param::handle_delete_param_command(selected_command),
+        ParamCommands::Delete(_) => delete_param::handle_delete_param_command(selected_command, print_limit),
     }
 }

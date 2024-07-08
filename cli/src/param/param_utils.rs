@@ -13,17 +13,27 @@ pub enum ParamUtilError {
     GetSelectedItemFromUserError(#[from] InquireError),
 }
 
-pub fn list_parameters(params: Vec<Parameter>) -> Result<(), ParamUtilError> {
+pub fn list_parameters(params: Vec<Parameter>, print_limit: u32) -> Result<(), ParamUtilError> {
     if params.len() == 0 {
         return Err(ParamUtilError::NoParams);
     }
 
     let formatted_params = format_params_for_printing(&params);
 
-    println!("\nParameters (Symbol | Regex | Note):"); // Spacing
-    for line in formatted_params {
-        println!("{}", line);
-    }
+    println!(); // Spacing
+    match Select::new(
+        "Parameters (Symbol | Regex | Note):",
+        formatted_params
+    )
+    .with_formatter(&|_| "".to_string())
+    .with_page_size(print_limit as usize)
+    .raw_prompt()
+    {
+        Ok(_) => {},
+        Err(e) => {
+            return Err(ParamUtilError::GetSelectedItemFromUserError(e))
+        }
+    };
 
     return Ok(());
 }
