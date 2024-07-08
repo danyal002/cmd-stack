@@ -1,0 +1,44 @@
+use data::models::Parameter;
+use inquire::InquireError;
+use prettytable::{format, Cell, Row, Table};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum ListParamError {
+    #[error("No parameters")]
+    NoParams,
+
+    #[error("failed to get selected item")]
+    GetSelectedItemFromUserError(#[from] InquireError),
+}
+
+pub fn list_parameters(params: Vec<Parameter>) -> Result<(), ListParamError> {
+    if params.len() == 0 {
+        return Err(ListParamError::NoParams);
+    }
+
+    let formatted_params = format_params_for_printing(&params);
+
+    println!("\nParameters (Symbol | Regex | Note):"); // Spacing
+    for line in formatted_params {
+        println!("{}", line);
+    }
+
+    return Ok(());
+}
+
+fn format_params_for_printing(params: &Vec<Parameter>) -> Vec<String> {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+
+    for param in params {
+        table.add_row(Row::new(vec![
+            Cell::new(&param.internal_parameter.symbol),
+            Cell::new(&param.internal_parameter.regex),
+            Cell::new(&param.internal_parameter.note.as_deref().unwrap_or("")),
+        ]));
+    }
+
+    let table_str = table.to_string();
+    return table_str.lines().map(|s| s.to_string()).collect();
+}

@@ -9,6 +9,7 @@ use logic::command::SearchCommandArgs;
 mod add_param;
 mod delete_param;
 mod list_param;
+mod param_list;
 mod update_param;
 
 pub fn handle_param_command(param_command: ParamCommands) {
