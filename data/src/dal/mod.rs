@@ -56,8 +56,10 @@ pub trait Dal: Sync + Send {
     async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqliteQueryError>;
 
     /// Get parameters for a command
-    async fn get_params(&self, command_id: u64)
-        -> Result<Vec<InternalParameter>, SqliteQueryError>;
+    async fn get_params(&self, command_id: u64) -> Result<Vec<Parameter>, SqliteQueryError>;
+
+    /// Update a parameter
+    async fn update_param(&self, param_id: u64, param: InternalParameter) -> Result<(), SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -271,9 +273,14 @@ impl Dal for SqlDal {
     async fn get_params(
         &self,
         command_id: u64,
-    ) -> Result<Vec<InternalParameter>, SqliteQueryError> {
+    ) -> Result<Vec<Parameter>, SqliteQueryError> {
         let query = Query::select()
-            .columns([sqlite::Parameter::Symbol, sqlite::Parameter::Regex])
+            .columns([
+                sqlite::Parameter::Id,
+                sqlite::Parameter::Symbol,
+                sqlite::Parameter::Regex,
+                sqlite::Parameter::Note,
+            ])
             .and_where(Expr::col(sqlite::Parameter::CommandId).eq(command_id))
             .from(sqlite::Parameter::Table)
             .to_string(SqliteQueryBuilder);
@@ -285,14 +292,40 @@ impl Dal for SqlDal {
 
         let mut params = Vec::new();
         for row in rows {
-            params.push(InternalParameter {
-                command_id: command_id,
-                symbol: row.get("symbol"),
-                regex: row.get("regex"),
-                note: None,
+            params.push(Parameter {
+                id: row.get::<i64, _>("id") as u64,
+                internal_parameter: InternalParameter {
+                    command_id: command_id,
+                    symbol: row.get("symbol"),
+                    regex: row.get("regex"),
+                    note: row.get("note"),
+                },
             });
         }
 
         Ok(params)
+    }
+
+    async fn update_param(
+        &self,
+        param_id: u64,
+        param: InternalParameter,
+    ) -> Result<(), SqliteQueryError> {
+        let query = Query::update()
+            .table(sqlite::Parameter::Table)
+            .values([
+                (sqlite::Parameter::Symbol, param.symbol.into()),
+                (sqlite::Parameter::Regex, param.regex.into()),
+                (sqlite::Parameter::Note, param.note.into()),
+            ])
+            .and_where(Expr::col(sqlite::Parameter::Id).eq(param_id))
+            .to_string(SqliteQueryBuilder);
+
+        match self.execute(&query).await {
+            Ok(_) => {}
+            Err(e) => return Err(SqliteQueryError::UpdateCommandLastUsed(e)),
+        };
+
+        Ok(())
     }
 }

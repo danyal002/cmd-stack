@@ -2,9 +2,10 @@ use data::models::Parameter;
 use inquire::InquireError;
 use prettytable::{format, Cell, Row, Table};
 use thiserror::Error;
+use inquire::Select;
 
 #[derive(Error, Debug)]
-pub enum ListParamError {
+pub enum ParamUtilError {
     #[error("No parameters")]
     NoParams,
 
@@ -12,9 +13,9 @@ pub enum ListParamError {
     GetSelectedItemFromUserError(#[from] InquireError),
 }
 
-pub fn list_parameters(params: Vec<Parameter>) -> Result<(), ListParamError> {
+pub fn list_parameters(params: Vec<Parameter>) -> Result<(), ParamUtilError> {
     if params.len() == 0 {
-        return Err(ListParamError::NoParams);
+        return Err(ParamUtilError::NoParams);
     }
 
     let formatted_params = format_params_for_printing(&params);
@@ -25,6 +26,31 @@ pub fn list_parameters(params: Vec<Parameter>) -> Result<(), ListParamError> {
     }
 
     return Ok(());
+}
+
+pub fn select_parameters(params: &Vec<Parameter>, print_limit: u32) -> Result<Parameter, ParamUtilError> {
+    if params.len() == 0 {
+        return Err(ParamUtilError::NoParams);
+    }
+
+    let formatted_params = format_params_for_printing(&params);
+
+    println!(); // Spacing
+    let selected_param = match Select::new(
+        "Select a parameter (Symbol | Regex | Note):",
+        formatted_params
+    )
+    .with_formatter(&|i| format!("{}", &params[i.index].internal_parameter.symbol))
+    .with_page_size(print_limit as usize)
+    .raw_prompt()
+    {
+        Ok(p) => p,
+        Err(e) => {
+            return Err(ParamUtilError::GetSelectedItemFromUserError(e))
+        }
+    };
+
+    return Ok(params[selected_param.index].clone());
 }
 
 fn format_params_for_printing(params: &Vec<Parameter>) -> Vec<String> {
