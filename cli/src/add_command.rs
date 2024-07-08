@@ -71,7 +71,7 @@ pub fn handle_add_command(args: AddArgs) {
     });
 
     match add_result {
-        Ok(_) => println!("Command added successfully"),
+        Ok(_) => println!("\nCommand added successfully"),
         Err(e) => println!("Add Cmd: Error adding command: {:?}", e),
     }
 }

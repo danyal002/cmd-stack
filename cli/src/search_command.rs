@@ -70,7 +70,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     clipboard.set_contents(copied_text).unwrap();
 
     println!(
-        "Command copied to clipboard: {}",
+        "\nCommand copied to clipboard: {}",
         selected_command.internal_command.command
     );
 

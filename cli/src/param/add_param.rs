@@ -66,7 +66,7 @@ pub fn handle_add_param_command(command: Command) {
     };
 
     match logic::param::handle_add_param(params) {
-        Ok(_) => println!("Parameters added successfully"),
+        Ok(_) => println!("\nParameters added successfully"),
         Err(e) => println!("Add Param Cmd: Error adding parameters: {:?}", e),
     }
 }

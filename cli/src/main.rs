@@ -18,7 +18,7 @@ fn main() {
     let args = CmdStackArgs::parse();
 
     inquire::set_global_render_config(inquire::ui::RenderConfig {
-        prompt: inquire::ui::StyleSheet::default().with_fg(inquire::ui::Color::DarkBlue),
+        prompt: inquire::ui::StyleSheet::default().with_fg(inquire::ui::Color::LightBlue),
         ..Default::default()
     });
 

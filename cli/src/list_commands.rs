@@ -34,7 +34,7 @@ pub fn handle_list_commands(args: ListArgs) {
         .unwrap();
 
     println!(
-        "Command copied to clipboard: {}",
+        "\nCommand copied to clipboard: {}",
         selected_command.internal_command.command
     );
 
