@@ -1,9 +1,9 @@
-cargo run add "ssh james@linux.student.cs.uwaterloo.ca" -a "UWaterloo CS" -n "SSH to UWaterloo CS Server" -t "CS"
-cargo run add "ssh arthur@ecetesla.uwaterloo.ca" -a "UWaterloo ECE Tesla" -n "SSH to UWaterloo Tesla Server" -t "ECE"
+cargo run add "ssh james@linux.student.cs.uwaterloo.ca" -a "UWaterloo CS" -n "SSH to UWaterloo CS Server" -t "CS" -f
+cargo run add "ssh arthur@ecetesla.uwaterloo.ca" -a "UWaterloo ECE Tesla" -n "SSH to UWaterloo Tesla Server" -t "ECE" -f
 cargo run add "ssh bob@eceterm.uwaterloo.ca" -a "UWaterloo ECE Term" -n "SSH to UWaterloo Term Server" -t "ECE"
 cargo run add "ssh jim@eceterm.uwaterloo.ca" -a "UWaterloo ECE Term 1" -n "SSH to UWaterloo Term Server" -t "ECE"
 cargo run add "ssh bim@eceterm.uwaterloo.ca" -a "UWaterloo ECE Term 2" -n "SSH to UWaterloo Term Server" -t "ECE"
-cargo run add "ssh dodge@eceterm.uwaterloo.ca" -a "UWaterloo ECE Term 3" -n "SSH to UWaterloo Term Server" -t "ECE"
+cargo run add "ssh dodge@eceterm.uwaterloo.ca" -a "UWaterloo ECE Term 3" -n "SSH to UWaterloo Term Server" -t "ECE" -f
 cargo run add "ssh charger@eceterm.uwaterloo.ca" -a "UWaterloo ECE Term 4" -n "SSH to UWaterloo Term Server" -t "ECE"
 cargo run add "ssh taylor@eceterm.uwaterloo.ca" -a "UWaterloo ECE Term 5" -n "SSH to UWaterloo Term Server" -t "ECE"
 cargo run add "ssh swift@eceterm.uwaterloo.ca" -a "UWaterloo ECE Term 6" -n "SSH to UWaterloo Term Server" -t "ECE"

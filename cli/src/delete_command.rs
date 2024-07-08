@@ -62,5 +62,5 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
         }
     };
 
-    println!("Command deleted successfully");
+    println!("\nCommand deleted successfully");
 }

@@ -54,14 +54,23 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         },
     };
 
+    let copied_text = match logic::param::handle_generate_param(selected_command.clone()) {
+        Ok(c) => c,
+        Err(e) => {
+            println!(
+                "Search Cmd: Failed to generate parameters for selected command: {:?}",
+                e
+            );
+            return;
+        }
+    };
+
     // Copy the selected command to the clipboard
     let mut clipboard = ClipboardContext::new().unwrap();
-    clipboard
-        .set_contents(selected_command.internal_command.command.clone())
-        .unwrap();
+    clipboard.set_contents(copied_text).unwrap();
 
     println!(
-        "Command copied to clipboard: {}",
+        "\nCommand copied to clipboard: {}",
         selected_command.internal_command.command
     );
 

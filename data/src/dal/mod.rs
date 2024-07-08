@@ -8,7 +8,7 @@ use sqlx::Row;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
-use crate::models::{Command, InternalCommand};
+use crate::models::*;
 
 /// Data Access Layer for Sqlite
 pub struct SqlDal {
@@ -51,6 +51,22 @@ pub trait Dal: Sync + Send {
         command_id: u64,
         new_command_props: InternalCommand,
     ) -> Result<(), SqliteQueryError>;
+
+    /// Adds parameters to the database
+    async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqliteQueryError>;
+
+    /// Get parameters for a command
+    async fn get_params(&self, command_id: u64) -> Result<Vec<Parameter>, SqliteQueryError>;
+
+    /// Update a parameter
+    async fn update_param(
+        &self,
+        param_id: u64,
+        param: InternalParameter,
+    ) -> Result<(), SqliteQueryError>;
+
+    /// Delete a parameter
+    async fn delete_param(&self, param_id: u64) -> Result<(), SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -61,6 +77,8 @@ pub enum SqliteQueryError {
     SearchCommand(#[source] sqlx::Error),
     #[error("failed to update command last used property")]
     UpdateCommandLastUsed(#[source] sqlx::Error),
+    #[error("failed to add parameter")]
+    AddParam(#[source] sqlx::Error),
 }
 
 #[async_trait]
@@ -219,6 +237,106 @@ impl Dal for SqlDal {
                 ),
             ])
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
+            .to_string(SqliteQueryBuilder);
+
+        match self.execute(&query).await {
+            Ok(_) => {}
+            Err(e) => return Err(SqliteQueryError::UpdateCommandLastUsed(e)),
+        };
+
+        Ok(())
+    }
+
+    async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqliteQueryError> {
+        let mut builder = Query::insert()
+            .into_table(sqlite::Parameter::Table)
+            .columns([
+                sqlite::Parameter::CommandId,
+                sqlite::Parameter::Symbol,
+                sqlite::Parameter::Regex,
+                sqlite::Parameter::Note,
+            ])
+            .to_owned();
+
+        for param in params.into_iter() {
+            builder.values_panic(vec![
+                param.command_id.into(),
+                param.symbol.into(),
+                param.regex.into(),
+                param.note.into(),
+            ]);
+        }
+
+        let query = builder.to_string(SqliteQueryBuilder);
+
+        match self.execute(&query).await {
+            Ok(_) => {}
+            Err(e) => return Err(SqliteQueryError::AddParam(e)),
+        }
+
+        Ok(())
+    }
+
+    async fn get_params(&self, command_id: u64) -> Result<Vec<Parameter>, SqliteQueryError> {
+        let query = Query::select()
+            .columns([
+                sqlite::Parameter::Id,
+                sqlite::Parameter::Symbol,
+                sqlite::Parameter::Regex,
+                sqlite::Parameter::Note,
+            ])
+            .and_where(Expr::col(sqlite::Parameter::CommandId).eq(command_id))
+            .from(sqlite::Parameter::Table)
+            .to_string(SqliteQueryBuilder);
+
+        let rows = match self.query(&query).await {
+            Ok(rows) => rows,
+            Err(e) => return Err(SqliteQueryError::SearchCommand(e)),
+        };
+
+        let mut params = Vec::new();
+        for row in rows {
+            params.push(Parameter {
+                id: row.get::<i64, _>("id") as u64,
+                internal_parameter: InternalParameter {
+                    command_id: command_id,
+                    symbol: row.get("symbol"),
+                    regex: row.get("regex"),
+                    note: row.get("note"),
+                },
+            });
+        }
+
+        Ok(params)
+    }
+
+    async fn update_param(
+        &self,
+        param_id: u64,
+        param: InternalParameter,
+    ) -> Result<(), SqliteQueryError> {
+        let query = Query::update()
+            .table(sqlite::Parameter::Table)
+            .values([
+                (sqlite::Parameter::Symbol, param.symbol.into()),
+                (sqlite::Parameter::Regex, param.regex.into()),
+                (sqlite::Parameter::Note, param.note.into()),
+            ])
+            .and_where(Expr::col(sqlite::Parameter::Id).eq(param_id))
+            .to_string(SqliteQueryBuilder);
+
+        match self.execute(&query).await {
+            Ok(_) => {}
+            Err(e) => return Err(SqliteQueryError::UpdateCommandLastUsed(e)),
+        };
+
+        Ok(())
+    }
+
+    async fn delete_param(&self, param_id: u64) -> Result<(), SqliteQueryError> {
+        let query = Query::delete()
+            .from_table(sqlite::Parameter::Table)
+            .and_where(Expr::col(sqlite::Parameter::Id).eq(param_id))
             .to_string(SqliteQueryBuilder);
 
         match self.execute(&query).await {

@@ -21,9 +21,9 @@ pub struct Command {
 /// Represents the properties of a parameter that the user will
 /// have knowledge about
 pub struct InternalParameter {
-    pub name: String,
+    pub command_id: u64,
     pub symbol: String,
-    pub default_value: Option<String>,
+    pub regex: String,
     pub note: Option<String>,
 }
 
@@ -31,6 +31,5 @@ pub struct InternalParameter {
 /// Stores all properties of a parameter in the database
 pub struct Parameter {
     pub id: u64,
-    pub command_id: u64,
     pub internal_parameter: InternalParameter,
 }

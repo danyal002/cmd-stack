@@ -91,9 +91,8 @@ impl SqliteDatabase {
                     .auto_increment(),
             )
             .col(ColumnDef::new(Parameter::CommandId).integer().not_null())
-            .col(ColumnDef::new(Parameter::Name).string().not_null())
             .col(ColumnDef::new(Parameter::Symbol).string().not_null())
-            .col(ColumnDef::new(Parameter::DefaultValue).string())
+            .col(ColumnDef::new(Parameter::Regex).string().not_null())
             .col(ColumnDef::new(Parameter::Note).string())
             .foreign_key(
                 ForeignKey::create()
@@ -140,8 +139,7 @@ pub enum Parameter {
     Table,
     Id,
     CommandId,
-    Name,
     Symbol,
-    DefaultValue,
+    Regex,
     Note,
 }

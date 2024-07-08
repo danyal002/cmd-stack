@@ -134,5 +134,5 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         }
     };
 
-    println!("Command updated successfully");
+    println!("\nCommand updated successfully");
 }
