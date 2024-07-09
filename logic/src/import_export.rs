@@ -110,21 +110,22 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
         import_cmd_id_to_db_id.insert(command.id, db_id);
     }
 
-    let mut insert_params: Vec<InternalParameter> = vec![];
-    for param in import_data.parameters {
-        let cmd_id = param.command_id;
-        insert_params.push(InternalParameter {
-            command_id: match import_cmd_id_to_db_id.get(&cmd_id) {
-                Some(id) => *id,
-                None => return Err(ImportExportError::InvalidData)
-            },
-            symbol: param.symbol,
-            regex: param.regex,
-            note: param.note,
-        })
+    if import_data.parameters.len() > 0 {
+        let mut insert_params: Vec<InternalParameter> = vec![];
+        for param in import_data.parameters {
+            let cmd_id = param.command_id;
+            insert_params.push(InternalParameter {
+                command_id: match import_cmd_id_to_db_id.get(&cmd_id) {
+                    Some(id) => *id,
+                    None => return Err(ImportExportError::InvalidData)
+                },
+                symbol: param.symbol,
+                regex: param.regex,
+                note: param.note,
+            })
+        }
+        dal.add_params(insert_params).await?;
     }
-
-    dal.add_params(insert_params).await?;
 
     Ok(())
 }

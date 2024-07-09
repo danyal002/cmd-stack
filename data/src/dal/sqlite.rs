@@ -1,20 +1,29 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
-use sqlx::sqlite::SqlitePoolOptions;
+use sqlx::sqlite::SqliteConnectOptions;
+use sqlx::SqlitePool;
 use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
+use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SQliteDatabaseConnectionError {
     #[error("Could not get the current directory")]
     CurDir(#[source] std::io::Error),
+
     #[error("Could not create the database file")]
     CreatingDatabase(#[source] std::io::Error),
+
+    #[error("Could not create sqlite options")]
+    SqliteOptionsInitialization(#[source] sqlx::Error),
+
     #[error("Could not connect to the file")]
     PoolInitialization(#[source] sqlx::Error),
+
     #[error("Could not create command table")]
     Command(#[source] sqlx::Error),
+
     #[error("Could not create parameter table")]
     Parameter(#[source] sqlx::Error),
 }
@@ -51,10 +60,13 @@ impl SqliteDatabase {
             }
         }
 
-        let pool = match SqlitePoolOptions::new()
-            .connect(&format!("sqlite://{}", db_path.to_str().unwrap()))
-            .await
-        {
+        let mut connect_options = match SqliteConnectOptions::from_str(&format!("sqlite://{}", db_path.to_str().unwrap())) {
+            Ok(options) => options,
+            Err(e) => return Err(SQliteDatabaseConnectionError::SqliteOptionsInitialization(e))
+        };
+        connect_options = connect_options.foreign_keys(true);
+
+        let pool = match SqlitePool::connect_with(connect_options).await {
             Ok(pool) => pool,
             Err(e) => {
                 return Err(SQliteDatabaseConnectionError::PoolInitialization(e));
