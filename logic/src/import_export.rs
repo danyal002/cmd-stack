@@ -1,5 +1,6 @@
 use data::dal::{sqlite::SqliteDatabase, Dal, SqlDal, SqliteQueryError};
 use thiserror::Error;
+use std::fs;
 
 #[derive(Error, Debug)]
 pub enum ImportExportError {
@@ -8,11 +9,14 @@ pub enum ImportExportError {
 
     #[error("database query error")]
     DbQuery(#[from] SqliteQueryError),
+
+    #[error("could not write to file")]
+    WriteToFile(#[source] std::io::Error)
 }
 
 #[tokio::main]
 /// Returns a JSON string containing all commands and parameters
-pub async fn create_export_json(_destination_file_path: String) -> Result<(), ImportExportError> {
+pub async fn create_export_json(destination_file_path: String) -> Result<(), ImportExportError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
@@ -32,7 +36,15 @@ pub async fn create_export_json(_destination_file_path: String) -> Result<(), Im
         "parameters": parameters,
     });
 
-    println!("{}", json_string);
+    match fs::write(destination_file_path, json_string.to_string()) {
+        Ok(_) => {},
+        Err(e) => return Err(ImportExportError::WriteToFile(e))
+    }
 
+    Ok(())
+}
+
+#[tokio::main]
+pub async fn import_data(_import_file_path: String) -> Result<(), ImportExportError> {
     Ok(())
 }
