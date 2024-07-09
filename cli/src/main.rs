@@ -30,6 +30,7 @@ fn main() {
         Command::Search(search_args) => search_command::handle_search_commands(search_args),
         Command::List(list_args) => list_commands::handle_list_commands(list_args),
         Command::Param(param_args) => param::handle_param_command(param_args),
-        Command::Export(export_args) => import_export::handle_export_command(export_args),
+        Command::Export(import_export_args) => import_export::handle_export_command(import_export_args),
+        Command::Import(import_export_args) => import_export::handle_import_command(import_export_args)
     }
 }
