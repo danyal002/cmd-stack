@@ -8,6 +8,11 @@ pub fn handle_export_command(args: ImportExportArgs) {
         println!("Export Cmd: File must be a JSON file");
         return;
     }
-    
-    println!("Exporting to file: {}", file);
+
+    match logic::import_export::create_export_json(file.clone()) {
+        Ok(_) => println!("\nCommands exported to {}", file),
+        Err(e) => println!("Failed to export command: {:?}", e)
+    }
 }
+
+

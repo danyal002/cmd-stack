@@ -1,4 +1,6 @@
-#[derive(Debug, Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 /// Represents the properties of a command that the user will
 /// have knowledge about
 pub struct InternalCommand {
@@ -9,7 +11,7 @@ pub struct InternalCommand {
     pub favourite: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 /// Stores all properties of a command in the database
 pub struct Command {
     pub id: u64,
@@ -17,7 +19,7 @@ pub struct Command {
     pub internal_command: InternalCommand,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 /// Represents the properties of a parameter that the user will
 /// have knowledge about
 pub struct InternalParameter {

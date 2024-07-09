@@ -45,7 +45,7 @@ pub trait Dal: Sync + Send {
     /// Deletes a command from the database
     async fn delete_command(&self, command_id: u64) -> Result<(), SqliteQueryError>;
 
-    // Update a command
+    /// Update a command
     async fn update_command(
         &self,
         command_id: u64,
@@ -67,6 +67,9 @@ pub trait Dal: Sync + Send {
 
     /// Delete a parameter
     async fn delete_param(&self, param_id: u64) -> Result<(), SqliteQueryError>;
+
+    /// Get all parameters
+    async fn get_all_internal_parameters(&self) -> Result<Vec<InternalParameter>, SqliteQueryError>;
 }
 
 #[derive(Error, Debug)]
@@ -345,5 +348,34 @@ impl Dal for SqlDal {
         };
 
         Ok(())
+    }
+
+    async fn get_all_internal_parameters(&self) -> Result<Vec<InternalParameter>, SqliteQueryError> {
+        let query = Query::select()
+            .columns([
+                sqlite::Parameter::CommandId,
+                sqlite::Parameter::Symbol,
+                sqlite::Parameter::Regex,
+                sqlite::Parameter::Note,
+            ])
+            .from(sqlite::Parameter::Table)
+            .to_string(SqliteQueryBuilder);
+
+        let rows = match self.query(&query).await {
+            Ok(rows) => rows,
+            Err(e) => return Err(SqliteQueryError::SearchCommand(e)),
+        };
+
+        let mut params = Vec::new();
+        for row in rows {
+            params.push(InternalParameter {
+                command_id: row.get::<i64, _>("command_id") as u64,
+                symbol: row.get("symbol"),
+                regex: row.get("regex"),
+                note: row.get("note"),
+            });
+        }
+
+        Ok(params)
     }
 }
