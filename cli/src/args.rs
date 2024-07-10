@@ -28,6 +28,12 @@ pub enum Command {
     /// Parameter generation management
     #[clap(subcommand)]
     Param(ParamCommands),
+
+    /// Export commands to a file
+    Export(ImportExportArgs),
+
+    /// Import commands from a file
+    Import(ImportExportArgs)
 }
 
 #[derive(Debug, Args)]
@@ -124,4 +130,11 @@ pub enum ParamCommands {
 
     /// List all parameters
     List(SearchAndPrintArgs),
+}
+
+#[derive(Debug, Args)]
+/// Arguments for importing/exporting commands
+pub struct ImportExportArgs {
+    /// The file to export to
+    pub file: String,
 }
