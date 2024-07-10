@@ -1,8 +1,6 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
-use std::fs;
-use std::path::Path;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -34,13 +32,7 @@ pub struct SqliteDatabase {
 
 impl SqliteDatabase {
     /// Creates a new connection to a SQLite database
-    ///
-    /// Creates the database and initializes the tables if required
     pub async fn new() -> Result<Self, SQliteDatabaseConnectionError> {
-        if !Self::db_file_exists() {
-            Self::create_db()
-        }
-
         let pool = Self::establish_db_connection().await?;
 
         Self::create_tables(&pool).await?;
@@ -56,24 +48,6 @@ impl SqliteDatabase {
         home_dir.to_str().unwrap().to_string() + "/.config/cmdstack/database.sqlite"
     }
 
-    /// Checks if the database file exists
-    fn db_file_exists() -> bool {
-        let db_path = Self::get_db_path();
-        Path::new(&db_path).exists()
-    }
-
-    /// Creates database file
-    fn create_db() {
-        let db_path = Self::get_db_path();
-        let db_dir = Path::new(&db_path).parent().unwrap();
-
-        if !db_dir.exists() {
-            fs::create_dir_all(db_dir).unwrap();
-        }
-
-        fs::File::create(db_path).unwrap();
-    }
-
     async fn establish_db_connection() -> Result<SqlitePool, SQliteDatabaseConnectionError> {
         let mut connect_options = match SqliteConnectOptions::from_str(Self::get_db_path().as_str())
         {
@@ -84,7 +58,8 @@ impl SqliteDatabase {
                 ))
             }
         };
-        connect_options = connect_options.foreign_keys(true);
+        // Enable foreign keys and ensure database file is created if it does not exist
+        connect_options = connect_options.foreign_keys(true).create_if_missing(true);
 
         match SqlitePool::connect_with(connect_options).await {
             Ok(pool) => Ok(pool),
@@ -128,7 +103,7 @@ impl SqliteDatabase {
             .foreign_key(
                 ForeignKey::create()
                     .name("fk_69420")
-                    .from(Parameter::Table, Parameter::Id)
+                    .from(Parameter::Table, Parameter::CommandId)
                     .to(Command::Table, Command::Id)
                     .on_delete(ForeignKeyAction::Cascade),
             )
