@@ -1,6 +1,5 @@
-
-use super::{SqlQueryError, Dal};
 use super::sqlite;
+use super::{Dal, SqlQueryError};
 use async_trait::async_trait;
 use sea_query::{Expr, Query, SqliteQueryBuilder};
 use sqlx::sqlite::SqliteRow;
@@ -294,13 +293,14 @@ impl Dal for SqliteDal {
                 sqlite::Parameter::Note,
             ])
             .from(sqlite::Parameter::Table)
-            .and_where( // Workaround while we figure out why foreign key references are not working
+            .and_where(
+                // Workaround while we figure out why foreign key references are not working
                 Expr::col(sqlite::Parameter::CommandId).in_subquery(
                     Query::select()
-                    .column(sqlite::Command::Id)
-                    .from(sqlite::Command::Table)
-                    .take()
-                )
+                        .column(sqlite::Command::Id)
+                        .from(sqlite::Command::Table)
+                        .take(),
+                ),
             )
             .to_string(SqliteQueryBuilder);
 

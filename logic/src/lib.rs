@@ -3,12 +3,16 @@
 //! This crate handles the business logic of the application
 
 pub mod command;
-pub mod param;
 pub mod import_export;
+pub mod param;
 
+use data::dal::{
+    sqlite::{SQliteDatabaseConnectionError, SqliteDatabase},
+    sqlite_dal::SqliteDal,
+    SqlQueryError,
+};
 use std::sync::OnceLock;
 use thiserror::Error;
-use data::dal::{sqlite::{SQliteDatabaseConnectionError, SqliteDatabase}, sqlite_dal::SqliteDal, SqlQueryError};
 
 static DB_CONNECTION: OnceLock<SqliteDal> = OnceLock::new();
 
@@ -16,7 +20,7 @@ static DB_CONNECTION: OnceLock<SqliteDal> = OnceLock::new();
 pub enum DefaultLogicError {
     #[error("failed to initalize the database connection")]
     DbConnection(#[from] DatabaseConnectionError),
-    
+
     #[error("unknown data store error")]
     Query(#[from] SqlQueryError),
 }
@@ -47,16 +51,17 @@ pub async fn init_db_connection() -> Result<SqliteDal, SQliteDatabaseConnectionE
 pub async fn get_db_connection() -> Result<&'static SqliteDal, DatabaseConnectionError> {
     if let Some(dal) = DB_CONNECTION.get() {
         Ok(dal)
-    } else { // If it is not initialized
+    } else {
+        // If it is not initialized
         let dal = init_db_connection().await?;
         match DB_CONNECTION.set(dal) {
             Ok(_) => {}
-            Err(_) => return Err(DatabaseConnectionError::InitDBConnection)
+            Err(_) => return Err(DatabaseConnectionError::InitDBConnection),
         }
 
         match DB_CONNECTION.get() {
             Some(dal) => Ok(dal),
-            None => Err(DatabaseConnectionError::NoneAfterInit)
+            None => Err(DatabaseConnectionError::NoneAfterInit),
         }
     }
 }

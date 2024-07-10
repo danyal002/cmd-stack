@@ -6,7 +6,7 @@ pub fn handle_export_command(args: ImportExportArgs) {
 
     match logic::import_export::create_export_json(file_path) {
         Ok(_) => println!("\nCommands exported to {:?}", file_path),
-        Err(e) => println!("Export Cmd: Failed to export command: {:?}", e)
+        Err(e) => println!("Export Cmd: Failed to export command: {:?}", e),
     }
 }
 
@@ -15,8 +15,6 @@ pub fn handle_import_command(args: ImportExportArgs) {
 
     match logic::import_export::import_data(file_path) {
         Ok(_) => println!("\nCommands imported from {:?}", file_path),
-        Err(e) => println!("Import Cmd: Failed to import command: {:?}", e)
+        Err(e) => println!("Import Cmd: Failed to import command: {:?}", e),
     }
 }
-
-

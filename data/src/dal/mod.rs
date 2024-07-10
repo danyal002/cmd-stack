@@ -1,9 +1,9 @@
 pub mod sqlite;
 pub mod sqlite_dal;
 
+use crate::models::*;
 use async_trait::async_trait;
 use thiserror::Error;
-use crate::models::*;
 
 #[derive(Error, Debug)]
 pub enum SqlQueryError {

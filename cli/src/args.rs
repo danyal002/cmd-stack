@@ -33,7 +33,7 @@ pub enum Command {
     Export(ImportExportArgs),
 
     /// Import commands from a file
-    Import(ImportExportArgs)
+    Import(ImportExportArgs),
 }
 
 #[derive(Debug, Args)]

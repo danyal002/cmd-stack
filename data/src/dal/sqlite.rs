@@ -34,7 +34,7 @@ pub struct SqliteDatabase {
 
 impl SqliteDatabase {
     /// Creates a new connection to a SQLite database
-    /// 
+    ///
     /// Creates the database and initializes the tables if required
     pub async fn new() -> Result<Self, SQliteDatabaseConnectionError> {
         if !Self::db_file_exists() {
@@ -47,9 +47,9 @@ impl SqliteDatabase {
 
         Ok(Self { pool })
     }
-    
+
     /// Returns path to database
-    /// 
+    ///
     /// Path: $HOME/.config/cmdstack/database.sqlite
     fn get_db_path() -> String {
         let home_dir = dirs::home_dir().unwrap();
@@ -75,15 +75,20 @@ impl SqliteDatabase {
     }
 
     async fn establish_db_connection() -> Result<SqlitePool, SQliteDatabaseConnectionError> {
-        let mut connect_options = match SqliteConnectOptions::from_str(Self::get_db_path().as_str()) {
+        let mut connect_options = match SqliteConnectOptions::from_str(Self::get_db_path().as_str())
+        {
             Ok(options) => options,
-            Err(e) => return Err(SQliteDatabaseConnectionError::SqliteOptionsInitialization(e))
+            Err(e) => {
+                return Err(SQliteDatabaseConnectionError::SqliteOptionsInitialization(
+                    e,
+                ))
+            }
         };
         connect_options = connect_options.foreign_keys(true);
 
         match SqlitePool::connect_with(connect_options).await {
             Ok(pool) => Ok(pool),
-            Err(e) => Err(SQliteDatabaseConnectionError::PoolInitialization(e))
+            Err(e) => Err(SQliteDatabaseConnectionError::PoolInitialization(e)),
         }
     }
 
@@ -137,7 +142,7 @@ impl SqliteDatabase {
         }
         match sqlx::query(&parameter_table_sql).execute(pool).await {
             Ok(_) => Ok(()),
-            Err(e) => Err(SQliteDatabaseConnectionError::Parameter(e))
+            Err(e) => Err(SQliteDatabaseConnectionError::Parameter(e)),
         }
     }
 }

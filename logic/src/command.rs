@@ -1,6 +1,6 @@
 //! Handles all requests for commands
+use data::dal::{Dal, SqlQueryError};
 use data::models::{Command, InternalCommand};
-use data::dal::{Dal,SqlQueryError};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;

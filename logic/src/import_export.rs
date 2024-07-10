@@ -1,15 +1,18 @@
-use data::{dal::{Dal, SqlQueryError}, models::{Command, InternalParameter}};
-use thiserror::Error;
-use std::{fs, path::Path, collections::HashMap};
+use data::{
+    dal::{Dal, SqlQueryError},
+    models::{Command, InternalParameter},
+};
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::{collections::HashMap, fs, path::Path};
+use thiserror::Error;
 
 use crate::{get_db_connection, DatabaseConnectionError};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ExportFormat {
     commands: Vec<Command>,
-    parameters: Vec<InternalParameter>
+    parameters: Vec<InternalParameter>,
 }
 
 #[derive(Error, Debug)]
@@ -36,15 +39,15 @@ pub enum ImportExportError {
     InvalidFilePath,
 
     #[error("import data is invalid")]
-    InvalidData
+    InvalidData,
 }
 
 /// Check if the file is a json file
-fn is_file_json(file_path: &Path) -> Result<(), ImportExportError>  {
+fn is_file_json(file_path: &Path) -> Result<(), ImportExportError> {
     // Ensure that the file is a JSON file
     if let Some(extension) = file_path.extension() {
         if extension != "json" {
-            return Err(ImportExportError::NotJson)
+            return Err(ImportExportError::NotJson);
         }
     } else {
         return Err(ImportExportError::InvalidFilePath);
@@ -55,15 +58,15 @@ fn is_file_json(file_path: &Path) -> Result<(), ImportExportError>  {
 #[tokio::main]
 /// Returns a JSON string containing all commands and parameters
 pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExportError> {
-    is_file_json(export_file_path)?; 
+    is_file_json(export_file_path)?;
 
     // Set up database connection
     let dal = get_db_connection().await?;
-    
+
     // Get all commands and parameters
     let export_data = ExportFormat {
         commands: dal.get_all_commands(false, false).await?,
-        parameters: dal.get_all_internal_parameters().await?
+        parameters: dal.get_all_internal_parameters().await?,
     };
 
     let json_string = serde_json::to_string(&export_data)?;
@@ -72,17 +75,16 @@ pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExp
     Ok(())
 }
 
-
 #[tokio::main]
 pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportError> {
     // Check if the file exists
     if !import_file_path.is_file() {
         return Err(ImportExportError::InvalidFilePath);
     }
-    
-    is_file_json(import_file_path)?; 
 
-    // Deserialize the file 
+    is_file_json(import_file_path)?;
+
+    // Deserialize the file
     let data = fs::read_to_string(import_file_path)?;
     let import_data: ExportFormat = serde_json::from_str(&data)?;
 
@@ -107,7 +109,7 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
             insert_params.push(InternalParameter {
                 command_id: match import_cmd_id_to_db_id.get(&cmd_id) {
                     Some(id) => *id,
-                    None => return Err(ImportExportError::InvalidData)
+                    None => return Err(ImportExportError::InvalidData),
                 },
                 symbol: param.symbol,
                 regex: param.regex,
