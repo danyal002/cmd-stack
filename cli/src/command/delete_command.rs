@@ -1,6 +1,6 @@
 use crate::{
     args::SearchAndPrintArgs,
-    search_utils::{
+    command::search_utils::{
         display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },

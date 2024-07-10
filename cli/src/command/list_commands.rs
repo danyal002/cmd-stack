@@ -1,6 +1,6 @@
 use crate::{
     args::ListArgs,
-    search_utils::{get_listed_commands, GetSelectedItemFromUserError},
+    command::search_utils::{get_listed_commands, GetSelectedItemFromUserError},
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use logic::command::handle_update_command_last_used_prop;

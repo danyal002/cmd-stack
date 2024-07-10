@@ -2,15 +2,10 @@
 //!
 //! This crate handles user interaction in the terminal
 
-mod add_command;
 mod args;
-mod delete_command;
 mod import_export;
-mod list_commands;
 mod param;
-mod search_command;
-mod search_utils;
-mod update_command;
+mod command;
 
 use args::{CmdStackArgs, Command};
 use clap::Parser;
@@ -24,11 +19,11 @@ fn main() {
     });
 
     match args.command {
-        Command::Add(add_args) => add_command::handle_add_command(add_args),
-        Command::Update(update_args) => update_command::handle_update_command(update_args),
-        Command::Delete(delete_args) => delete_command::handle_delete_command(delete_args),
-        Command::Search(search_args) => search_command::handle_search_commands(search_args),
-        Command::List(list_args) => list_commands::handle_list_commands(list_args),
+        Command::Add(add_args) => command::add_command::handle_add_command(add_args),
+        Command::Update(update_args) => command::update_command::handle_update_command(update_args),
+        Command::Delete(delete_args) => command::delete_command::handle_delete_command(delete_args),
+        Command::Search(search_args) => command::search_command::handle_search_commands(search_args),
+        Command::List(list_args) => command::list_commands::handle_list_commands(list_args),
         Command::Param(param_args) => param::handle_param_command(param_args),
         Command::Export(import_export_args) => {
             import_export::handle_export_command(import_export_args)
