@@ -1,13 +1,9 @@
 //! Handles all requests for commands
-use data::{
-    dal::Dal,
-    models::{Command, InternalCommand},
-};
+use data::models::{Command, InternalCommand};
+use data::dal::{Dal, sqlite::SqliteDatabase, sqlite_dal::SqliteDal, SqlQueryError};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
-
-use data::dal::{sqlite::SqliteDatabase, SqlDal};
 
 #[derive(Error, Debug)]
 pub enum AddCommandError {
@@ -16,7 +12,7 @@ pub enum AddCommandError {
     #[error("database creation error")]
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
     #[error("unknown data store error")]
-    Query,
+    Query(#[from] SqlQueryError),
 }
 
 #[tokio::main]
@@ -31,14 +27,14 @@ pub async fn handle_add_command(command: InternalCommand) -> Result<(), AddComma
         Ok(db) => db,
         Err(e) => return Err(AddCommandError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
     // Add the command to the database
     match dal.add_command(command).await {
         Ok(_) => {}
-        Err(_) => return Err(AddCommandError::Query),
+        Err(e) => return Err(AddCommandError::Query(e)),
     };
 
     Ok(())
@@ -57,7 +53,7 @@ pub enum SearchCommandError {
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
 
     #[error("Error querying the database")]
-    Query,
+    Query(#[from] SqlQueryError),
 }
 
 #[tokio::main]
@@ -70,14 +66,14 @@ pub async fn handle_search_command(
         Ok(db) => db,
         Err(e) => return Err(SearchCommandError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
     // Get all commands from the database
     let commands = match dal.get_all_commands(false, false).await {
         Ok(results) => results,
-        Err(_) => return Err(SearchCommandError::Query),
+        Err(e) => return Err(SearchCommandError::Query(e)),
     };
 
     // Filter the commands based on the search parameters using fuzzy matching
@@ -133,14 +129,14 @@ pub async fn handle_list_commands(
         Ok(db) => db,
         Err(e) => return Err(SearchCommandError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
     // Get all commands from the database
     let commands = match dal.get_all_commands(order_by_use, favourite).await {
         Ok(results) => results,
-        Err(_) => return Err(SearchCommandError::Query),
+        Err(e) => return Err(SearchCommandError::Query(e)),
     };
 
     Ok(commands)
@@ -155,7 +151,7 @@ pub enum UpdateCommandError {
     DbConnection(data::dal::sqlite::SQliteDatabaseConnectionError),
 
     #[error("Error updating command last used property")]
-    Query,
+    Query(#[from] SqlQueryError),
 }
 
 #[tokio::main]
@@ -168,14 +164,14 @@ pub async fn handle_update_command_last_used_prop(
         Ok(db) => db,
         Err(e) => return Err(UpdateCommandError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
     // Update the last used property of the command
     match dal.update_command_last_used_prop(command_id).await {
         Ok(_) => {}
-        Err(_) => return Err(UpdateCommandError::Query),
+        Err(e) => return Err(UpdateCommandError::Query(e)),
     };
 
     Ok(())
@@ -196,14 +192,14 @@ pub async fn handle_update_command(
         Ok(db) => db,
         Err(e) => return Err(UpdateCommandError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
     // Update the command
     match dal.update_command(command_id, new_command_props).await {
         Ok(_) => {}
-        Err(_) => return Err(UpdateCommandError::Query),
+        Err(e) => return Err(UpdateCommandError::Query(e)),
     };
 
     Ok(())
@@ -215,7 +211,7 @@ pub enum DeleteCommandError {
     DbConnection(data::dal::sqlite::SQliteDatabaseConnectionError),
 
     #[error("Error deleting command")]
-    Query,
+    Query(#[from] SqlQueryError),
 }
 
 #[tokio::main]
@@ -226,14 +222,14 @@ pub async fn handle_delete_command(command_id: u64) -> Result<(), DeleteCommandE
         Ok(db) => db,
         Err(e) => return Err(DeleteCommandError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
     // Delete the selected command
     match dal.delete_command(command_id).await {
         Ok(_) => {}
-        Err(_) => return Err(DeleteCommandError::Query),
+        Err(e) => return Err(DeleteCommandError::Query(e)),
     };
 
     Ok(())

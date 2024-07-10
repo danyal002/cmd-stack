@@ -1,4 +1,4 @@
-use data::{dal::{sqlite::SqliteDatabase, Dal, SqlDal, SqliteQueryError}, models::{Command, InternalParameter}};
+use data::{dal::{sqlite::SqliteDatabase, Dal, sqlite_dal::SqliteDal, SqlQueryError}, models::{Command, InternalParameter}};
 use thiserror::Error;
 use std::{fs, path::Path, collections::HashMap};
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ pub enum ImportExportError {
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
 
     #[error("database query error")]
-    DbQuery(#[from] SqliteQueryError),
+    DbQuery(#[from] SqlQueryError),
 
     #[error("could not serialize data")]
     SerdeError(#[from] serde_json::Error),
@@ -60,7 +60,7 @@ pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExp
         Ok(db) => db,
         Err(e) => return Err(ImportExportError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
@@ -95,7 +95,7 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
         Ok(db) => db,
         Err(e) => return Err(ImportExportError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 

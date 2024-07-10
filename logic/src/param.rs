@@ -7,7 +7,7 @@ use rand::Rng;
 use rand_regex::Regex;
 use thiserror::Error;
 
-use data::dal::{sqlite::SqliteDatabase, SqlDal, SqliteQueryError};
+use data::dal::{sqlite::SqliteDatabase, sqlite_dal::SqliteDal, SqlQueryError};
 
 #[derive(Error, Debug)]
 pub enum AddParamError {
@@ -16,7 +16,7 @@ pub enum AddParamError {
     #[error("database creation error")]
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
     #[error("unknown data store error")]
-    Query,
+    Query(#[from] SqlQueryError),
 }
 
 #[tokio::main]
@@ -33,14 +33,14 @@ pub async fn handle_add_param(params: Vec<InternalParameter>) -> Result<(), AddP
         Ok(db) => db,
         Err(e) => return Err(AddParamError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
     // Add the parameters to the database
     match dal.add_params(params).await {
         Ok(_) => {}
-        Err(_) => return Err(AddParamError::Query),
+        Err(e) => return Err(AddParamError::Query(e)),
     };
 
     Ok(())
@@ -51,7 +51,7 @@ pub enum GenerateParamError {
     #[error("database creation error")]
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
     #[error("unknown data store error")]
-    Query,
+    Query(#[from] SqlQueryError),
     #[error("invalid regex pattern")]
     InvalidRegexPattern(#[from] regex_syntax::Error),
     #[error("invalid Hir (high-level intermediate representation) for the regex pattern")]
@@ -66,14 +66,14 @@ pub async fn handle_generate_param(command: Command) -> Result<String, GenerateP
         Ok(db) => db,
         Err(e) => return Err(GenerateParamError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
     // Get the parameters for the command from the database
     let params: Vec<Parameter> = match dal.get_params(command.id).await {
         Ok(p) => p,
-        Err(_) => return Err(GenerateParamError::Query),
+        Err(e) => return Err(GenerateParamError::Query(e)),
     };
 
     // If there are no parameters, return the command
@@ -115,7 +115,7 @@ pub enum ParameterLogicError {
     #[error("database creation error")]
     DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
     #[error("unknown data store error")]
-    Query(#[from] SqliteQueryError),
+    Query(#[from] SqlQueryError),
 }
 
 #[tokio::main]
@@ -125,7 +125,7 @@ pub async fn get_params(command_id: u64) -> Result<Vec<Parameter>, ParameterLogi
         Ok(db) => db,
         Err(e) => return Err(ParameterLogicError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
@@ -148,7 +148,7 @@ pub async fn update_param(
         Ok(db) => db,
         Err(e) => return Err(ParameterLogicError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
@@ -168,7 +168,7 @@ pub async fn delete_param(param_id: u64) -> Result<(), ParameterLogicError> {
         Ok(db) => db,
         Err(e) => return Err(ParameterLogicError::DbConnection(e)),
     };
-    let dal = SqlDal {
+    let dal = SqliteDal {
         sql: Box::new(sqlite_db),
     };
 
