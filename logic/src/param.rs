@@ -9,7 +9,7 @@ use thiserror::Error;
 
 use data::dal::SqlQueryError;
 
-use crate::{get_db_connection, DatabaseConnectionError};
+use crate::{get_db_connection, DatabaseConnectionError, DefaultLogicError};
 
 #[derive(Error, Debug)]
 pub enum AddParamError {
@@ -100,23 +100,15 @@ pub async fn handle_generate_param(command: Command) -> Result<String, GenerateP
     Ok(command.internal_command.command + " " + &param_string)
 }
 
-#[derive(Error, Debug)]
-pub enum ParameterLogicError {
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-    #[error("unknown data store error")]
-    Query(#[from] SqlQueryError),
-}
-
 #[tokio::main]
-pub async fn get_params(command_id: i64) -> Result<Vec<Parameter>, ParameterLogicError> {
+pub async fn get_params(command_id: i64) -> Result<Vec<Parameter>, DefaultLogicError> {
     // Set up database connection
     let dal = get_db_connection().await?;
 
     // Get the parameters for the command from the database
     let params: Vec<Parameter> = match dal.get_params(command_id).await {
         Ok(p) => p,
-        Err(e) => return Err(ParameterLogicError::Query(e)),
+        Err(e) => return Err(DefaultLogicError::Query(e)),
     };
 
     Ok(params)
@@ -126,28 +118,28 @@ pub async fn get_params(command_id: i64) -> Result<Vec<Parameter>, ParameterLogi
 pub async fn update_param(
     param_id: i64,
     param: InternalParameter,
-) -> Result<(), ParameterLogicError> {
+) -> Result<(), DefaultLogicError> {
     // Set up database connection
     let dal = get_db_connection().await?;
 
     // Update the parameter in the database
     match dal.update_param(param_id, param).await {
         Ok(_) => {}
-        Err(e) => return Err(ParameterLogicError::Query(e)),
+        Err(e) => return Err(DefaultLogicError::Query(e)),
     };
 
     Ok(())
 }
 
 #[tokio::main]
-pub async fn delete_param(param_id: i64) -> Result<(), ParameterLogicError> {
+pub async fn delete_param(param_id: i64) -> Result<(), DefaultLogicError> {
     // Set up database connection
     let dal = get_db_connection().await?;
 
     // Delete the parameter from the database
     match dal.delete_param(param_id).await {
         Ok(_) => {}
-        Err(e) => return Err(ParameterLogicError::Query(e)),
+        Err(e) => return Err(DefaultLogicError::Query(e)),
     };
 
     Ok(())

@@ -8,9 +8,18 @@ pub mod import_export;
 
 use std::sync::OnceLock;
 use thiserror::Error;
-use data::dal::{sqlite::{SQliteDatabaseConnectionError, SqliteDatabase}, sqlite_dal::SqliteDal};
+use data::dal::{sqlite::{SQliteDatabaseConnectionError, SqliteDatabase}, sqlite_dal::SqliteDal, SqlQueryError};
 
 static DB_CONNECTION: OnceLock<SqliteDal> = OnceLock::new();
+
+#[derive(Debug, Error)]
+pub enum DefaultLogicError {
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
+    
+    #[error("unknown data store error")]
+    Query(#[from] SqlQueryError),
+}
 
 #[derive(Debug, Error)]
 pub enum DatabaseConnectionError {

@@ -31,7 +31,7 @@ pub fn search_args_wizard() -> Result<SearchCommandArgs, InquireError> {
 #[derive(Error, Debug)]
 pub enum GetSelectedItemFromUserError {
     #[error("failed to get commands")]
-    GetCommands(#[from] logic::command::SearchCommandError),
+    GetCommands(#[from] logic::DefaultLogicError),
 
     #[error("no commands found")]
     NoCommandsFound,

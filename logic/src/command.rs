@@ -5,7 +5,7 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
 
-use crate::{get_db_connection, DatabaseConnectionError};
+use crate::{get_db_connection, DatabaseConnectionError, DefaultLogicError};
 
 #[derive(Error, Debug)]
 pub enum AddCommandError {
@@ -43,27 +43,18 @@ pub struct SearchCommandArgs {
     pub tag: Option<String>,
 }
 
-#[derive(Error, Debug)]
-pub enum SearchCommandError {
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("Error querying the database")]
-    Query(#[from] SqlQueryError),
-}
-
 #[tokio::main]
 /// Handles the search for a command
 pub async fn handle_search_command(
     params: SearchCommandArgs,
-) -> Result<Vec<Command>, SearchCommandError> {
+) -> Result<Vec<Command>, DefaultLogicError> {
     // Set up database connection
     let dal = get_db_connection().await?;
 
     // Get all commands from the database
     let commands = match dal.get_all_commands(false, false).await {
         Ok(results) => results,
-        Err(e) => return Err(SearchCommandError::Query(e)),
+        Err(e) => return Err(DefaultLogicError::Query(e)),
     };
 
     // Filter the commands based on the search parameters using fuzzy matching
@@ -113,14 +104,14 @@ pub async fn handle_search_command(
 pub async fn handle_list_commands(
     order_by_use: bool,
     favourite: bool,
-) -> Result<Vec<Command>, SearchCommandError> {
+) -> Result<Vec<Command>, DefaultLogicError> {
     // Set up database connection
     let dal = get_db_connection().await?;
 
     // Get all commands from the database
     let commands = match dal.get_all_commands(order_by_use, favourite).await {
         Ok(results) => results,
-        Err(e) => return Err(SearchCommandError::Query(e)),
+        Err(e) => return Err(DefaultLogicError::Query(e)),
     };
 
     Ok(commands)
@@ -177,25 +168,16 @@ pub async fn handle_update_command(
     Ok(())
 }
 
-#[derive(Error, Debug)]
-pub enum DeleteCommandError {
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("Error deleting command")]
-    Query(#[from] SqlQueryError),
-}
-
 #[tokio::main]
 /// Handles deleting a command
-pub async fn handle_delete_command(command_id: i64) -> Result<(), DeleteCommandError> {
+pub async fn handle_delete_command(command_id: i64) -> Result<(), DefaultLogicError> {
     // Set up database connection
     let dal = get_db_connection().await?;
 
     // Delete the selected command
     match dal.delete_command(command_id).await {
         Ok(_) => {}
-        Err(e) => return Err(DeleteCommandError::Query(e)),
+        Err(e) => return Err(DefaultLogicError::Query(e)),
     };
 
     Ok(())
