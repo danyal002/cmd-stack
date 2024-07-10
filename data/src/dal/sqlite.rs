@@ -1,9 +1,8 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
-use std::fs::File;
+use std::fs;
 use std::path::Path;
-use std::path::PathBuf;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -34,46 +33,61 @@ pub struct SqliteDatabase {
 }
 
 impl SqliteDatabase {
-    /// Creates a new connection to a SQLite database and initializes the tables
-    /// if required
+    /// Creates a new connection to a SQLite database
+    /// 
+    /// Creates the database and initializes the tables if required
     pub async fn new() -> Result<Self, SQliteDatabaseConnectionError> {
-        // Create a connection pool
-        let cur_dir = match std::env::current_dir() {
-            Ok(dir) => dir,
-            Err(e) => {
-                return Err(SQliteDatabaseConnectionError::CurDir(e));
-            }
-        };
-
-        let mut db_path = PathBuf::from(cur_dir);
-        db_path.pop();
-        db_path.push("data/cmdstack_db.db");
-
-        // Check if the database file exists
-        if !Path::new(&db_path).exists() {
-            // Create the database file
-            match File::create(&db_path) {
-                Ok(_) => {}
-                Err(e) => {
-                    return Err(SQliteDatabaseConnectionError::CreatingDatabase(e));
-                }
-            }
+        if !Self::db_file_exists() {
+            Self::create_db()
         }
 
-        let mut connect_options = match SqliteConnectOptions::from_str(&format!("sqlite://{}", db_path.to_str().unwrap())) {
+        let pool = Self::establish_db_connection().await?;
+
+        Self::create_tables(&pool).await?;
+
+        Ok(Self { pool })
+    }
+    
+    /// Returns path to database
+    /// 
+    /// Path: $HOME/.config/cmdstack/database.sqlite
+    fn get_db_path() -> String {
+        let home_dir = dirs::home_dir().unwrap();
+        home_dir.to_str().unwrap().to_string() + "/.config/cmdstack/database.sqlite"
+    }
+
+    /// Checks if the database file exists
+    fn db_file_exists() -> bool {
+        let db_path = Self::get_db_path();
+        Path::new(&db_path).exists()
+    }
+
+    /// Creates database file
+    fn create_db() {
+        let db_path = Self::get_db_path();
+        let db_dir = Path::new(&db_path).parent().unwrap();
+
+        if !db_dir.exists() {
+            fs::create_dir_all(db_dir).unwrap();
+        }
+
+        fs::File::create(db_path).unwrap();
+    }
+
+    async fn establish_db_connection() -> Result<SqlitePool, SQliteDatabaseConnectionError> {
+        let mut connect_options = match SqliteConnectOptions::from_str(Self::get_db_path().as_str()) {
             Ok(options) => options,
             Err(e) => return Err(SQliteDatabaseConnectionError::SqliteOptionsInitialization(e))
         };
         connect_options = connect_options.foreign_keys(true);
 
-        let pool = match SqlitePool::connect_with(connect_options).await {
-            Ok(pool) => pool,
-            Err(e) => {
-                return Err(SQliteDatabaseConnectionError::PoolInitialization(e));
-            }
-        };
+        match SqlitePool::connect_with(connect_options).await {
+            Ok(pool) => Ok(pool),
+            Err(e) => Err(SQliteDatabaseConnectionError::PoolInitialization(e))
+        }
+    }
 
-        // Create the tables
+    async fn create_tables(pool: &SqlitePool) -> Result<(), SQliteDatabaseConnectionError> {
         let command_table_sql = Table::create()
             .table(Command::Table)
             .if_not_exists()
@@ -115,20 +129,16 @@ impl SqliteDatabase {
             )
             .build(SqliteQueryBuilder);
 
-        match sqlx::query(&command_table_sql).execute(&pool).await {
+        match sqlx::query(&command_table_sql).execute(pool).await {
             Ok(_) => {}
             Err(e) => {
                 return Err(SQliteDatabaseConnectionError::Command(e));
             }
         }
-        match sqlx::query(&parameter_table_sql).execute(&pool).await {
-            Ok(_) => {}
-            Err(e) => {
-                return Err(SQliteDatabaseConnectionError::Parameter(e));
-            }
+        match sqlx::query(&parameter_table_sql).execute(pool).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(SQliteDatabaseConnectionError::Parameter(e))
         }
-
-        Ok(Self { pool })
     }
 }
 
