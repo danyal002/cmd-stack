@@ -3,6 +3,7 @@ pub mod sqlite_dal;
 
 use crate::models::*;
 use async_trait::async_trait;
+use sqlx::Transaction;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -20,62 +21,126 @@ pub enum SqlQueryError {
     AddParam(#[source] sqlx::Error),
 }
 
+#[derive(Error, Debug)]
+pub enum SqlTxError {
+    #[error("failed to begin transaction")]
+    TxBegin(#[source] sqlx::Error),
+
+    #[error("failed to commit transaction")]
+    TxCommit(#[source] sqlx::Error),
+
+    #[error("failed to rollback transaction")]
+    TxRollback(#[source] sqlx::Error),
+}
+
 #[async_trait]
 /// Data Access Layer trait that includes all the methods required to interact with the database
 pub trait Dal: Sync + Send {
     type Row;
+    type DB: sqlx::Database;
+
+    /// Begin transaction
+    async fn begin(&self) -> Result<Transaction<'_, Self::DB>, SqlTxError>;
+
+    /// Commit transaction
+    async fn commit(&self, tx: Transaction<'_, Self::DB>) -> Result<(), SqlTxError>;
+
+    /// Rollback transaction
+    async fn rollback(&self, tx: Transaction<'_, Self::DB>) -> Result<(), SqlTxError>;
 
     /// Gets the current Unix timestamp
     async fn get_unix_timestamp() -> i64;
 
     /// Executes an insert
-    async fn execute_insert(&self, query: &str) -> Result<i64, sqlx::Error>;
+    async fn execute_insert(
+        &self,
+        query: &str,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<i64, sqlx::Error>;
 
     /// Executes a query
-    async fn execute(&self, query: &str) -> Result<(), sqlx::Error>;
+    async fn execute(
+        &self,
+        query: &str,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<(), sqlx::Error>;
 
     /// Queries the database and returns the rows
-    async fn query(&self, query: &str) -> Result<Vec<Self::Row>, sqlx::Error>;
+    async fn query(
+        &self,
+        query: &str,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<Vec<Self::Row>, sqlx::Error>;
 
     /// Adds a command to the database
-    async fn add_command(&self, command: InternalCommand) -> Result<i64, SqlQueryError>;
+    async fn add_command(
+        &self,
+        command: InternalCommand,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<i64, SqlQueryError>;
 
     /// Gets all commands from the database
     async fn get_all_commands(
         &self,
         order_by_use: bool,
         favourites_only: bool,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
     ) -> Result<Vec<Command>, SqlQueryError>;
 
     /// Updates the last used property of a command to the current time
-    async fn update_command_last_used_prop(&self, command_id: i64) -> Result<(), SqlQueryError>;
+    async fn update_command_last_used_prop(
+        &self,
+        command_id: i64,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<(), SqlQueryError>;
 
     /// Deletes a command from the database
-    async fn delete_command(&self, command_id: i64) -> Result<(), SqlQueryError>;
+    async fn delete_command(
+        &self,
+        command_id: i64,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<(), SqlQueryError>;
 
     /// Update a command
     async fn update_command(
         &self,
         command_id: i64,
         new_command_props: InternalCommand,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
     ) -> Result<(), SqlQueryError>;
 
     /// Adds parameters to the database
-    async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqlQueryError>;
+    async fn add_params(
+        &self,
+        params: Vec<InternalParameter>,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<(), SqlQueryError>;
 
     /// Get parameters for a command
-    async fn get_params(&self, command_id: i64) -> Result<Vec<Parameter>, SqlQueryError>;
+    async fn get_params(
+        &self,
+        command_id: i64,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<Vec<Parameter>, SqlQueryError>;
 
     /// Update a parameter
     async fn update_param(
         &self,
         param_id: i64,
         param: InternalParameter,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
     ) -> Result<(), SqlQueryError>;
 
     /// Delete a parameter
-    async fn delete_param(&self, param_id: i64) -> Result<(), SqlQueryError>;
+    async fn delete_param(
+        &self,
+        param_id: i64,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<(), SqlQueryError>;
 
     /// Get all parameters
-    async fn get_all_internal_parameters(&self) -> Result<Vec<InternalParameter>, SqlQueryError>;
+    async fn get_all_internal_parameters(
+        &self,
+        tx: Option<&mut Transaction<'_, Self::DB>>,
+    ) -> Result<Vec<InternalParameter>, SqlQueryError>;
 }
