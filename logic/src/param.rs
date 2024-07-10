@@ -13,11 +13,13 @@ use crate::{get_db_connection, DatabaseConnectionError, DefaultLogicError};
 
 #[derive(Error, Debug)]
 pub enum AddParamError {
-    #[error("Invalid parameter")]
+    #[error("invalid parameter")]
     InvalidParam,
+
     #[error("failed to initalize the database connection")]
     DbConnection(#[from] DatabaseConnectionError),
-    #[error("unknown data store error")]
+
+    #[error("error executing database query")]
     Query(#[from] SqlQueryError),
 }
 
@@ -46,10 +48,13 @@ pub async fn handle_add_param(params: Vec<InternalParameter>) -> Result<(), AddP
 pub enum GenerateParamError {
     #[error("failed to initalize the database connection")]
     DbConnection(#[from] DatabaseConnectionError),
-    #[error("unknown data store error")]
+
+    #[error("error executing database query")]
     Query(#[from] SqlQueryError),
+
     #[error("invalid regex pattern")]
     InvalidRegexPattern(#[from] regex_syntax::Error),
+
     #[error("invalid Hir (high-level intermediate representation) for the regex pattern")]
     InvalidHir(#[from] rand_regex::Error),
 }

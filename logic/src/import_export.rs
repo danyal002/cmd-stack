@@ -17,7 +17,7 @@ pub enum ImportExportError {
     #[error("database connection error")]
     DbConnection(#[from] DatabaseConnectionError),
 
-    #[error("database query error")]
+    #[error("error executing database query")]
     DbQuery(#[from] SqlQueryError),
 
     #[error("could not serialize data")]

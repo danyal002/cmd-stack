@@ -8,20 +8,22 @@ use thiserror::Error;
 use crate::{get_db_connection, DatabaseConnectionError, DefaultLogicError};
 
 #[derive(Error, Debug)]
-pub enum AddCommandError {
-    #[error("Invalid command")]
+pub enum CommandLogicError {
+    #[error("invalid command")]
     InvalidCommand,
+
     #[error("failed to initalize the database connection")]
     DbConnection(#[from] DatabaseConnectionError),
-    #[error("unknown data store error")]
+
+    #[error("error executing database query")]
     Query(#[from] SqlQueryError),
 }
 
 #[tokio::main]
 /// Handles the addition of a command
-pub async fn handle_add_command(command: InternalCommand) -> Result<(), AddCommandError> {
+pub async fn handle_add_command(command: InternalCommand) -> Result<(), CommandLogicError> {
     if command.command.trim().is_empty() || command.alias.trim().is_empty() {
-        return Err(AddCommandError::InvalidCommand);
+        return Err(CommandLogicError::InvalidCommand);
     }
 
     // Set up database connection
@@ -30,7 +32,7 @@ pub async fn handle_add_command(command: InternalCommand) -> Result<(), AddComma
     // Add the command to the database
     match dal.add_command(command).await {
         Ok(_) => {}
-        Err(e) => return Err(AddCommandError::Query(e)),
+        Err(e) => return Err(CommandLogicError::Query(e)),
     };
 
     Ok(())
@@ -117,30 +119,18 @@ pub async fn handle_list_commands(
     Ok(commands)
 }
 
-#[derive(Error, Debug)]
-pub enum UpdateCommandError {
-    #[error("Invalid command")]
-    InvalidCommand,
-
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("Error updating command last used property")]
-    Query(#[from] SqlQueryError),
-}
-
 #[tokio::main]
 /// Handles the updating of the last used property of a command
 pub async fn handle_update_command_last_used_prop(
     command_id: i64,
-) -> Result<(), UpdateCommandError> {
+) -> Result<(), CommandLogicError> {
     // Set up database connection
     let dal = get_db_connection().await?;
 
     // Update the last used property of the command
     match dal.update_command_last_used_prop(command_id).await {
         Ok(_) => {}
-        Err(e) => return Err(UpdateCommandError::Query(e)),
+        Err(e) => return Err(CommandLogicError::Query(e)),
     };
 
     Ok(())
@@ -151,9 +141,9 @@ pub async fn handle_update_command_last_used_prop(
 pub async fn handle_update_command(
     command_id: i64,
     new_command_props: InternalCommand,
-) -> Result<(), UpdateCommandError> {
+) -> Result<(), CommandLogicError> {
     if new_command_props.command.trim().is_empty() || new_command_props.alias.trim().is_empty() {
-        return Err(UpdateCommandError::InvalidCommand);
+        return Err(CommandLogicError::InvalidCommand);
     }
 
     // Set up database connection
@@ -162,7 +152,7 @@ pub async fn handle_update_command(
     // Update the command
     match dal.update_command(command_id, new_command_props).await {
         Ok(_) => {}
-        Err(e) => return Err(UpdateCommandError::Query(e)),
+        Err(e) => return Err(CommandLogicError::Query(e)),
     };
 
     Ok(())
