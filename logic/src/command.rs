@@ -1,16 +1,18 @@
 //! Handles all requests for commands
 use data::models::{Command, InternalCommand};
-use data::dal::{Dal, sqlite::SqliteDatabase, sqlite_dal::SqliteDal, SqlQueryError};
+use data::dal::{Dal,SqlQueryError};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
+
+use crate::{get_db_connection, DatabaseConnectionError};
 
 #[derive(Error, Debug)]
 pub enum AddCommandError {
     #[error("Invalid command")]
     InvalidCommand,
-    #[error("database creation error")]
-    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
     #[error("unknown data store error")]
     Query(#[from] SqlQueryError),
 }
@@ -23,13 +25,7 @@ pub async fn handle_add_command(command: InternalCommand) -> Result<(), AddComma
     }
 
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(AddCommandError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Add the command to the database
     match dal.add_command(command).await {
@@ -49,8 +45,8 @@ pub struct SearchCommandArgs {
 
 #[derive(Error, Debug)]
 pub enum SearchCommandError {
-    #[error("database creation error")]
-    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
 
     #[error("Error querying the database")]
     Query(#[from] SqlQueryError),
@@ -62,13 +58,7 @@ pub async fn handle_search_command(
     params: SearchCommandArgs,
 ) -> Result<Vec<Command>, SearchCommandError> {
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(SearchCommandError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Get all commands from the database
     let commands = match dal.get_all_commands(false, false).await {
@@ -125,13 +115,7 @@ pub async fn handle_list_commands(
     favourite: bool,
 ) -> Result<Vec<Command>, SearchCommandError> {
     // Set up database connection
-    let sqlite_db: SqliteDatabase = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(SearchCommandError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Get all commands from the database
     let commands = match dal.get_all_commands(order_by_use, favourite).await {
@@ -147,8 +131,8 @@ pub enum UpdateCommandError {
     #[error("Invalid command")]
     InvalidCommand,
 
-    #[error("database creation error")]
-    DbConnection(data::dal::sqlite::SQliteDatabaseConnectionError),
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
 
     #[error("Error updating command last used property")]
     Query(#[from] SqlQueryError),
@@ -160,13 +144,7 @@ pub async fn handle_update_command_last_used_prop(
     command_id: i64,
 ) -> Result<(), UpdateCommandError> {
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(UpdateCommandError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Update the last used property of the command
     match dal.update_command_last_used_prop(command_id).await {
@@ -188,13 +166,7 @@ pub async fn handle_update_command(
     }
 
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(UpdateCommandError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Update the command
     match dal.update_command(command_id, new_command_props).await {
@@ -207,8 +179,8 @@ pub async fn handle_update_command(
 
 #[derive(Error, Debug)]
 pub enum DeleteCommandError {
-    #[error("database creation error")]
-    DbConnection(data::dal::sqlite::SQliteDatabaseConnectionError),
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
 
     #[error("Error deleting command")]
     Query(#[from] SqlQueryError),
@@ -218,13 +190,7 @@ pub enum DeleteCommandError {
 /// Handles deleting a command
 pub async fn handle_delete_command(command_id: i64) -> Result<(), DeleteCommandError> {
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(DeleteCommandError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Delete the selected command
     match dal.delete_command(command_id).await {

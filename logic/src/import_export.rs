@@ -1,8 +1,10 @@
-use data::{dal::{sqlite::SqliteDatabase, Dal, sqlite_dal::SqliteDal, SqlQueryError}, models::{Command, InternalParameter}};
+use data::{dal::{Dal, SqlQueryError}, models::{Command, InternalParameter}};
 use thiserror::Error;
 use std::{fs, path::Path, collections::HashMap};
 use serde::{Deserialize, Serialize};
 use serde_json;
+
+use crate::{get_db_connection, DatabaseConnectionError};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ExportFormat {
@@ -13,7 +15,7 @@ struct ExportFormat {
 #[derive(Error, Debug)]
 pub enum ImportExportError {
     #[error("database connection error")]
-    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
+    DbConnection(#[from] DatabaseConnectionError),
 
     #[error("database query error")]
     DbQuery(#[from] SqlQueryError),
@@ -56,14 +58,8 @@ pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExp
     is_file_json(export_file_path)?; 
 
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(ImportExportError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
-
+    let dal = get_db_connection().await?;
+    
     // Get all commands and parameters
     let export_data = ExportFormat {
         commands: dal.get_all_commands(false, false).await?,
@@ -91,13 +87,7 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
     let import_data: ExportFormat = serde_json::from_str(&data)?;
 
     // Create database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(ImportExportError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Insert all records into the database
     //

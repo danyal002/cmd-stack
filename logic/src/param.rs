@@ -7,14 +7,16 @@ use rand::Rng;
 use rand_regex::Regex;
 use thiserror::Error;
 
-use data::dal::{sqlite::SqliteDatabase, sqlite_dal::SqliteDal, SqlQueryError};
+use data::dal::SqlQueryError;
+
+use crate::{get_db_connection, DatabaseConnectionError};
 
 #[derive(Error, Debug)]
 pub enum AddParamError {
     #[error("Invalid parameter")]
     InvalidParam,
-    #[error("database creation error")]
-    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
     #[error("unknown data store error")]
     Query(#[from] SqlQueryError),
 }
@@ -29,13 +31,7 @@ pub async fn handle_add_param(params: Vec<InternalParameter>) -> Result<(), AddP
     }
 
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(AddParamError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Add the parameters to the database
     match dal.add_params(params).await {
@@ -48,8 +44,8 @@ pub async fn handle_add_param(params: Vec<InternalParameter>) -> Result<(), AddP
 
 #[derive(Error, Debug)]
 pub enum GenerateParamError {
-    #[error("database creation error")]
-    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
     #[error("unknown data store error")]
     Query(#[from] SqlQueryError),
     #[error("invalid regex pattern")]
@@ -62,13 +58,7 @@ pub enum GenerateParamError {
 /// Handles the generation of parameters for a command
 pub async fn handle_generate_param(command: Command) -> Result<String, GenerateParamError> {
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(GenerateParamError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Get the parameters for the command from the database
     let params: Vec<Parameter> = match dal.get_params(command.id).await {
@@ -112,8 +102,8 @@ pub async fn handle_generate_param(command: Command) -> Result<String, GenerateP
 
 #[derive(Error, Debug)]
 pub enum ParameterLogicError {
-    #[error("database creation error")]
-    DbConnection(#[from] data::dal::sqlite::SQliteDatabaseConnectionError),
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
     #[error("unknown data store error")]
     Query(#[from] SqlQueryError),
 }
@@ -121,13 +111,7 @@ pub enum ParameterLogicError {
 #[tokio::main]
 pub async fn get_params(command_id: i64) -> Result<Vec<Parameter>, ParameterLogicError> {
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(ParameterLogicError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Get the parameters for the command from the database
     let params: Vec<Parameter> = match dal.get_params(command_id).await {
@@ -144,13 +128,7 @@ pub async fn update_param(
     param: InternalParameter,
 ) -> Result<(), ParameterLogicError> {
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(ParameterLogicError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Update the parameter in the database
     match dal.update_param(param_id, param).await {
@@ -164,13 +142,7 @@ pub async fn update_param(
 #[tokio::main]
 pub async fn delete_param(param_id: i64) -> Result<(), ParameterLogicError> {
     // Set up database connection
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(ParameterLogicError::DbConnection(e)),
-    };
-    let dal = SqliteDal {
-        sql: Box::new(sqlite_db),
-    };
+    let dal = get_db_connection().await?;
 
     // Delete the parameter from the database
     match dal.delete_param(param_id).await {
