@@ -30,7 +30,7 @@ pub async fn handle_add_command(command: InternalCommand) -> Result<(), CommandL
     let dal = get_db_connection().await?;
 
     // Add the command to the database
-    match dal.add_command(command).await {
+    match dal.add_command(command, None).await {
         Ok(_) => {}
         Err(e) => return Err(CommandLogicError::Query(e)),
     };
@@ -54,7 +54,7 @@ pub async fn handle_search_command(
     let dal = get_db_connection().await?;
 
     // Get all commands from the database
-    let commands = match dal.get_all_commands(false, false).await {
+    let commands = match dal.get_all_commands(false, false, None).await {
         Ok(results) => results,
         Err(e) => return Err(DefaultLogicError::Query(e)),
     };
@@ -111,7 +111,7 @@ pub async fn handle_list_commands(
     let dal = get_db_connection().await?;
 
     // Get all commands from the database
-    let commands = match dal.get_all_commands(order_by_use, favourite).await {
+    let commands = match dal.get_all_commands(order_by_use, favourite, None).await {
         Ok(results) => results,
         Err(e) => return Err(DefaultLogicError::Query(e)),
     };
@@ -128,7 +128,7 @@ pub async fn handle_update_command_last_used_prop(
     let dal = get_db_connection().await?;
 
     // Update the last used property of the command
-    match dal.update_command_last_used_prop(command_id).await {
+    match dal.update_command_last_used_prop(command_id, None).await {
         Ok(_) => {}
         Err(e) => return Err(CommandLogicError::Query(e)),
     };
@@ -150,7 +150,10 @@ pub async fn handle_update_command(
     let dal = get_db_connection().await?;
 
     // Update the command
-    match dal.update_command(command_id, new_command_props).await {
+    match dal
+        .update_command(command_id, new_command_props, None)
+        .await
+    {
         Ok(_) => {}
         Err(e) => return Err(CommandLogicError::Query(e)),
     };
@@ -165,7 +168,7 @@ pub async fn handle_delete_command(command_id: i64) -> Result<(), DefaultLogicEr
     let dal = get_db_connection().await?;
 
     // Delete the selected command
-    match dal.delete_command(command_id).await {
+    match dal.delete_command(command_id, None).await {
         Ok(_) => {}
         Err(e) => return Err(DefaultLogicError::Query(e)),
     };

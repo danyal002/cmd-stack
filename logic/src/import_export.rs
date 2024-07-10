@@ -1,5 +1,5 @@
 use data::{
-    dal::{Dal, SqlQueryError},
+    dal::{Dal, SqlQueryError, SqlTxError},
     models::{Command, InternalParameter},
 };
 use serde::{Deserialize, Serialize};
@@ -40,6 +40,9 @@ pub enum ImportExportError {
 
     #[error("import data is invalid")]
     InvalidData,
+
+    #[error("transaction error")]
+    Transaction(#[from] SqlTxError),
 }
 
 /// Check if the file is a json file
@@ -65,8 +68,8 @@ pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExp
 
     // Get all commands and parameters
     let export_data = ExportFormat {
-        commands: dal.get_all_commands(false, false).await?,
-        parameters: dal.get_all_internal_parameters().await?,
+        commands: dal.get_all_commands(false, false, None).await?,
+        parameters: dal.get_all_internal_parameters(None).await?,
     };
 
     let json_string = serde_json::to_string(&export_data)?;
@@ -91,14 +94,25 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
     // Create database connection
     let dal = get_db_connection().await?;
 
+    let mut tx = dal.begin().await?;
+
     // Insert all records into the database
     //
-    // We keep a map mapping command IDs in the json to their respective
-    // ids in the new database. This is required when inserting the parameters
-    // to ensure the foreign key references are consistent
+    // We keep a map linking command IDs in the json to their respective
+    // ids in the database. This is required when inserting the parameters
+    // to ensure the foreign key references are correct
     let mut import_cmd_id_to_db_id: HashMap<i64, i64> = HashMap::new();
     for command in import_data.commands {
-        let db_id = dal.add_command(command.internal_command).await?;
+        let db_id = match dal
+            .add_command(command.internal_command, Some(&mut tx))
+            .await
+        {
+            Ok(id) => id,
+            Err(e) => {
+                dal.rollback(tx).await?;
+                return Err(ImportExportError::DbQuery(e));
+            }
+        };
         import_cmd_id_to_db_id.insert(command.id, db_id);
     }
 
@@ -109,15 +123,22 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
             insert_params.push(InternalParameter {
                 command_id: match import_cmd_id_to_db_id.get(&cmd_id) {
                     Some(id) => *id,
-                    None => return Err(ImportExportError::InvalidData),
+                    None => {
+                        dal.rollback(tx).await?;
+                        return Err(ImportExportError::InvalidData);
+                    }
                 },
                 symbol: param.symbol,
                 regex: param.regex,
                 note: param.note,
             })
         }
-        dal.add_params(insert_params).await?;
+        if let Err(e) = dal.add_params(insert_params, Some(&mut tx)).await {
+            dal.rollback(tx).await?;
+            return Err(ImportExportError::DbQuery(e));
+        }
     }
 
+    dal.commit(tx).await?;
     Ok(())
 }

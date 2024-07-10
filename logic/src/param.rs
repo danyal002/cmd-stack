@@ -36,7 +36,7 @@ pub async fn handle_add_param(params: Vec<InternalParameter>) -> Result<(), AddP
     let dal = get_db_connection().await?;
 
     // Add the parameters to the database
-    match dal.add_params(params).await {
+    match dal.add_params(params, None).await {
         Ok(_) => {}
         Err(e) => return Err(AddParamError::Query(e)),
     };
@@ -66,7 +66,7 @@ pub async fn handle_generate_param(command: Command) -> Result<String, GenerateP
     let dal = get_db_connection().await?;
 
     // Get the parameters for the command from the database
-    let params: Vec<Parameter> = match dal.get_params(command.id).await {
+    let params: Vec<Parameter> = match dal.get_params(command.id, None).await {
         Ok(p) => p,
         Err(e) => return Err(GenerateParamError::Query(e)),
     };
@@ -111,7 +111,7 @@ pub async fn get_params(command_id: i64) -> Result<Vec<Parameter>, DefaultLogicE
     let dal = get_db_connection().await?;
 
     // Get the parameters for the command from the database
-    let params: Vec<Parameter> = match dal.get_params(command_id).await {
+    let params: Vec<Parameter> = match dal.get_params(command_id, None).await {
         Ok(p) => p,
         Err(e) => return Err(DefaultLogicError::Query(e)),
     };
@@ -128,7 +128,7 @@ pub async fn update_param(
     let dal = get_db_connection().await?;
 
     // Update the parameter in the database
-    match dal.update_param(param_id, param).await {
+    match dal.update_param(param_id, param, None).await {
         Ok(_) => {}
         Err(e) => return Err(DefaultLogicError::Query(e)),
     };
@@ -142,7 +142,7 @@ pub async fn delete_param(param_id: i64) -> Result<(), DefaultLogicError> {
     let dal = get_db_connection().await?;
 
     // Delete the parameter from the database
-    match dal.delete_param(param_id).await {
+    match dal.delete_param(param_id, None).await {
         Ok(_) => {}
         Err(e) => return Err(DefaultLogicError::Query(e)),
     };
