@@ -3,6 +3,7 @@
 use super::param_utils::{select_parameters, ParamUtilError};
 use data::models::{InternalParameter, Parameter};
 use inquire::{InquireError, Text};
+use logic::Logic;
 
 fn update_param_wizard(
     cmd_id: i64,
@@ -30,7 +31,7 @@ fn update_param_wizard(
     });
 }
 
-pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
+pub fn handle_update_param_command(logic_layer: Logic, params: Vec<Parameter>, print_limit: u32) {
     let param_to_update = match select_parameters(&params, print_limit) {
         Ok(param) => param,
         Err(e) => match e {
@@ -61,7 +62,7 @@ pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
         }
     };
 
-    match logic::param::update_param(param_to_update.id, updated_internal_params) {
+    match logic_layer.update_param(param_to_update.id, updated_internal_params) {
         Ok(_) => {
             println!("Parameter updated successfully");
         }

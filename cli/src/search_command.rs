@@ -6,10 +6,10 @@ use crate::{
     },
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
-use logic::command::{handle_update_command_last_used_prop, SearchCommandArgs};
+use logic::{command::SearchCommandArgs, Logic};
 
 /// UI handler for the search command
-pub fn handle_search_commands(args: SearchAndPrintArgs) {
+pub fn handle_search_commands(logic_layer: Logic, args: SearchAndPrintArgs) {
     let mut command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
@@ -33,6 +33,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
 
     // Get the selected command
     let selected_command = match get_searched_commands(
+        &logic_layer,
         SearchCommandArgs {
             alias: alias,
             command: command,
@@ -54,7 +55,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         },
     };
 
-    let copied_text = match logic::param::handle_generate_param(selected_command.clone()) {
+    let copied_text = match logic_layer.handle_generate_param(selected_command.clone()) {
         Ok(c) => c,
         Err(e) => {
             println!(
@@ -74,7 +75,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         selected_command.internal_command.command
     );
 
-    match handle_update_command_last_used_prop(selected_command.id) {
+    match logic_layer.handle_update_command_last_used_prop(selected_command.id) {
         Ok(_) => {}
         Err(e) => {
             println!(

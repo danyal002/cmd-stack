@@ -2,6 +2,7 @@
 
 use data::models::{Command, InternalParameter};
 use inquire::{validator::Validation, InquireError};
+use logic::Logic;
 use rand_regex::Regex;
 
 /// Generates a wizard to set the properties of a parameter
@@ -53,7 +54,7 @@ fn get_params_from_user(command_id: i64) -> Result<Vec<InternalParameter>, Inqui
     return Ok(params);
 }
 
-pub fn handle_add_param_command(command: Command) {
+pub fn handle_add_param_command(logic_layer: Logic, command: Command) {
     let params = match get_params_from_user(command.id) {
         Ok(p) => p,
         Err(e) => {
@@ -62,7 +63,7 @@ pub fn handle_add_param_command(command: Command) {
         }
     };
 
-    match logic::param::handle_add_param(params) {
+    match logic_layer.handle_add_param(params) {
         Ok(_) => println!("\nParameters added successfully"),
         Err(e) => println!("Add Param Cmd: Error adding parameters: {:?}", e),
     }

@@ -5,10 +5,10 @@ use crate::{
         GetSelectedItemFromUserError,
     },
 };
-use logic::command::SearchCommandArgs;
+use logic::{command::SearchCommandArgs, Logic};
 
 /// UI handler for the delete command
-pub fn handle_delete_command(args: SearchAndPrintArgs) {
+pub fn handle_delete_command(logic_layer: Logic, args: SearchAndPrintArgs) {
     let mut command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
@@ -32,6 +32,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
 
     // Get the selected command
     let selected_command = match get_searched_commands(
+        &logic_layer,
         SearchCommandArgs {
             alias: alias,
             command: command,
@@ -54,7 +55,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
     };
 
     // Delete the selected command
-    match logic::command::handle_delete_command(selected_command.id) {
+    match logic_layer.handle_delete_command(selected_command.id) {
         Ok(_) => {}
         Err(e) => {
             println!("Delete Cmd: Failed to delete command: {:?}", e);

@@ -5,6 +5,7 @@ use crate::search_utils::{
     GetSelectedItemFromUserError,
 };
 use logic::command::SearchCommandArgs;
+use logic::Logic;
 
 mod add_param;
 mod delete_param;
@@ -12,7 +13,7 @@ mod list_param;
 mod param_utils;
 mod update_param;
 
-pub fn handle_param_command(param_command: ParamCommands) {
+pub fn handle_param_command(logic_layer: Logic, param_command: ParamCommands) {
     let param_args = match &param_command {
         ParamCommands::List(list_param_args) => list_param_args,
         ParamCommands::Add(add_param_args) => add_param_args,
@@ -43,6 +44,7 @@ pub fn handle_param_command(param_command: ParamCommands) {
 
     // Get the selected command
     let selected_command = match get_searched_commands(
+        &logic_layer,
         SearchCommandArgs {
             alias: alias,
             command: command,
@@ -65,7 +67,7 @@ pub fn handle_param_command(param_command: ParamCommands) {
     };
 
     // Get the parameters for the selected command
-    let params = match logic::param::get_params(selected_command.id) {
+    let params = match logic_layer.get_params(selected_command.id) {
         Ok(params) => params,
         Err(e) => {
             println!("Param Cmd: Error getting parameters: {:?}", e);
@@ -75,8 +77,8 @@ pub fn handle_param_command(param_command: ParamCommands) {
 
     match param_command {
         ParamCommands::List(_) => list_param::handle_list_param_command(params, print_limit),
-        ParamCommands::Add(_) => add_param::handle_add_param_command(selected_command),
-        ParamCommands::Update(_) => update_param::handle_update_param_command(params, print_limit),
-        ParamCommands::Delete(_) => delete_param::handle_delete_param_command(params, print_limit),
+        ParamCommands::Add(_) => add_param::handle_add_param_command(logic_layer, selected_command),
+        ParamCommands::Update(_) => update_param::handle_update_param_command(logic_layer, params, print_limit),
+        ParamCommands::Delete(_) => delete_param::handle_delete_param_command(logic_layer, params, print_limit),
     }
 }

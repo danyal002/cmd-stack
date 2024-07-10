@@ -7,7 +7,7 @@ use crate::{
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
-use logic::command::SearchCommandArgs;
+use logic::{command::SearchCommandArgs, Logic};
 
 /// Generates a wizard to set the properties of a command
 ///
@@ -55,7 +55,7 @@ pub fn set_command_properties_wizard(
 }
 
 /// UI handler for the update command
-pub fn handle_update_command(args: SearchAndPrintArgs) {
+pub fn handle_update_command(logic_layer: Logic, args: SearchAndPrintArgs) {
     let mut command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
@@ -79,6 +79,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
 
     // Get the selected command
     let selected_command = match get_searched_commands(
+        &logic_layer,
         SearchCommandArgs {
             alias: alias,
             command: command,
@@ -117,7 +118,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
     };
 
     // Update the selected command
-    match logic::command::handle_update_command(
+    match logic_layer.handle_update_command(
         selected_command.id,
         InternalCommand {
             alias: new_command_properties.alias,

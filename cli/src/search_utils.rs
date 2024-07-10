@@ -1,7 +1,7 @@
 use crate::args::PrintStyle;
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
-use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
+use logic::{command::SearchCommandArgs, Logic};
 use prettytable::{format, Cell, Row, Table};
 use thiserror::Error;
 
@@ -42,11 +42,12 @@ pub enum GetSelectedItemFromUserError {
 
 /// Gets search candidates for the user from the database and prompts the user to select one
 pub fn get_searched_commands(
+    logic_layer: &Logic,
     search_args: SearchCommandArgs,
     print_style: PrintStyle,
     display_limit: u32,
 ) -> Result<Command, GetSelectedItemFromUserError> {
-    let commands = match handle_search_command(search_args) {
+    let commands = match logic_layer.handle_search_command(search_args) {
         Ok(c) => c,
         Err(e) => {
             println!("Search: Failed to get commands from DB: {:?}", e);
@@ -67,12 +68,13 @@ pub fn get_searched_commands(
 /// Gets all commands from the database in the user's preferred format
 /// and prompts the user to select one
 pub fn get_listed_commands(
+    logic_layer: &Logic,
     order_by_use: bool,
     favourite: bool,
     print_style: PrintStyle,
     display_limit: u32,
 ) -> Result<Command, GetSelectedItemFromUserError> {
-    let commands = match handle_list_commands(order_by_use, favourite) {
+    let commands = match logic_layer.handle_list_commands(order_by_use, favourite) {
         Ok(c) => c,
         Err(e) => {
             return Err(GetSelectedItemFromUserError::GetCommands(e));
