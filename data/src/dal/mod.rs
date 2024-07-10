@@ -29,7 +29,7 @@ pub trait Dal: Sync + Send {
     async fn get_unix_timestamp() -> i64;
 
     /// Executes an insert
-    async fn execute_insert(&self, query: &str) -> Result<u64, sqlx::Error>;
+    async fn execute_insert(&self, query: &str) -> Result<i64, sqlx::Error>;
 
     /// Executes a query
     async fn execute(&self, query: &str) -> Result<(), sqlx::Error>;
@@ -38,7 +38,7 @@ pub trait Dal: Sync + Send {
     async fn query(&self, query: &str) -> Result<Vec<Self::Row>, sqlx::Error>;
 
     /// Adds a command to the database
-    async fn add_command(&self, command: InternalCommand) -> Result<u64, SqlQueryError>;
+    async fn add_command(&self, command: InternalCommand) -> Result<i64, SqlQueryError>;
 
     /// Gets all commands from the database
     async fn get_all_commands(
@@ -48,15 +48,15 @@ pub trait Dal: Sync + Send {
     ) -> Result<Vec<Command>, SqlQueryError>;
 
     /// Updates the last used property of a command to the current time
-    async fn update_command_last_used_prop(&self, command_id: u64) -> Result<(), SqlQueryError>;
+    async fn update_command_last_used_prop(&self, command_id: i64) -> Result<(), SqlQueryError>;
 
     /// Deletes a command from the database
-    async fn delete_command(&self, command_id: u64) -> Result<(), SqlQueryError>;
+    async fn delete_command(&self, command_id: i64) -> Result<(), SqlQueryError>;
 
     /// Update a command
     async fn update_command(
         &self,
-        command_id: u64,
+        command_id: i64,
         new_command_props: InternalCommand,
     ) -> Result<(), SqlQueryError>;
 
@@ -64,19 +64,18 @@ pub trait Dal: Sync + Send {
     async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqlQueryError>;
 
     /// Get parameters for a command
-    async fn get_params(&self, command_id: u64) -> Result<Vec<Parameter>, SqlQueryError>;
+    async fn get_params(&self, command_id: i64) -> Result<Vec<Parameter>, SqlQueryError>;
 
     /// Update a parameter
     async fn update_param(
         &self,
-        param_id: u64,
+        param_id: i64,
         param: InternalParameter,
     ) -> Result<(), SqlQueryError>;
 
     /// Delete a parameter
-    async fn delete_param(&self, param_id: u64) -> Result<(), SqlQueryError>;
+    async fn delete_param(&self, param_id: i64) -> Result<(), SqlQueryError>;
 
     /// Get all parameters
     async fn get_all_internal_parameters(&self) -> Result<Vec<InternalParameter>, SqlQueryError>;
 }
-

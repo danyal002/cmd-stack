@@ -119,7 +119,7 @@ pub enum ParameterLogicError {
 }
 
 #[tokio::main]
-pub async fn get_params(command_id: u64) -> Result<Vec<Parameter>, ParameterLogicError> {
+pub async fn get_params(command_id: i64) -> Result<Vec<Parameter>, ParameterLogicError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
@@ -140,7 +140,7 @@ pub async fn get_params(command_id: u64) -> Result<Vec<Parameter>, ParameterLogi
 
 #[tokio::main]
 pub async fn update_param(
-    param_id: u64,
+    param_id: i64,
     param: InternalParameter,
 ) -> Result<(), ParameterLogicError> {
     // Set up database connection
@@ -162,7 +162,7 @@ pub async fn update_param(
 }
 
 #[tokio::main]
-pub async fn delete_param(param_id: u64) -> Result<(), ParameterLogicError> {
+pub async fn delete_param(param_id: i64) -> Result<(), ParameterLogicError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,

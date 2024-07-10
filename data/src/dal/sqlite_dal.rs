@@ -25,9 +25,9 @@ impl Dal for SqliteDal {
             .as_secs() as i64
     }
 
-    async fn execute_insert(&self, query: &str) -> Result<u64, sqlx::Error> {
+    async fn execute_insert(&self, query: &str) -> Result<i64, sqlx::Error> {
         let query_result = sqlx::query(query).execute(&self.sql.pool).await?;
-        Ok(query_result.last_insert_rowid() as u64)
+        Ok(query_result.last_insert_rowid())
     }
 
     async fn execute(&self, query: &str) -> Result<(), sqlx::Error> {
@@ -39,7 +39,7 @@ impl Dal for SqliteDal {
         Ok(rows)
     }
 
-    async fn add_command(&self, command: InternalCommand) -> Result<u64, SqlQueryError> {
+    async fn add_command(&self, command: InternalCommand) -> Result<i64, SqlQueryError> {
         let current_time = Self::get_unix_timestamp().await;
 
         let query = Query::insert()
@@ -118,15 +118,15 @@ impl Dal for SqliteDal {
                     note: row.get("note"),
                     favourite: row.get("favourite"),
                 },
-                id: row.get::<i64, _>("id") as u64,
-                last_used: row.get::<i64, _>("last_used") as u64,
+                id: row.get::<i64, _>("id"),
+                last_used: row.get::<i64, _>("last_used"),
             });
         }
 
         Ok(commands)
     }
 
-    async fn update_command_last_used_prop(&self, command_id: u64) -> Result<(), SqlQueryError> {
+    async fn update_command_last_used_prop(&self, command_id: i64) -> Result<(), SqlQueryError> {
         let current_time = Self::get_unix_timestamp().await;
 
         let query = Query::update()
@@ -143,7 +143,7 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn delete_command(&self, command_id: u64) -> Result<(), SqlQueryError> {
+    async fn delete_command(&self, command_id: i64) -> Result<(), SqlQueryError> {
         let query = Query::delete()
             .from_table(sqlite::Command::Table)
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
@@ -159,7 +159,7 @@ impl Dal for SqliteDal {
 
     async fn update_command(
         &self,
-        command_id: u64,
+        command_id: i64,
         new_command_props: InternalCommand,
     ) -> Result<(), SqlQueryError> {
         let query = Query::update()
@@ -215,7 +215,7 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn get_params(&self, command_id: u64) -> Result<Vec<Parameter>, SqlQueryError> {
+    async fn get_params(&self, command_id: i64) -> Result<Vec<Parameter>, SqlQueryError> {
         let query = Query::select()
             .columns([
                 sqlite::Parameter::Id,
@@ -235,7 +235,7 @@ impl Dal for SqliteDal {
         let mut params = Vec::new();
         for row in rows {
             params.push(Parameter {
-                id: row.get::<i64, _>("id") as u64,
+                id: row.get::<i64, _>("id"),
                 internal_parameter: InternalParameter {
                     command_id: command_id,
                     symbol: row.get("symbol"),
@@ -250,7 +250,7 @@ impl Dal for SqliteDal {
 
     async fn update_param(
         &self,
-        param_id: u64,
+        param_id: i64,
         param: InternalParameter,
     ) -> Result<(), SqlQueryError> {
         let query = Query::update()
@@ -271,7 +271,7 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn delete_param(&self, param_id: u64) -> Result<(), SqlQueryError> {
+    async fn delete_param(&self, param_id: i64) -> Result<(), SqlQueryError> {
         let query = Query::delete()
             .from_table(sqlite::Parameter::Table)
             .and_where(Expr::col(sqlite::Parameter::Id).eq(param_id))
@@ -312,7 +312,7 @@ impl Dal for SqliteDal {
         let mut params = Vec::new();
         for row in rows {
             params.push(InternalParameter {
-                command_id: row.get::<i64, _>("command_id") as u64,
+                command_id: row.get::<i64, _>("command_id"),
                 symbol: row.get("symbol"),
                 regex: row.get("regex"),
                 note: row.get("note"),

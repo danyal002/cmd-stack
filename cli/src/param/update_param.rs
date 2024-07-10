@@ -5,7 +5,7 @@ use data::models::{InternalParameter, Parameter};
 use inquire::{InquireError, Text};
 
 fn update_param_wizard(
-    cmd_id: u64,
+    cmd_id: i64,
     cur_symbol: String,
     cur_regex: String,
     cur_note: Option<String>,

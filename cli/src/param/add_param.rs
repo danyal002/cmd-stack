@@ -5,7 +5,7 @@ use inquire::{validator::Validation, InquireError};
 use rand_regex::Regex;
 
 /// Generates a wizard to set the properties of a parameter
-fn set_param_properties_wizard(command_id: u64) -> Result<InternalParameter, InquireError> {
+fn set_param_properties_wizard(command_id: i64) -> Result<InternalParameter, InquireError> {
     println!("\nSet the properties of the parameter");
     let symbol = inquire::Text::new("Symbol:").prompt()?;
 
@@ -36,7 +36,7 @@ fn set_param_properties_wizard(command_id: u64) -> Result<InternalParameter, Inq
     });
 }
 
-fn get_params_from_user(command_id: u64) -> Result<Vec<InternalParameter>, InquireError> {
+fn get_params_from_user(command_id: i64) -> Result<Vec<InternalParameter>, InquireError> {
     let mut params = Vec::new();
     loop {
         let param = set_param_properties_wizard(command_id)?;

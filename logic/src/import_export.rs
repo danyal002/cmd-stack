@@ -104,7 +104,7 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
     // We keep a map mapping command IDs in the json to their respective
     // ids in the new database. This is required when inserting the parameters
     // to ensure the foreign key references are consistent
-    let mut import_cmd_id_to_db_id: HashMap<u64, u64> = HashMap::new();
+    let mut import_cmd_id_to_db_id: HashMap<i64, i64> = HashMap::new();
     for command in import_data.commands {
         let db_id = dal.add_command(command.internal_command).await?;
         import_cmd_id_to_db_id.insert(command.id, db_id);

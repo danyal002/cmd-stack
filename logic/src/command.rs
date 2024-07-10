@@ -157,7 +157,7 @@ pub enum UpdateCommandError {
 #[tokio::main]
 /// Handles the updating of the last used property of a command
 pub async fn handle_update_command_last_used_prop(
-    command_id: u64,
+    command_id: i64,
 ) -> Result<(), UpdateCommandError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
@@ -180,7 +180,7 @@ pub async fn handle_update_command_last_used_prop(
 #[tokio::main]
 /// Handles the updating of a command
 pub async fn handle_update_command(
-    command_id: u64,
+    command_id: i64,
     new_command_props: InternalCommand,
 ) -> Result<(), UpdateCommandError> {
     if new_command_props.command.trim().is_empty() || new_command_props.alias.trim().is_empty() {
@@ -216,7 +216,7 @@ pub enum DeleteCommandError {
 
 #[tokio::main]
 /// Handles deleting a command
-pub async fn handle_delete_command(command_id: u64) -> Result<(), DeleteCommandError> {
+pub async fn handle_delete_command(command_id: i64) -> Result<(), DeleteCommandError> {
     // Set up database connection
     let sqlite_db = match SqliteDatabase::new().await {
         Ok(db) => db,
