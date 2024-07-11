@@ -1,5 +1,3 @@
-pub enum SuccessOutput {}
-
 pub enum ErrorOutput {
     UserInput,
     SelectCmd,
