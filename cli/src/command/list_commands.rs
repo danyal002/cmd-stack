@@ -1,6 +1,7 @@
 use crate::{
     args::ListArgs,
     command::search_utils::{get_listed_commands, GetSelectedItemFromUserError},
+    outputs::ErrorOutput,
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use log::error;
@@ -23,7 +24,7 @@ pub fn handle_list_commands(args: ListArgs) {
             }
             _ => {
                 error!(target: "List Cmd", "Failed to get selected command: {:?}", e);
-                println!("Failed to list commands");
+                ErrorOutput::SelectCmd.print();
                 return;
             }
         },
@@ -38,7 +39,7 @@ pub fn handle_list_commands(args: ListArgs) {
         ),
         Err(e) => {
             error!(target: "List Cmd", "Failed copy command to clipboard: {:?}", e);
-            println!("Failed to copy selected command");
+            ErrorOutput::FailedToCommand("copy".to_string()).print();
             return;
         }
     }

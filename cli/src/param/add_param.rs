@@ -5,6 +5,8 @@ use inquire::{validator::Validation, InquireError};
 use log::error;
 use rand_regex::Regex;
 
+use crate::outputs::ErrorOutput;
+
 /// Generates a wizard to set the properties of a parameter
 fn set_param_properties_wizard(command_id: i64) -> Result<InternalParameter, InquireError> {
     println!("\nSet the properties of the parameter");
@@ -59,7 +61,7 @@ pub fn handle_add_param_command(command: Command) {
         Ok(p) => p,
         Err(e) => {
             error!(target: "Add Param Cmd", "Error setting parameter properties: {:?}", e);
-            println!("Failed to set parameter properties");
+            ErrorOutput::UserInput.print();
             return;
         }
     };
@@ -68,7 +70,7 @@ pub fn handle_add_param_command(command: Command) {
         Ok(_) => println!("\nParameters added successfully"),
         Err(e) => {
             error!(target: "Add Param Cmd", "Error adding parameters: {:?}", e);
-            println!("Failed to add parameters");
+            ErrorOutput::AddParams.print();
         }
     }
 }

@@ -4,6 +4,7 @@ use crate::{
         display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
+    outputs::ErrorOutput,
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -69,7 +70,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
             Ok(properties) => properties,
             Err(e) => {
                 error!(target: "Update Cmd", "Error setting command properties: {:?}", e);
-                println!("Failed to get input");
+                ErrorOutput::UserInput.print();
                 return;
             }
         };
@@ -97,7 +98,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
             }
             _ => {
                 error!(target: "Update Cmd", "Failed to get selected command: {:?}", e);
-                println!("Failed to select command");
+                ErrorOutput::SelectCmd.print();
                 return;
             }
         },
@@ -115,7 +116,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         Ok(properties) => properties,
         Err(e) => {
             error!(target: "Update Cmd", "Error setting command properties: {:?}", e);
-            println!("Failed to get input");
+            ErrorOutput::UserInput.print();
             return;
         }
     };
@@ -134,7 +135,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         Ok(_) => {}
         Err(e) => {
             error!(target: "Update Cmd", "Failed to update command: {:?}", e);
-            println!("Failed to update selected command");
+            ErrorOutput::FailedToCommand("update".to_string()).print();
             return;
         }
     };

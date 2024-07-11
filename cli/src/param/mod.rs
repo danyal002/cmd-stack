@@ -4,6 +4,7 @@ use crate::command::search_utils::{
     display_search_args_wizard, get_searched_commands, search_args_wizard,
     GetSelectedItemFromUserError,
 };
+use crate::outputs::ErrorOutput;
 use log::error;
 use logic::command::SearchCommandArgs;
 
@@ -33,7 +34,7 @@ pub fn handle_param_command(param_command: ParamCommands) {
             Ok(properties) => properties,
             Err(e) => {
                 error!(target: "Param Cmd", "Error setting command properties: {:?}", e);
-                println!("Failed to get input");
+                ErrorOutput::UserInput.print();
                 return;
             }
         };
@@ -61,7 +62,7 @@ pub fn handle_param_command(param_command: ParamCommands) {
             }
             _ => {
                 error!(target: "Param Cmd", "Failed to get selected command: {:?}", e);
-                println!("Failed to get selected command");
+                ErrorOutput::SelectCmd.print();
                 return;
             }
         },
@@ -72,7 +73,7 @@ pub fn handle_param_command(param_command: ParamCommands) {
         Ok(params) => params,
         Err(e) => {
             error!(target: "Param Cmd", "Error getting parameters: {:?}", e);
-            println!("Failed to get parameters for selected command");
+            ErrorOutput::FailedToCommand("get parameters".to_string()).print();
             return;
         }
     };

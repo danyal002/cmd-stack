@@ -1,4 +1,4 @@
-use crate::args::AddArgs;
+use crate::{args::AddArgs, outputs::ErrorOutput};
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
@@ -49,7 +49,7 @@ pub fn handle_add_command(args: AddArgs) {
             Ok(properties) => properties,
             Err(e) => {
                 error!(target: "Add Cmd", "Error setting command properties: {:?}", e);
-                println!("Failed to get input");
+                ErrorOutput::UserInput.print();
                 return;
             }
         };
@@ -76,7 +76,7 @@ pub fn handle_add_command(args: AddArgs) {
         Ok(_) => println!("\nCommand added successfully"),
         Err(e) => {
             error!(target: "Add Cmd", "Error adding command: {:?}", e);
-            println!("Failed to add command");
+            ErrorOutput::AddCmd.print();
         }
     }
 }

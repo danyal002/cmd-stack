@@ -3,6 +3,8 @@
 use data::models::Parameter;
 use log::error;
 
+use crate::outputs::ErrorOutput;
+
 use super::param_utils::{select_parameters, ParamUtilError};
 
 pub fn handle_delete_param_command(params: Vec<Parameter>, print_limit: u32) {
@@ -15,7 +17,7 @@ pub fn handle_delete_param_command(params: Vec<Parameter>, print_limit: u32) {
             }
             _ => {
                 error!(target: "Param Delete Cmd", "Error listing parameters: {:?}", e);
-                println!("Failed to select parameter");
+                ErrorOutput::SelectParam.print();
                 return;
             }
         },
@@ -25,7 +27,7 @@ pub fn handle_delete_param_command(params: Vec<Parameter>, print_limit: u32) {
         Ok(_) => println!("\nParameter deleted successfully"),
         Err(e) => {
             error!(target: "Param Delete Cmd", "Error deleting parameter: {:?}", e);
-            println!("Failed to delete selected parameter");
+            ErrorOutput::FailedToParam("delete".to_string()).print();
         }
     }
 }

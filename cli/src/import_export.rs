@@ -1,4 +1,4 @@
-use crate::args::ImportExportArgs;
+use crate::{args::ImportExportArgs, outputs::ErrorOutput};
 use log::error;
 use std::path::Path;
 
@@ -9,7 +9,7 @@ pub fn handle_export_command(args: ImportExportArgs) {
         Ok(_) => println!("\nCommands exported to {:?}", file_path),
         Err(e) => {
             error!(target: "Export Cmd", "Failed to export command: {:?}", e);
-            println!("Failed to export command");
+            ErrorOutput::Export.print();
         }
     }
 }
@@ -21,7 +21,7 @@ pub fn handle_import_command(args: ImportExportArgs) {
         Ok(_) => println!("\nCommands imported from {:?}", file_path),
         Err(e) => {
             error!(target: "Import Cmd", "Failed to import command: {:?}", e);
-            println!("Failed to import command");
+            ErrorOutput::Import.print();
         }
     }
 }

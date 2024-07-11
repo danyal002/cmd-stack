@@ -4,6 +4,7 @@ use crate::{
         display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
+    outputs::ErrorOutput,
 };
 use log::error;
 use logic::command::SearchCommandArgs;
@@ -22,7 +23,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
             Ok(properties) => properties,
             Err(e) => {
                 error!(target: "Delete Cmd", "Error setting command properties: {:?}", e);
-                println!("Failed to get input");
+                ErrorOutput::UserInput.print();
                 return;
             }
         };
@@ -50,7 +51,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
             }
             _ => {
                 error!(target: "Delete Cmd", "Failed to get selected command: {:?}", e);
-                println!("Failed to select command");
+                ErrorOutput::SelectCmd.print();
                 return;
             }
         },
@@ -61,7 +62,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
         Ok(_) => {}
         Err(e) => {
             error!(target: "Delete Cmd", "Failed to delete command: {:?}", e);
-            println!("Failed to delete selected command");
+            ErrorOutput::FailedToCommand("delete".to_string()).print();
             return;
         }
     };

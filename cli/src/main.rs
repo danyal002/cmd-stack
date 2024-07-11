@@ -5,12 +5,15 @@
 mod args;
 mod command;
 mod import_export;
+pub mod outputs;
 mod param;
 
 use args::{CmdStackArgs, Command};
 use clap::Parser;
 
 fn main() {
+    env_logger::init();
+
     let args = CmdStackArgs::parse();
 
     inquire::set_global_render_config(inquire::ui::RenderConfig {

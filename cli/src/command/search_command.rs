@@ -4,6 +4,7 @@ use crate::{
         display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
+    outputs::ErrorOutput,
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use log::error;
@@ -23,7 +24,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
             Ok(properties) => properties,
             Err(e) => {
                 error!(target: "Search Cmd", "Error setting command properties: {:?}", e);
-                println!("Failed to get input");
+                ErrorOutput::UserInput.print();
                 return;
             }
         };
@@ -51,7 +52,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
             }
             _ => {
                 error!(target: "Search Cmd", "Failed to get selected command: {:?}", e);
-                println!("Failed to get selected command");
+                ErrorOutput::SelectCmd.print();
                 return;
             }
         },
@@ -64,7 +65,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
                 "Search Cmd: Failed to generate parameters for selected command: {:?}",
                 e
             );
-            println!("Failed to generate parameters");
+            ErrorOutput::GenerateParam.print();
             return;
         }
     };
@@ -75,7 +76,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         Ok(()) => println!("\nCommand copied to clipboard: {}", copied_text),
         Err(e) => {
             error!(target: "Search Cmd", "Failed copy command to clipboard: {:?}", e);
-            println!("Failed to copy selected command");
+            ErrorOutput::FailedToCommand("copy".to_string()).print();
             return;
         }
     }
