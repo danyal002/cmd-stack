@@ -1,6 +1,7 @@
 use crate::args::AddArgs;
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
+use log::error;
 
 #[derive(Debug)]
 /// The properties of a command
@@ -47,7 +48,8 @@ pub fn handle_add_command(args: AddArgs) {
         let command_properties = match set_command_properties_wizard(&command) {
             Ok(properties) => properties,
             Err(e) => {
-                println!("Add Cmd: Error setting command properties: {:?}", e);
+                error!(target: "Add Cmd", "Error setting command properties: {:?}", e);
+                println!("Failed to get input");
                 return;
             }
         };
@@ -72,6 +74,9 @@ pub fn handle_add_command(args: AddArgs) {
 
     match add_result {
         Ok(_) => println!("\nCommand added successfully"),
-        Err(e) => println!("Add Cmd: Error adding command: {:?}", e),
+        Err(e) => {
+            error!(target: "Add Cmd", "Error adding command: {:?}", e);
+            println!("Failed to add command");
+        }
     }
 }
