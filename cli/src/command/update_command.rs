@@ -4,9 +4,11 @@ use crate::{
         display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
+    outputs::ErrorOutput,
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
+use log::error;
 use logic::command::SearchCommandArgs;
 
 /// Generates a wizard to set the properties of a command
@@ -67,7 +69,8 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         let command_properties = match search_args_wizard() {
             Ok(properties) => properties,
             Err(e) => {
-                println!("Search Cmd: Error setting command properties: {:?}", e);
+                error!(target: "Update Cmd", "Error setting command properties: {:?}", e);
+                ErrorOutput::UserInput.print();
                 return;
             }
         };
@@ -94,7 +97,8 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
                 return;
             }
             _ => {
-                println!("Update Cmd: Failed to get selected command: {:?}", e);
+                error!(target: "Update Cmd", "Failed to get selected command: {:?}", e);
+                ErrorOutput::SelectCmd.print();
                 return;
             }
         },
@@ -111,7 +115,8 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
     ) {
         Ok(properties) => properties,
         Err(e) => {
-            println!("Update Cmd: Error setting command properties: {:?}", e);
+            error!(target: "Update Cmd", "Error setting command properties: {:?}", e);
+            ErrorOutput::UserInput.print();
             return;
         }
     };
@@ -129,7 +134,8 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
     ) {
         Ok(_) => {}
         Err(e) => {
-            println!("Update Cmd: Failed to delete command: {:?}", e);
+            error!(target: "Update Cmd", "Failed to update command: {:?}", e);
+            ErrorOutput::FailedToCommand("update".to_string()).print();
             return;
         }
     };

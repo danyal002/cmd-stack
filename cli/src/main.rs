@@ -5,18 +5,49 @@
 mod args;
 mod command;
 mod import_export;
+pub mod outputs;
 mod param;
 
 use args::{CmdStackArgs, Command};
 use clap::Parser;
+use log::LevelFilter;
+use log4rs::append::file::FileAppender;
+use log4rs::config::{Appender, Config, Root};
 
 fn main() {
-    let args = CmdStackArgs::parse();
+    // Set up logging. Can log in any crate using the log crate
+    //
+    // If we are doing local development, set up environment logger
+    // Otherwise (if the app was built with the --release flag), send logs to a file in the user's file statem.
+    if cfg!(debug_assertions) {
+        // Set up environment logger
+        env_logger::Builder::new()
+            .filter(None, LevelFilter::Info)
+            .init();
+    } else {
+        // Log file path: $HOME/.config/cmdstack/cmdstack.log
+        let home_dir = dirs::home_dir().unwrap();
+        let logfile_path =
+            home_dir.to_str().unwrap().to_string() + "/.config/cmdstack/cmdstack.log";
 
+        let logfile = FileAppender::builder().build(logfile_path).unwrap();
+
+        let config = Config::builder()
+            .appender(Appender::builder().build("logfile", Box::new(logfile)))
+            .build(Root::builder().appender("logfile").build(LevelFilter::Info))
+            .unwrap();
+
+        log4rs::init_config(config).unwrap();
+    }
+
+    // Configure inquire
     inquire::set_global_render_config(inquire::ui::RenderConfig {
         prompt: inquire::ui::StyleSheet::default().with_fg(inquire::ui::Color::LightBlue),
         ..Default::default()
     });
+
+    // Parse command line arguments and execute the command
+    let args = CmdStackArgs::parse();
 
     match args.command {
         Command::Add(add_args) => command::add_command::handle_add_command(add_args),

@@ -2,7 +2,10 @@
 
 use data::models::{Command, InternalParameter};
 use inquire::{validator::Validation, InquireError};
+use log::error;
 use rand_regex::Regex;
+
+use crate::outputs::ErrorOutput;
 
 /// Generates a wizard to set the properties of a parameter
 fn set_param_properties_wizard(command_id: i64) -> Result<InternalParameter, InquireError> {
@@ -57,13 +60,17 @@ pub fn handle_add_param_command(command: Command) {
     let params = match get_params_from_user(command.id) {
         Ok(p) => p,
         Err(e) => {
-            println!("Add Param Cmd: Error setting parameter properties: {:?}", e);
+            error!(target: "Add Param Cmd", "Error setting parameter properties: {:?}", e);
+            ErrorOutput::UserInput.print();
             return;
         }
     };
 
     match logic::param::handle_add_param(params) {
         Ok(_) => println!("\nParameters added successfully"),
-        Err(e) => println!("Add Param Cmd: Error adding parameters: {:?}", e),
+        Err(e) => {
+            error!(target: "Add Param Cmd", "Error adding parameters: {:?}", e);
+            ErrorOutput::AddParams.print();
+        }
     }
 }

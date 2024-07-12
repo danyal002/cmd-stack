@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 data = { path = "../data" }
 fuzzy-matcher = "0.3.7"
+log = "0.4.22"
 rand = "0.8.5"
 rand_regex = "0.17.0"
 regex-syntax = "0.8.4"

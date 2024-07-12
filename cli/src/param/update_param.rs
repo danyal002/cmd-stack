@@ -1,8 +1,11 @@
 //! Add a parameter to a command
 
+use crate::outputs::ErrorOutput;
+
 use super::param_utils::{select_parameters, ParamUtilError};
 use data::models::{InternalParameter, Parameter};
 use inquire::{InquireError, Text};
+use log::error;
 
 fn update_param_wizard(
     cmd_id: i64,
@@ -39,7 +42,8 @@ pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
                 return;
             }
             _ => {
-                println!("Param Update Cmd: Error listing parameters: {:?}", e);
+                error!(target: "Param Update Cmd", "Error listing parameters: {:?}", e);
+                ErrorOutput::SelectParam.print();
                 return;
             }
         },
@@ -53,10 +57,10 @@ pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
     ) {
         Ok(properties) => properties,
         Err(e) => {
-            println!(
-                "Param Update Cmd: Error setting command properties: {:?}",
-                e
+            error!(
+                target: "Param Update Cmd", "Error setting command properties: {:?}", e
             );
+            ErrorOutput::UserInput.print();
             return;
         }
     };
@@ -66,7 +70,8 @@ pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
             println!("Parameter updated successfully");
         }
         Err(e) => {
-            println!("Param Update Cmd: Error updating parameter: {:?}", e);
+            error!(target: "Param Update Cmd", "Error updating parameter: {:?}", e);
+            ErrorOutput::FailedToParam("update".to_string()).print();
         }
     }
 }

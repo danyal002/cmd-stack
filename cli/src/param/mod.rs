@@ -4,6 +4,8 @@ use crate::command::search_utils::{
     display_search_args_wizard, get_searched_commands, search_args_wizard,
     GetSelectedItemFromUserError,
 };
+use crate::outputs::ErrorOutput;
+use log::error;
 use logic::command::SearchCommandArgs;
 
 mod add_param;
@@ -31,7 +33,8 @@ pub fn handle_param_command(param_command: ParamCommands) {
         let command_properties = match search_args_wizard() {
             Ok(properties) => properties,
             Err(e) => {
-                println!("Param Cmd: Error setting command properties: {:?}", e);
+                error!(target: "Param Cmd", "Error setting command properties: {:?}", e);
+                ErrorOutput::UserInput.print();
                 return;
             }
         };
@@ -58,7 +61,8 @@ pub fn handle_param_command(param_command: ParamCommands) {
                 return;
             }
             _ => {
-                println!("Param Cmd: Failed to get selected command: {:?}", e);
+                error!(target: "Param Cmd", "Failed to get selected command: {:?}", e);
+                ErrorOutput::SelectCmd.print();
                 return;
             }
         },
@@ -68,7 +72,8 @@ pub fn handle_param_command(param_command: ParamCommands) {
     let params = match logic::param::get_params(selected_command.id) {
         Ok(params) => params,
         Err(e) => {
-            println!("Param Cmd: Error getting parameters: {:?}", e);
+            error!(target: "Param Cmd", "Error getting parameters: {:?}", e);
+            ErrorOutput::FailedToCommand("get parameters".to_string()).print();
             return;
         }
     };

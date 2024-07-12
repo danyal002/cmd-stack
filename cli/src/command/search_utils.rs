@@ -1,6 +1,7 @@
 use crate::args::PrintStyle;
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
+use log::error;
 use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
 use prettytable::{format, Cell, Row, Table};
 use thiserror::Error;
@@ -49,7 +50,7 @@ pub fn get_searched_commands(
     let commands = match handle_search_command(search_args) {
         Ok(c) => c,
         Err(e) => {
-            println!("Search: Failed to get commands from DB: {:?}", e);
+            error!(target: "Search Utils", "Failed to get commands from DB: {:?}", e);
             return Err(GetSelectedItemFromUserError::GetCommands(e));
         }
     };
