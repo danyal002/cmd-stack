@@ -31,7 +31,14 @@ pub fn handle_list_commands(args: ListArgs) {
     };
 
     // Copy the selected command to the clipboard
-    let mut clipboard = ClipboardContext::new().unwrap();
+    let mut clipboard = match ClipboardContext::new() {
+        Ok(ctx) => ctx,
+        Err(e) => {
+            error!(target: "List Cmd", "Failed to initialize the clipboard: {:?}", e);
+            ErrorOutput::FailedToCommand("copy".to_string()).print();
+            return;
+        }
+    };
     match clipboard.set_contents(selected_command.internal_command.command.clone()) {
         Ok(()) => println!(
             "\nCommand copied to clipboard: {}",

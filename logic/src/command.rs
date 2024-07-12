@@ -68,27 +68,27 @@ pub async fn handle_search_command(
             let min_threshold = 50; // TODO: Adjust this threshold
 
             let alias_match = match &params.alias {
-                Some(a) => {
-                    let res = matcher.fuzzy_match(&command.internal_command.alias, a);
-                    res.is_some() && res.unwrap() > min_threshold
-                }
+                Some(a) => match matcher.fuzzy_match(&command.internal_command.alias, a) {
+                    Some(r) => r > min_threshold,
+                    None => false,
+                },
                 None => false,
             };
 
             let command_match = match &params.command {
-                Some(c) => {
-                    let res = matcher.fuzzy_match(&command.internal_command.command, c);
-                    res.is_some() && res.unwrap() > min_threshold
-                }
+                Some(c) => match matcher.fuzzy_match(&command.internal_command.command, c) {
+                    Some(r) => r > min_threshold,
+                    None => false,
+                },
                 None => false,
             };
 
             let tag_match = match &params.tag {
                 Some(t) => match &command.internal_command.tag {
-                    Some(tag) => {
-                        let res = matcher.fuzzy_match(tag, t);
-                        res.is_some() && res.unwrap() > min_threshold
-                    }
+                    Some(tag) => match matcher.fuzzy_match(tag, t) {
+                        Some(r) => r > min_threshold,
+                        None => false,
+                    },
                     None => false,
                 },
                 None => false,

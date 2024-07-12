@@ -82,12 +82,14 @@ pub async fn handle_generate_param(command: Command) -> Result<String, GenerateP
     let mut param_string = String::new();
     for param in params.iter() {
         let mut parser = regex_syntax::ParserBuilder::new().unicode(false).build();
-        let hir = parser.parse(&param.internal_parameter.regex);
-        if hir.is_err() {
-            return Err(GenerateParamError::InvalidRegexPattern(hir.unwrap_err()));
-        }
+        let hir = match parser.parse(&param.internal_parameter.regex) {
+            Ok(hir) => hir,
+            Err(e) => {
+                return Err(GenerateParamError::InvalidRegexPattern(e));
+            }
+        };
 
-        let gen = match Regex::with_hir(hir.unwrap(), 100) {
+        let gen = match Regex::with_hir(hir, 100) {
             Ok(r) => r,
             Err(e) => return Err(GenerateParamError::InvalidHir(e)),
         };

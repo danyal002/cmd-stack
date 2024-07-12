@@ -15,12 +15,14 @@ fn set_param_properties_wizard(command_id: i64) -> Result<InternalParameter, Inq
     // Validate that the given regex is valid
     let validator = |input: &str| {
         let mut parser = regex_syntax::ParserBuilder::new().unicode(false).build();
-        let hir = parser.parse(input);
-        if hir.is_err() {
-            return Ok(Validation::Invalid("Your regex is invalid".into()));
-        }
+        let hir = match parser.parse(input) {
+            Ok(hir) => hir,
+            Err(_) => {
+                return Ok(Validation::Invalid("Your regex is invalid".into()));
+            }
+        };
 
-        match Regex::with_hir(hir.unwrap(), 100) {
+        match Regex::with_hir(hir, 100) {
             Ok(_) => Ok(Validation::Valid),
             Err(_) => Ok(Validation::Invalid("Your regex is invalid".into())),
         }

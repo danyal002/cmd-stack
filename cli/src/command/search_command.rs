@@ -71,7 +71,14 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     };
 
     // Copy the selected command to the clipboard
-    let mut clipboard = ClipboardContext::new().unwrap();
+    let mut clipboard = match ClipboardContext::new() {
+        Ok(ctx) => ctx,
+        Err(e) => {
+            error!(target: "Search Cmd", "Failed to initialize the clipboard: {:?}", e);
+            ErrorOutput::FailedToCommand("copy".to_string()).print();
+            return;
+        }
+    };
     match clipboard.set_contents(copied_text.clone()) {
         Ok(()) => println!("\nCommand copied to clipboard: {}", copied_text),
         Err(e) => {

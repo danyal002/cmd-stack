@@ -4,7 +4,6 @@ use inquire::{InquireError, Select, Text};
 use log::error;
 
 #[derive(Debug)]
-/// The properties of a command
 struct AddCommandProperties {
     alias: String,
     tag: Option<String>,
@@ -63,16 +62,22 @@ pub fn handle_add_command(args: AddArgs) {
         alias = Some(command.clone());
     }
 
-    // Add the command to the database
-    let add_result = logic::command::handle_add_command(InternalCommand {
+    let alias = match alias {
+        Some(a) => a,
+        None => {
+            error!(target: "Add Cmd", "Could not set alias");
+            ErrorOutput::UserInput.print();
+            return;
+        }
+    };
+
+    match logic::command::handle_add_command(InternalCommand {
         command: command,
-        alias: alias.unwrap(),
+        alias: alias,
         tag: tag,
         note: note,
         favourite: favourite,
-    });
-
-    match add_result {
+    }) {
         Ok(_) => println!("\nCommand added successfully"),
         Err(e) => {
             error!(target: "Add Cmd", "Error adding command: {:?}", e);

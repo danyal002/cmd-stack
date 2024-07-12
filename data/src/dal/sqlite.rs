@@ -6,8 +6,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SQliteDatabaseConnectionError {
-    #[error("Could not get the current directory")]
-    CurDir(#[source] std::io::Error),
+    #[error("Could not get the database path")]
+    DbPath(String),
 
     #[error("Could not create the database file")]
     CreatingDatabase(#[source] std::io::Error),
@@ -43,14 +43,30 @@ impl SqliteDatabase {
     /// Returns path to database
     ///
     /// Path: $HOME/.config/cmdstack/database.sqlite
-    fn get_db_path() -> String {
-        let home_dir = dirs::home_dir().unwrap();
-        home_dir.to_str().unwrap().to_string() + "/.config/cmdstack/database.sqlite"
+    fn get_db_path() -> Result<String, SQliteDatabaseConnectionError> {
+        let home_dir = match dirs::home_dir() {
+            Some(dir) => match dir.to_str() {
+                Some(path) => path.to_string(),
+                None => {
+                    return Err(SQliteDatabaseConnectionError::DbPath(
+                        "Could not convert home directory to string".to_string(),
+                    ));
+                }
+            },
+            None => {
+                return Err(SQliteDatabaseConnectionError::DbPath(
+                    "Could not get home directory".to_string(),
+                ));
+            }
+        };
+
+        Ok(home_dir + "/.config/cmdstack/database.sqlite")
     }
 
     async fn establish_db_connection() -> Result<SqlitePool, SQliteDatabaseConnectionError> {
-        let mut connect_options = match SqliteConnectOptions::from_str(Self::get_db_path().as_str())
-        {
+        let db_path = Self::get_db_path()?;
+
+        let mut connect_options = match SqliteConnectOptions::from_str(&db_path) {
             Ok(options) => options,
             Err(e) => {
                 return Err(SQliteDatabaseConnectionError::SqliteOptionsInitialization(
