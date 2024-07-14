@@ -1,0 +1,19 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+logic = { path = "../logic" }
+data = { path = "../data" } 
+clap = { version = "4.5.7", features = ["derive"] }
+inquire = "0.7.5"
+thiserror = "1.0.61"
+cli-clipboard = "0.4.0"
+prettytable = "0.10.0"
+rand_regex = "0.17.0"
+regex-syntax = "0.8.4"
+log = "0.4.22"
+log4rs = "1.3.0"
+env_logger = "0.11.3"
+dirs = "5.0.1"

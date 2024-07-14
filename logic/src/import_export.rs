@@ -1,0 +1,144 @@
+use data::{
+    dal::{Dal, SqlQueryError, SqlTxError},
+    models::{Command, InternalParameter},
+};
+use serde::{Deserialize, Serialize};
+use serde_json;
+use std::{collections::HashMap, fs, path::Path};
+use thiserror::Error;
+
+use crate::{get_db_connection, DatabaseConnectionError};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ExportFormat {
+    commands: Vec<Command>,
+    parameters: Vec<InternalParameter>,
+}
+
+#[derive(Error, Debug)]
+pub enum ImportExportError {
+    #[error("database connection error")]
+    DbConnection(#[from] DatabaseConnectionError),
+
+    #[error("error executing database query")]
+    DbQuery(#[from] SqlQueryError),
+
+    #[error("could not serialize data")]
+    SerdeError(#[from] serde_json::Error),
+
+    #[error("could not read or write to file")]
+    RwFile(#[from] std::io::Error),
+
+    #[error("provided file is not a JSON file")]
+    NotJson,
+
+    #[error("provided file does not exist")]
+    DoesNotExist,
+
+    #[error("provided file path is invalid")]
+    InvalidFilePath,
+
+    #[error("import data is invalid")]
+    InvalidData,
+
+    #[error("transaction error")]
+    Transaction(#[from] SqlTxError),
+}
+
+/// Check if the file is a json file
+fn is_file_json(file_path: &Path) -> Result<(), ImportExportError> {
+    // Ensure that the file is a JSON file
+    if let Some(extension) = file_path.extension() {
+        if extension != "json" {
+            return Err(ImportExportError::NotJson);
+        }
+    } else {
+        return Err(ImportExportError::InvalidFilePath);
+    }
+    Ok(())
+}
+
+#[tokio::main]
+/// Returns a JSON string containing all commands and parameters
+pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExportError> {
+    is_file_json(export_file_path)?;
+
+    // Set up database connection
+    let dal = get_db_connection().await?;
+
+    // Get all commands and parameters
+    let export_data = ExportFormat {
+        commands: dal.get_all_commands(false, false, None).await?,
+        parameters: dal.get_all_internal_parameters(None).await?,
+    };
+
+    let json_string = serde_json::to_string(&export_data)?;
+    fs::write(export_file_path, json_string)?;
+
+    Ok(())
+}
+
+#[tokio::main]
+pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportError> {
+    // Check if the file exists
+    if !import_file_path.is_file() {
+        return Err(ImportExportError::InvalidFilePath);
+    }
+
+    is_file_json(import_file_path)?;
+
+    // Deserialize the file
+    let data = fs::read_to_string(import_file_path)?;
+    let import_data: ExportFormat = serde_json::from_str(&data)?;
+
+    // Create database connection
+    let dal = get_db_connection().await?;
+
+    let mut tx = dal.begin().await?;
+
+    // Insert all records into the database
+    //
+    // We keep a map linking command IDs in the json to their respective
+    // ids in the database. This is required when inserting the parameters
+    // to ensure the foreign key references are correct
+    let mut import_cmd_id_to_db_id: HashMap<i64, i64> = HashMap::new();
+    for command in import_data.commands {
+        let db_id = match dal
+            .add_command(command.internal_command, Some(&mut tx))
+            .await
+        {
+            Ok(id) => id,
+            Err(e) => {
+                dal.rollback(tx).await?;
+                return Err(ImportExportError::DbQuery(e));
+            }
+        };
+        import_cmd_id_to_db_id.insert(command.id, db_id);
+    }
+
+    if import_data.parameters.len() > 0 {
+        let mut insert_params: Vec<InternalParameter> = vec![];
+        for param in import_data.parameters {
+            let cmd_id = param.command_id;
+            insert_params.push(InternalParameter {
+                command_id: match import_cmd_id_to_db_id.get(&cmd_id) {
+                    Some(id) => *id,
+                    None => {
+                        dal.rollback(tx).await?;
+                        return Err(ImportExportError::InvalidData);
+                    }
+                },
+                symbol: param.symbol,
+                regex: param.regex,
+                note: param.note,
+            })
+        }
+        if let Err(e) = dal.add_params(insert_params, Some(&mut tx)).await {
+            dal.rollback(tx).await?;
+            return Err(ImportExportError::DbQuery(e));
+        }
+    }
+
+    dal.commit(tx).await?;
+    Ok(())
+}
