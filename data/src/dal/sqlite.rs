@@ -1,15 +1,13 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
-use std::fs;
-use std::path::Path;
 use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SQliteDatabaseConnectionError {
-    #[error("Could not get the current directory")]
-    CurDir(#[source] std::io::Error),
+    #[error("Could not get the database path")]
+    DbPath(String),
 
     #[error("Could not create the database file")]
     CreatingDatabase(#[source] std::io::Error),
@@ -34,13 +32,7 @@ pub struct SqliteDatabase {
 
 impl SqliteDatabase {
     /// Creates a new connection to a SQLite database
-    ///
-    /// Creates the database and initializes the tables if required
     pub async fn new() -> Result<Self, SQliteDatabaseConnectionError> {
-        if !Self::db_file_exists() {
-            Self::create_db()
-        }
-
         let pool = Self::establish_db_connection().await?;
 
         Self::create_tables(&pool).await?;
@@ -51,32 +43,30 @@ impl SqliteDatabase {
     /// Returns path to database
     ///
     /// Path: $HOME/.config/cmdstack/database.sqlite
-    fn get_db_path() -> String {
-        let home_dir = dirs::home_dir().unwrap();
-        home_dir.to_str().unwrap().to_string() + "/.config/cmdstack/database.sqlite"
-    }
+    fn get_db_path() -> Result<String, SQliteDatabaseConnectionError> {
+        let home_dir = match dirs::home_dir() {
+            Some(dir) => match dir.to_str() {
+                Some(path) => path.to_string(),
+                None => {
+                    return Err(SQliteDatabaseConnectionError::DbPath(
+                        "Could not convert home directory to string".to_string(),
+                    ));
+                }
+            },
+            None => {
+                return Err(SQliteDatabaseConnectionError::DbPath(
+                    "Could not get home directory".to_string(),
+                ));
+            }
+        };
 
-    /// Checks if the database file exists
-    fn db_file_exists() -> bool {
-        let db_path = Self::get_db_path();
-        Path::new(&db_path).exists()
-    }
-
-    /// Creates database file
-    fn create_db() {
-        let db_path = Self::get_db_path();
-        let db_dir = Path::new(&db_path).parent().unwrap();
-
-        if !db_dir.exists() {
-            fs::create_dir_all(db_dir).unwrap();
-        }
-
-        fs::File::create(db_path).unwrap();
+        Ok(home_dir + "/.config/cmdstack/database.sqlite")
     }
 
     async fn establish_db_connection() -> Result<SqlitePool, SQliteDatabaseConnectionError> {
-        let mut connect_options = match SqliteConnectOptions::from_str(Self::get_db_path().as_str())
-        {
+        let db_path = Self::get_db_path()?;
+
+        let mut connect_options = match SqliteConnectOptions::from_str(&db_path) {
             Ok(options) => options,
             Err(e) => {
                 return Err(SQliteDatabaseConnectionError::SqliteOptionsInitialization(
@@ -84,7 +74,8 @@ impl SqliteDatabase {
                 ))
             }
         };
-        connect_options = connect_options.foreign_keys(true);
+        // Enable foreign keys and ensure database file is created if it does not exist
+        connect_options = connect_options.foreign_keys(true).create_if_missing(true);
 
         match SqlitePool::connect_with(connect_options).await {
             Ok(pool) => Ok(pool),
@@ -128,7 +119,7 @@ impl SqliteDatabase {
             .foreign_key(
                 ForeignKey::create()
                     .name("fk_69420")
-                    .from(Parameter::Table, Parameter::Id)
+                    .from(Parameter::Table, Parameter::CommandId)
                     .to(Command::Table, Command::Id)
                     .on_delete(ForeignKeyAction::Cascade),
             )

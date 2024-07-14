@@ -1,7 +1,11 @@
 //! Add a parameter to a command
 
-use crate::param::param_utils::{list_parameters, ParamUtilError};
+use crate::{
+    outputs::ErrorOutput,
+    param::param_utils::{list_parameters, ParamUtilError},
+};
 use data::models::Parameter;
+use log::error;
 
 pub fn handle_list_param_command(params: Vec<Parameter>, print_limit: u32) {
     match list_parameters(params, print_limit) {
@@ -11,7 +15,8 @@ pub fn handle_list_param_command(params: Vec<Parameter>, print_limit: u32) {
                 println!("\nSelected command does not have any parameters");
             }
             _ => {
-                println!("Param List Cmd: Error listing parameters: {:?}", e);
+                error!(target: "Param List Cmd", "Error listing parameters: {:?}", e);
+                ErrorOutput::ListParams.print();
             }
         },
     }

@@ -1,9 +1,9 @@
-use super::sqlite;
+use super::{sqlite, SqlTxError};
 use super::{Dal, SqlQueryError};
 use async_trait::async_trait;
 use sea_query::{Expr, Query, SqliteQueryBuilder};
 use sqlx::sqlite::SqliteRow;
-use sqlx::Row;
+use sqlx::{Row, Sqlite, Transaction};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::models::*;
@@ -16,6 +16,28 @@ pub struct SqliteDal {
 #[async_trait]
 impl Dal for SqliteDal {
     type Row = SqliteRow;
+    type DB = Sqlite;
+
+    async fn begin(&self) -> Result<Transaction<'_, Sqlite>, SqlTxError> {
+        match self.sql.pool.begin().await {
+            Ok(tx) => Ok(tx),
+            Err(e) => Err(SqlTxError::TxBegin(e)),
+        }
+    }
+
+    async fn rollback(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
+        match tx.rollback().await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(SqlTxError::TxRollback(e)),
+        }
+    }
+
+    async fn commit(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
+        match tx.commit().await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(SqlTxError::TxCommit(e)),
+        }
+    }
 
     async fn get_unix_timestamp() -> i64 {
         SystemTime::now()
@@ -24,21 +46,51 @@ impl Dal for SqliteDal {
             .as_secs() as i64
     }
 
-    async fn execute_insert(&self, query: &str) -> Result<i64, sqlx::Error> {
-        let query_result = sqlx::query(query).execute(&self.sql.pool).await?;
+    async fn execute_insert(
+        &self,
+        query: &str,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<i64, sqlx::Error> {
+        let query_result;
+        if let Some(trans) = tx {
+            query_result = sqlx::query(query).execute(&mut **trans).await?;
+        } else {
+            query_result = sqlx::query(query).execute(&self.sql.pool).await?;
+        }
         Ok(query_result.last_insert_rowid())
     }
 
-    async fn execute(&self, query: &str) -> Result<(), sqlx::Error> {
-        sqlx::query(query).execute(&self.sql.pool).await.map(|_| ())
+    async fn execute(
+        &self,
+        query: &str,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<(), sqlx::Error> {
+        if let Some(trans) = tx {
+            sqlx::query(query).execute(&mut **trans).await.map(|_| ())
+        } else {
+            sqlx::query(query).execute(&self.sql.pool).await.map(|_| ())
+        }
     }
 
-    async fn query(&self, query: &str) -> Result<Vec<Self::Row>, sqlx::Error> {
-        let rows = sqlx::query(query).fetch_all(&self.sql.pool).await?;
+    async fn query(
+        &self,
+        query: &str,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<Vec<Self::Row>, sqlx::Error> {
+        let rows;
+        if let Some(trans) = tx {
+            rows = sqlx::query(query).fetch_all(&mut **trans).await?;
+        } else {
+            rows = sqlx::query(query).fetch_all(&self.sql.pool).await?;
+        }
         Ok(rows)
     }
 
-    async fn add_command(&self, command: InternalCommand) -> Result<i64, SqlQueryError> {
+    async fn add_command(
+        &self,
+        command: InternalCommand,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<i64, SqlQueryError> {
         let current_time = Self::get_unix_timestamp().await;
 
         let query = Query::insert()
@@ -61,7 +113,7 @@ impl Dal for SqliteDal {
             ])
             .to_string(SqliteQueryBuilder);
 
-        let inserted_row_id = match self.execute_insert(&query).await {
+        let inserted_row_id = match self.execute_insert(&query, tx).await {
             Ok(id) => id,
             Err(e) => return Err(SqlQueryError::AddCommand(e)),
         };
@@ -73,6 +125,7 @@ impl Dal for SqliteDal {
         &self,
         order_by_use: bool,
         favourites_only: bool,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<Vec<Command>, SqlQueryError> {
         let query = Query::select()
             .columns([
@@ -102,7 +155,7 @@ impl Dal for SqliteDal {
             .from(sqlite::Command::Table)
             .to_string(SqliteQueryBuilder);
 
-        let rows = match self.query(&query).await {
+        let rows = match self.query(&query, tx).await {
             Ok(rows) => rows,
             Err(e) => return Err(SqlQueryError::SearchCommand(e)),
         };
@@ -125,7 +178,11 @@ impl Dal for SqliteDal {
         Ok(commands)
     }
 
-    async fn update_command_last_used_prop(&self, command_id: i64) -> Result<(), SqlQueryError> {
+    async fn update_command_last_used_prop(
+        &self,
+        command_id: i64,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<(), SqlQueryError> {
         let current_time = Self::get_unix_timestamp().await;
 
         let query = Query::update()
@@ -134,7 +191,7 @@ impl Dal for SqliteDal {
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute(&query).await {
+        match self.execute(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
         };
@@ -142,13 +199,17 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn delete_command(&self, command_id: i64) -> Result<(), SqlQueryError> {
+    async fn delete_command(
+        &self,
+        command_id: i64,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<(), SqlQueryError> {
         let query = Query::delete()
             .from_table(sqlite::Command::Table)
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute(&query).await {
+        match self.execute(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
         };
@@ -160,6 +221,7 @@ impl Dal for SqliteDal {
         &self,
         command_id: i64,
         new_command_props: InternalCommand,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<(), SqlQueryError> {
         let query = Query::update()
             .table(sqlite::Command::Table)
@@ -176,7 +238,7 @@ impl Dal for SqliteDal {
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute(&query).await {
+        match self.execute(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
         };
@@ -184,7 +246,11 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn add_params(&self, params: Vec<InternalParameter>) -> Result<(), SqlQueryError> {
+    async fn add_params(
+        &self,
+        params: Vec<InternalParameter>,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<(), SqlQueryError> {
         let mut builder = Query::insert()
             .into_table(sqlite::Parameter::Table)
             .columns([
@@ -206,7 +272,7 @@ impl Dal for SqliteDal {
 
         let query = builder.to_string(SqliteQueryBuilder);
 
-        match self.execute_insert(&query).await {
+        match self.execute_insert(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::AddParam(e)),
         }
@@ -214,7 +280,11 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn get_params(&self, command_id: i64) -> Result<Vec<Parameter>, SqlQueryError> {
+    async fn get_params(
+        &self,
+        command_id: i64,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<Vec<Parameter>, SqlQueryError> {
         let query = Query::select()
             .columns([
                 sqlite::Parameter::Id,
@@ -226,7 +296,7 @@ impl Dal for SqliteDal {
             .from(sqlite::Parameter::Table)
             .to_string(SqliteQueryBuilder);
 
-        let rows = match self.query(&query).await {
+        let rows = match self.query(&query, tx).await {
             Ok(rows) => rows,
             Err(e) => return Err(SqlQueryError::SearchCommand(e)),
         };
@@ -251,6 +321,7 @@ impl Dal for SqliteDal {
         &self,
         param_id: i64,
         param: InternalParameter,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<(), SqlQueryError> {
         let query = Query::update()
             .table(sqlite::Parameter::Table)
@@ -262,7 +333,7 @@ impl Dal for SqliteDal {
             .and_where(Expr::col(sqlite::Parameter::Id).eq(param_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute(&query).await {
+        match self.execute(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
         };
@@ -270,13 +341,17 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn delete_param(&self, param_id: i64) -> Result<(), SqlQueryError> {
+    async fn delete_param(
+        &self,
+        param_id: i64,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<(), SqlQueryError> {
         let query = Query::delete()
             .from_table(sqlite::Parameter::Table)
             .and_where(Expr::col(sqlite::Parameter::Id).eq(param_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute(&query).await {
+        match self.execute(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
         };
@@ -284,7 +359,10 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn get_all_internal_parameters(&self) -> Result<Vec<InternalParameter>, SqlQueryError> {
+    async fn get_all_internal_parameters(
+        &self,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<Vec<InternalParameter>, SqlQueryError> {
         let query = Query::select()
             .columns([
                 sqlite::Parameter::CommandId,
@@ -293,18 +371,9 @@ impl Dal for SqliteDal {
                 sqlite::Parameter::Note,
             ])
             .from(sqlite::Parameter::Table)
-            .and_where(
-                // Workaround while we figure out why foreign key references are not working
-                Expr::col(sqlite::Parameter::CommandId).in_subquery(
-                    Query::select()
-                        .column(sqlite::Command::Id)
-                        .from(sqlite::Command::Table)
-                        .take(),
-                ),
-            )
             .to_string(SqliteQueryBuilder);
 
-        let rows = match self.query(&query).await {
+        let rows = match self.query(&query, tx).await {
             Ok(rows) => rows,
             Err(e) => return Err(SqlQueryError::SearchCommand(e)),
         };

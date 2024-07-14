@@ -1,9 +1,9 @@
-use crate::args::AddArgs;
+use crate::{args::AddArgs, outputs::ErrorOutput};
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
+use log::error;
 
 #[derive(Debug)]
-/// The properties of a command
 struct AddCommandProperties {
     alias: String,
     tag: Option<String>,
@@ -47,7 +47,8 @@ pub fn handle_add_command(args: AddArgs) {
         let command_properties = match set_command_properties_wizard(&command) {
             Ok(properties) => properties,
             Err(e) => {
-                println!("Add Cmd: Error setting command properties: {:?}", e);
+                error!(target: "Add Cmd", "Error setting command properties: {:?}", e);
+                ErrorOutput::UserInput.print();
                 return;
             }
         };
@@ -61,17 +62,26 @@ pub fn handle_add_command(args: AddArgs) {
         alias = Some(command.clone());
     }
 
-    // Add the command to the database
-    let add_result = logic::command::handle_add_command(InternalCommand {
+    let alias = match alias {
+        Some(a) => a,
+        None => {
+            error!(target: "Add Cmd", "Could not set alias");
+            ErrorOutput::UserInput.print();
+            return;
+        }
+    };
+
+    match logic::command::handle_add_command(InternalCommand {
         command: command,
-        alias: alias.unwrap(),
+        alias: alias,
         tag: tag,
         note: note,
         favourite: favourite,
-    });
-
-    match add_result {
+    }) {
         Ok(_) => println!("\nCommand added successfully"),
-        Err(e) => println!("Add Cmd: Error adding command: {:?}", e),
+        Err(e) => {
+            error!(target: "Add Cmd", "Error adding command: {:?}", e);
+            ErrorOutput::AddCmd.print();
+        }
     }
 }
