@@ -47,7 +47,6 @@ pub enum ImportExportError {
 
 /// Check if the file is a json file
 fn is_file_json(file_path: &Path) -> Result<(), ImportExportError> {
-    // Ensure that the file is a JSON file
     if let Some(extension) = file_path.extension() {
         if extension != "json" {
             return Err(ImportExportError::NotJson);
@@ -59,7 +58,7 @@ fn is_file_json(file_path: &Path) -> Result<(), ImportExportError> {
 }
 
 #[tokio::main]
-/// Returns a JSON string containing all commands and parameters
+/// Handle the export request by writing all data in the database to the requested JSON file
 pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExportError> {
     is_file_json(export_file_path)?;
 
@@ -79,6 +78,7 @@ pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExp
 }
 
 #[tokio::main]
+/// Handle the import request by importing all data in the given JSON file
 pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportError> {
     // Check if the file exists
     if !import_file_path.is_file() {

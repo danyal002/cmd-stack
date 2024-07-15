@@ -1,5 +1,3 @@
-//! Add a parameter to a command
-
 use data::models::{Command, InternalParameter};
 use inquire::{validator::Validation, InquireError};
 use log::error;
@@ -58,6 +56,7 @@ fn get_params_from_user(command_id: i64) -> Result<Vec<InternalParameter>, Inqui
     return Ok(params);
 }
 
+/// UI handler for add parameter command
 pub fn handle_add_param_command(command: Command) {
     let params = match get_params_from_user(command.id) {
         Ok(p) => p,

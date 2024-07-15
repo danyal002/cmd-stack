@@ -108,6 +108,7 @@ pub async fn handle_generate_param(command: Command) -> Result<String, GenerateP
 }
 
 #[tokio::main]
+/// Get all parameters associated with the given command
 pub async fn get_params(command_id: i64) -> Result<Vec<Parameter>, DefaultLogicError> {
     // Set up database connection
     let dal = get_db_connection().await?;

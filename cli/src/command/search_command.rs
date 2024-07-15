@@ -91,7 +91,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     match handle_update_command_last_used_prop(selected_command.id) {
         Ok(_) => {}
         Err(e) => {
-            // Does not matter much to the user if this does not work
+            // Does not matter to the user if this does not work
             error!(
                 target: "Search Cmd", "Failed to update command last used prop: {:?}",
                 e

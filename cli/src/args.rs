@@ -8,7 +8,6 @@ pub struct CmdStackArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// Different commands that can be executed
 pub enum Command {
     /// Add a command
     Add(AddArgs),
@@ -60,7 +59,7 @@ pub struct AddArgs {
 }
 
 #[derive(Debug, ValueEnum, Clone)]
-/// Different supported printing methods
+/// Different supported printing styles for commands
 pub enum PrintStyle {
     /// Display the alias, value, tag, and notes
     All,

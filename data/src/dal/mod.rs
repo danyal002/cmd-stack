@@ -58,14 +58,14 @@ pub trait Dal: Sync + Send {
         tx: Option<&mut Transaction<'_, Self::DB>>,
     ) -> Result<i64, sqlx::Error>;
 
-    /// Executes a query
+    /// Executes a query (returns nothing)
     async fn execute(
         &self,
         query: &str,
         tx: Option<&mut Transaction<'_, Self::DB>>,
     ) -> Result<(), sqlx::Error>;
 
-    /// Queries the database and returns the rows
+    /// Query the database (returns rows)
     async fn query(
         &self,
         query: &str,

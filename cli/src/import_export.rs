@@ -2,6 +2,7 @@ use crate::{args::ImportExportArgs, outputs::ErrorOutput};
 use log::error;
 use std::path::Path;
 
+/// UI handler for export command
 pub fn handle_export_command(args: ImportExportArgs) {
     let file_path = Path::new(&args.file);
 
@@ -14,6 +15,7 @@ pub fn handle_export_command(args: ImportExportArgs) {
     }
 }
 
+/// UI handler for import command
 pub fn handle_import_command(args: ImportExportArgs) {
     let file_path = Path::new(&args.file);
 

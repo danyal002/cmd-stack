@@ -1,5 +1,3 @@
-//! Add a parameter to a command
-
 use data::models::Parameter;
 use log::error;
 
@@ -7,6 +5,7 @@ use crate::outputs::ErrorOutput;
 
 use super::param_utils::{select_parameters, ParamUtilError};
 
+/// UI handler for delete parameter command
 pub fn handle_delete_param_command(params: Vec<Parameter>, print_limit: u32) {
     let param_to_delete = match select_parameters(&params, print_limit) {
         Ok(param) => param,

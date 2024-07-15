@@ -33,6 +33,7 @@ fn update_param_wizard(
     });
 }
 
+/// UI handler for update parameter command
 pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
     let param_to_update = match select_parameters(&params, print_limit) {
         Ok(param) => param,
