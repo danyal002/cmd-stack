@@ -13,6 +13,7 @@ fn update_param_wizard(
     cur_regex: String,
     cur_note: Option<String>,
 ) -> Result<InternalParameter, InquireError> {
+    println!("\nSet the properties of the parameter");
     let symbol = Text::new("Symbol:")
         .with_initial_value(&cur_symbol)
         .prompt()?;
@@ -68,7 +69,7 @@ pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
 
     match logic::param::update_param(param_to_update.id, updated_internal_params) {
         Ok(_) => {
-            println!("Parameter updated successfully");
+            println!("\nParameter updated successfully");
         }
         Err(e) => {
             error!(target: "Param Update Cmd", "Error updating parameter: {:?}", e);

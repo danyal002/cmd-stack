@@ -13,6 +13,7 @@ use clap::Parser;
 use log::LevelFilter;
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Root};
+use outputs::ErrorOutput;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -75,8 +76,8 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
 fn main() {
     match initialize_logger() {
         Ok(_) => {}
-        Err(e) => {
-            eprintln!("Error initializing logger: {}", e);
+        Err(_) => {
+            ErrorOutput::Logger.print();
             std::process::exit(1);
         }
     }

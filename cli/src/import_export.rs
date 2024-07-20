@@ -20,7 +20,7 @@ pub fn handle_import_command(args: ImportExportArgs) {
     let file_path = Path::new(&args.file);
 
     match logic::import_export::import_data(file_path) {
-        Ok(_) => println!("\nCommands imported from {:?}", file_path),
+        Ok(num) => println!("\n{} commands imported from {:?}", num, file_path),
         Err(e) => {
             error!(target: "Import Cmd", "Failed to import command: {:?}", e);
             ErrorOutput::Import.print();

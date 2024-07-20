@@ -19,9 +19,20 @@ pub fn handle_list_commands(args: ListArgs) {
         Ok(c) => c,
         Err(e) => match e {
             GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("No commands found");
+                println!("\nNo commands found");
                 return;
             }
+            GetSelectedItemFromUserError::InquireError(ie) => match ie {
+                inquire::InquireError::OperationInterrupted => {
+                    // If the user cancelled the search, don't display anything
+                    return;
+                }
+                _ => {
+                    error!(target: "List Cmd", "Failed to get selected command: {:?}", ie);
+                    ErrorOutput::SelectCmd.print();
+                    return;
+                }
+            },
             _ => {
                 error!(target: "List Cmd", "Failed to get selected command: {:?}", e);
                 ErrorOutput::SelectCmd.print();

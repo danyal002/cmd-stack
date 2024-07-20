@@ -56,7 +56,7 @@ pub fn handle_param_command(param_command: ParamCommands) {
         Ok(c) => c,
         Err(e) => match e {
             GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("No commands found");
+                println!("\nNo commands found");
                 return;
             }
             _ => {

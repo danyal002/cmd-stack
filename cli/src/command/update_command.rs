@@ -93,7 +93,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         Ok(c) => c,
         Err(e) => match e {
             GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("No commands found");
+                println!("\nNo commands found");
                 return;
             }
             _ => {

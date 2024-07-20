@@ -10,10 +10,12 @@ pub enum ErrorOutput {
     GenerateParam,
     AddParams,
     ListParams,
+    Logger,
 }
 
 impl ErrorOutput {
     pub fn print(&self) {
+        println!(); // Spacing
         match self {
             ErrorOutput::UserInput => println!("Failed to get input"),
             ErrorOutput::SelectCmd => println!("Failed to select command"),
@@ -26,6 +28,7 @@ impl ErrorOutput {
             ErrorOutput::GenerateParam => println!("Failed to generate parameter"),
             ErrorOutput::AddParams => println!("Failed to add parameters"),
             ErrorOutput::ListParams => println!("Failed to list parameters"),
+            ErrorOutput::Logger => println!("Failed to initialize logger"),
         }
     }
 }

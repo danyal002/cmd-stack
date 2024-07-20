@@ -46,7 +46,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
         Ok(c) => c,
         Err(e) => match e {
             GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("No commands found");
+                println!("\nNo commands found");
                 return;
             }
             _ => {

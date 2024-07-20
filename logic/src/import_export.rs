@@ -79,7 +79,7 @@ pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExp
 
 #[tokio::main]
 /// Handle the import request by importing all data in the given JSON file
-pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportError> {
+pub async fn import_data(import_file_path: &Path) -> Result<u32, ImportExportError> {
     // Check if the file exists
     if !import_file_path.is_file() {
         return Err(ImportExportError::InvalidFilePath);
@@ -101,6 +101,7 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
     // We keep a map linking command IDs in the json to their respective
     // ids in the database. This is required when inserting the parameters
     // to ensure the foreign key references are correct
+    let num_commands = import_data.commands.len() as u32;
     let mut import_cmd_id_to_db_id: HashMap<i64, i64> = HashMap::new();
     for command in import_data.commands {
         let db_id = match dal
@@ -140,15 +141,15 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
     }
 
     dal.commit(tx).await?;
-    Ok(())
+    Ok(num_commands)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use std::fs::File;
     use std::io::prelude::*;
+    use tempfile::tempdir;
 
     #[test]
     fn is_file_json_valid() {
@@ -227,8 +228,10 @@ mod tests {
         let dir = tempdir().unwrap();
         let file_path = dir.path().join("test.json");
         let mut tmp_file = File::create(&file_path).unwrap();
-        tmp_file.write_all(b"Some text that is definitely not JSON").unwrap();
-       
+        tmp_file
+            .write_all(b"Some text that is definitely not JSON")
+            .unwrap();
+
         let result = import_data(&file_path);
         assert!(matches!(result, Err(ImportExportError::SerdeError(_))));
     }

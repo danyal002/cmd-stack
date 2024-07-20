@@ -138,7 +138,6 @@ impl SqliteDatabase {
     }
 }
 
-
 #[derive(Iden)]
 /// Command Table Schema
 pub enum Command {
