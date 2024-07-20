@@ -32,7 +32,11 @@ pub fn print_internal_command(internal_command: &InternalCommand) {
             Cell::new(note),
         ]));
     }
-    let favourite_status = if internal_command.favourite { "YES" } else { "NO" };
+    let favourite_status = if internal_command.favourite {
+        "YES"
+    } else {
+        "NO"
+    };
     table.add_row(Row::new(vec![
         Cell::new("Favourite:").with_style(Attr::Italic(true)),
         Cell::new(favourite_status),

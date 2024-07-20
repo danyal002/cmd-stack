@@ -43,7 +43,8 @@ pub fn handle_add_command(args: AddArgs) {
     let mut favourite = args.favourite;
 
     // If no alias, tag, or note is provided, generate a wizard to get them
-    if alias.is_none() && tag.is_none() && note.is_none() {
+    let generate_command_with_wizard = alias.is_none() && tag.is_none() && note.is_none();
+    if generate_command_with_wizard {
         let command_properties = match set_command_properties_wizard(&command) {
             Ok(properties) => properties,
             Err(e) => {
@@ -81,8 +82,14 @@ pub fn handle_add_command(args: AddArgs) {
 
     match logic::command::handle_add_command(internal_command.clone()) {
         Ok(_) => {
-            println!("\nCommand added successfully:");
-            print_internal_command(&internal_command);
+            if !generate_command_with_wizard {
+                // If the user added the command via CLI arguments, we need to
+                // display the information so they can confirm the validity
+                println!("\nCommand added successfully:");
+                print_internal_command(&internal_command);
+            } else {
+                println!("\nCommand added successfully");
+            }
         }
         Err(e) => {
             error!(target: "Add Cmd", "Error adding command: {:?}", e);
