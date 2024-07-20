@@ -1,4 +1,4 @@
-use crate::{args::AddArgs, outputs::ErrorOutput};
+use crate::{args::AddArgs, command::print_internal_command, outputs::ErrorOutput};
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
@@ -71,14 +71,19 @@ pub fn handle_add_command(args: AddArgs) {
         }
     };
 
-    match logic::command::handle_add_command(InternalCommand {
+    let internal_command = InternalCommand {
         command: command,
         alias: alias,
         tag: tag,
         note: note,
         favourite: favourite,
-    }) {
-        Ok(_) => println!("\nCommand added successfully"),
+    };
+
+    match logic::command::handle_add_command(internal_command.clone()) {
+        Ok(_) => {
+            println!("\nCommand added successfully:");
+            print_internal_command(&internal_command);
+        }
         Err(e) => {
             error!(target: "Add Cmd", "Error adding command: {:?}", e);
             ErrorOutput::AddCmd.print();

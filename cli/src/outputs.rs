@@ -5,6 +5,7 @@ pub enum ErrorOutput {
     FailedToCommand(String),
     FailedToParam(String),
     Export,
+    NotJson,
     Import,
     AddCmd,
     GenerateParam,
@@ -23,6 +24,9 @@ impl ErrorOutput {
             ErrorOutput::FailedToCommand(op) => println!("Failed to {} selected command", op),
             ErrorOutput::FailedToParam(op) => println!("Failed to {} selected parameter", op),
             ErrorOutput::Export => println!("Failed to export commands"),
+            ErrorOutput::NotJson => {
+                println!("Failed to export because provided file is not a JSON")
+            }
             ErrorOutput::Import => println!("Failed to import commands"),
             ErrorOutput::AddCmd => println!("Failed to add command"),
             ErrorOutput::GenerateParam => println!("Failed to generate parameter"),

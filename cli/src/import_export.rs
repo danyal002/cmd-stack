@@ -1,5 +1,6 @@
 use crate::{args::ImportExportArgs, outputs::ErrorOutput};
 use log::error;
+use logic::import_export::ImportExportError;
 use std::path::Path;
 
 /// UI handler for export command
@@ -10,7 +11,10 @@ pub fn handle_export_command(args: ImportExportArgs) {
         Ok(_) => println!("\nCommands exported to {:?}", file_path),
         Err(e) => {
             error!(target: "Export Cmd", "Failed to export command: {:?}", e);
-            ErrorOutput::Export.print();
+            match e {
+                ImportExportError::NotJson => ErrorOutput::NotJson.print(),
+                _ => ErrorOutput::Export.print(),
+            }
         }
     }
 }
