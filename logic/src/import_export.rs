@@ -147,8 +147,6 @@ pub async fn import_data(import_file_path: &Path) -> Result<u32, ImportExportErr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::File;
-    use std::io::prelude::*;
     use tempfile::tempdir;
 
     #[test]

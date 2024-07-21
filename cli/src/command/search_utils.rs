@@ -4,7 +4,8 @@ use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
 use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
-use prettytable::{format, Cell, Row, Table};
+use termion::terminal_size;
+use prettytable::{Table, Row, Cell, format};
 use thiserror::Error;
 
 pub fn display_search_args_wizard(
@@ -150,21 +151,42 @@ fn format_commands_for_printing(
     };
 }
 
+fn truncate_string(s: &str, width: usize) -> String {
+    if s.chars().count() > width {
+        format!("{}...", &s.chars().take(width - 3).collect::<String>())
+    } else {
+        s.to_string()
+    }
+}
+
 fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
+    let (width, _) = terminal_size().unwrap_or((80, 0)); // Default to 80 if terminal size cannot be determined
+
+    // Define maximum widths for each column
+    let alias_width = std::cmp::max(width * 15 / 100, 17) as usize; // Alias gets 15% of width or 17, whichever is more
+    let tag_width = 10;
+    let favourite_width = 5;
+
+    let remaining_width = width as usize - alias_width - tag_width - favourite_width - 12;
+    let command_width = remaining_width * 75 / 100; // Commands get 75% of remaining width
+    let note_width = remaining_width - command_width;
+
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
 
     for command in commands {
+        // Truncate the text for command and note fields
+        let truncated_alias = truncate_string(&command.internal_command.alias, alias_width);
+        let truncated_tag = truncate_string(command.internal_command.tag.as_deref().unwrap_or(""), tag_width);
+        let truncated_command = truncate_string(&command.internal_command.command, command_width);
+        let truncated_note = truncate_string(command.internal_command.note.as_deref().unwrap_or(""), note_width);
+
         table.add_row(Row::new(vec![
-            Cell::new(&command.internal_command.alias),
-            Cell::new(&command.internal_command.command),
-            Cell::new(command.internal_command.tag.as_deref().unwrap_or("")),
-            Cell::new(command.internal_command.note.as_deref().unwrap_or("")),
-            Cell::new(if command.internal_command.favourite {
-                "YES"
-            } else {
-                "NO"
-            }),
+            Cell::new(&truncated_alias),
+            Cell::new(&truncated_command),
+            Cell::new(&truncated_tag),
+            Cell::new(&truncated_note),
+            Cell::new(if command.internal_command.favourite { "YES" } else { "NO" }),
         ]));
     }
 
