@@ -7,6 +7,7 @@ mod command;
 mod import_export;
 pub mod outputs;
 mod param;
+pub mod utils;
 
 use args::{CmdStackArgs, Command};
 use clap::Parser;
