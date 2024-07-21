@@ -4,6 +4,7 @@ pub enum ErrorOutput {
     SelectParam,
     FailedToCommand(String),
     FailedToParam(String),
+    FailedToCopy(String),
     Export,
     NotJson,
     Import,
@@ -23,6 +24,11 @@ impl ErrorOutput {
             ErrorOutput::SelectParam => println!("Failed to select parameter"),
             ErrorOutput::FailedToCommand(op) => println!("Failed to {} selected command", op),
             ErrorOutput::FailedToParam(op) => println!("Failed to {} selected parameter", op),
+            ErrorOutput::FailedToCopy(cmd) => {
+                println!("Failed to add the selected command to clipboard. Please copy the following text:");
+                println!();
+                println!("{}\n", cmd);
+            }
             ErrorOutput::Export => println!("Failed to export commands"),
             ErrorOutput::NotJson => {
                 println!("Failed to export because provided file is not a JSON")

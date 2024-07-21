@@ -1,4 +1,5 @@
-use crate::args::PrintStyle;
+use crate::{args::PrintStyle, outputs::ErrorOutput};
+use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
@@ -169,4 +170,23 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
 
     let table_str = table.to_string();
     return table_str.lines().map(|s| s.to_string()).collect();
+}
+
+pub fn copy_text(cmd: &str, text_to_copy: String) {
+    let mut clipboard = match ClipboardContext::new() {
+        Ok(ctx) => ctx,
+        Err(e) => {
+            error!(target: cmd, "Failed to initialize the clipboard: {:?}", e);
+            ErrorOutput::FailedToCopy(text_to_copy).print();
+            return;
+        }
+    };
+    match clipboard.set_contents(text_to_copy.clone()) {
+        Ok(()) => println!("\nCommand copied to clipboard: {}", text_to_copy),
+        Err(e) => {
+            error!(target: cmd, "Failed copy command to clipboard: {:?}", e);
+            ErrorOutput::FailedToCopy(text_to_copy).print();
+            return;
+        }
+    }
 }

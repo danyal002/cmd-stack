@@ -1,12 +1,11 @@
 use crate::{
     args::SearchAndPrintArgs,
     command::search_utils::{
-        display_search_args_wizard, get_searched_commands, search_args_wizard,
+        copy_text, display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
     outputs::ErrorOutput,
 };
-use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use log::error;
 use logic::command::{handle_update_command_last_used_prop, SearchCommandArgs};
 
@@ -71,22 +70,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     };
 
     // Copy the selected command to the clipboard
-    let mut clipboard = match ClipboardContext::new() {
-        Ok(ctx) => ctx,
-        Err(e) => {
-            error!(target: "Search Cmd", "Failed to initialize the clipboard: {:?}", e);
-            ErrorOutput::FailedToCommand("copy".to_string()).print();
-            return;
-        }
-    };
-    match clipboard.set_contents(copied_text.clone()) {
-        Ok(()) => println!("\nCommand copied to clipboard: {}", copied_text),
-        Err(e) => {
-            error!(target: "Search Cmd", "Failed copy command to clipboard: {:?}", e);
-            ErrorOutput::FailedToCommand("copy".to_string()).print();
-            return;
-        }
-    }
+    copy_text("Search Cmd", copied_text);
 
     match handle_update_command_last_used_prop(selected_command.id) {
         Ok(_) => {}
