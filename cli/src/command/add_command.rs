@@ -41,6 +41,7 @@ pub fn handle_add_command(args: AddArgs) {
     let mut tag = args.tag;
     let mut note = args.note;
     let mut favourite = args.favourite;
+    l
 
     // If no alias, tag, or note is provided, generate a wizard to get them
     if alias.is_none() && tag.is_none() && note.is_none() {
