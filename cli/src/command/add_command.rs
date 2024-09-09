@@ -26,12 +26,12 @@ fn set_command_properties_wizard(command: &str) -> Result<AddCommandProperties, 
         .prompt()?
         == "Yes";
 
-    return Ok(AddCommandProperties {
-        alias: alias,
-        tag: if tag != "" { Some(tag) } else { None },
-        note: if note != "" { Some(note) } else { None },
-        favourite: favourite,
-    });
+    Ok(AddCommandProperties {
+        alias,
+        tag: if !tag.is_empty() { Some(tag) } else { None },
+        note: if !note.is_empty() { Some(note) } else { None },
+        favourite,
+    })
 }
 
 /// UI handler for the add command
@@ -73,11 +73,11 @@ pub fn handle_add_command(args: AddArgs) {
     };
 
     let internal_command = InternalCommand {
-        command: command,
-        alias: alias,
-        tag: tag,
-        note: note,
-        favourite: favourite,
+        command,
+        alias,
+        tag,
+        note,
+        favourite,
     };
 
     match logic::command::handle_add_command(internal_command.clone()) {

@@ -61,14 +61,17 @@ pub enum GenerateParamError {
 
 #[tokio::main]
 /// Handles the generation of parameters for a command
-pub async fn handle_generate_param(command: Command) -> Result<String, GenerateParamError> {
+pub async fn handle_generate_param(command: Command) -> Result<String, Box<GenerateParamError>> {
     // Set up database connection
-    let dal = get_db_connection().await?;
+    let dal = match get_db_connection().await {
+        Ok(c) => c,
+        Err(e) => return Err(Box::new(GenerateParamError::DbConnection(e)))
+    };
 
     // Get the parameters for the command from the database
     let params: Vec<Parameter> = match dal.get_params(command.id, None).await {
         Ok(p) => p,
-        Err(e) => return Err(GenerateParamError::Query(e)),
+        Err(e) => return Err(Box::new(GenerateParamError::Query(e))),
     };
 
     // If there are no parameters, return the command
@@ -85,13 +88,13 @@ pub async fn handle_generate_param(command: Command) -> Result<String, GenerateP
         let hir = match parser.parse(&param.internal_parameter.regex) {
             Ok(hir) => hir,
             Err(e) => {
-                return Err(GenerateParamError::InvalidRegexPattern(e));
+                return Err(Box::new(GenerateParamError::InvalidRegexPattern(e)));
             }
         };
 
         let gen = match Regex::with_hir(hir, 100) {
             Ok(r) => r,
-            Err(e) => return Err(GenerateParamError::InvalidHir(e)),
+            Err(e) => return Err(Box::new(GenerateParamError::InvalidHir(e))),
         };
         let param_value = (&mut rng)
             .sample_iter(&gen)

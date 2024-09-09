@@ -13,7 +13,7 @@ pub fn display_search_args_wizard(
     command: &Option<String>,
     tag: &Option<String>,
 ) -> bool {
-    return alias.is_none() && command.is_none() && tag.is_none();
+    alias.is_none() && command.is_none() && tag.is_none()
 }
 
 /// Generates a wizard to set the properties for command searching
@@ -24,11 +24,11 @@ pub fn search_args_wizard() -> Result<SearchCommandArgs, InquireError> {
 
     let tag = Text::new("Tag").prompt()?;
 
-    return Ok(SearchCommandArgs {
-        alias: if alias != "" { Some(alias) } else { None },
-        command: if command != "" { Some(command) } else { None },
-        tag: if tag != "" { Some(tag) } else { None },
-    });
+    Ok(SearchCommandArgs {
+        alias: if !alias.is_empty() { Some(alias) } else { None },
+        command: if !command.is_empty() { Some(command) } else { None },
+        tag: if !tag.is_empty() { Some(tag) } else { None },
+    })
 }
 
 #[derive(Error, Debug)]
@@ -64,7 +64,7 @@ pub fn get_searched_commands(
                 return Err(e);
             }
         };
-    return Ok(selected_command);
+    Ok(selected_command)
 }
 
 /// Gets all commands from the database in the user's preferred format
@@ -89,7 +89,7 @@ pub fn get_listed_commands(
                 return Err(e);
             }
         };
-    return Ok(selected_command);
+    Ok(selected_command)
 }
 
 /// Generates a wizard to prompt the user to select a command from a list of commands
@@ -98,7 +98,7 @@ fn get_selected_item_from_user(
     print_style: PrintStyle,
     display_limit: u32,
 ) -> Result<Command, GetSelectedItemFromUserError> {
-    if commands.len() == 0 {
+    if commands.is_empty() {
         return Err(GetSelectedItemFromUserError::NoCommandsFound);
     }
 
@@ -110,7 +110,7 @@ fn get_selected_item_from_user(
         formatted_commands,
     )
     // Only display the command once the user makes a selection
-    .with_formatter(&|i| format!("{}", &commands[i.index].internal_command.command))
+    .with_formatter(&|i| commands[i.index].internal_command.command.to_string())
     .with_page_size(display_limit as usize)
     .raw_prompt()
     {
@@ -120,7 +120,7 @@ fn get_selected_item_from_user(
         }
     };
 
-    return Ok(commands[selected_command.index].clone());
+    Ok(commands[selected_command.index].clone())
 }
 
 /// Formats the commands for printing based on the user's preferred style.
@@ -129,26 +129,26 @@ fn format_commands_for_printing(
     commands: &Vec<Command>,
     print_style: PrintStyle,
 ) -> (Vec<String>, &str) {
-    return match print_style {
+    match print_style {
         PrintStyle::All => (
             format_internal_commands(commands),
             "(Alias | Command | Tag | Note | Favourite [YES/NO])",
         ),
         PrintStyle::Alias => (
             commands
-                .into_iter()
+                .iter()
                 .map(|c| c.internal_command.alias.clone())
                 .collect(),
             "(Alias)",
         ),
         PrintStyle::Command => (
             commands
-                .into_iter()
+                .iter()
                 .map(|c| c.internal_command.command.clone())
                 .collect(),
             "(Command)",
         ),
-    };
+    }
 }
 
 fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
@@ -214,7 +214,6 @@ pub fn copy_text(cmd: &str, text_to_copy: String) {
         Err(e) => {
             error!(target: cmd, "Failed copy command to clipboard: {:?}", e);
             ErrorOutput::FailedToCopy(text_to_copy).print();
-            return;
         }
     }
 }

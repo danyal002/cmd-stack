@@ -36,9 +36,9 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     // Get the selected command
     let selected_command = match get_searched_commands(
         SearchCommandArgs {
-            alias: alias,
-            command: command,
-            tag: tag,
+            alias,
+            command,
+            tag,
         },
         print_style,
         print_limit,
@@ -80,7 +80,6 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
                 target: "Search Cmd", "Failed to update command last used prop: {:?}",
                 e
             );
-            return;
         }
     };
 }

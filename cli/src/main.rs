@@ -35,7 +35,7 @@ enum LoggerInitializationError {
 /// Set up logging for CLI
 ///
 /// If we are doing local development, set up environment logger.
-/// Otherwise (if the app was built with the `--release`` flag), send logs to a file in the user's file statem.
+/// Otherwise (if the app was built with the `--release` flag), send logs to a file in the user's file statem.
 fn initialize_logger() -> Result<(), LoggerInitializationError> {
     if cfg!(debug_assertions) {
         // Set up environment logger

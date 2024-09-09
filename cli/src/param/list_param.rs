@@ -17,12 +17,10 @@ pub fn handle_list_param_command(params: Vec<Parameter>, print_limit: u32) {
                 match ie {
                     inquire::InquireError::OperationInterrupted => {
                         // If the user cancelled the search, don't display anything
-                        return;
                     }
                     _ => {
                         error!(target: "Param List Cmd", "Error listing parameters: {:?}", ie);
                         ErrorOutput::ListParams.print();
-                        return;
                     }
                 }
             }

@@ -8,7 +8,7 @@ use inquire::{InquireError, Text};
 use log::error;
 
 fn update_param_wizard(
-    cmd_id: i64,
+    command_id: i64,
     cur_symbol: String,
     cur_regex: String,
     cur_note: Option<String>,
@@ -26,12 +26,12 @@ fn update_param_wizard(
         .with_initial_value(&cur_note.unwrap_or(String::from("")))
         .prompt()?;
 
-    return Ok(InternalParameter {
-        command_id: cmd_id,
-        symbol: symbol,
-        regex: regex,
-        note: if note != "" { Some(note) } else { None },
-    });
+    Ok(InternalParameter {
+        command_id,
+        symbol,
+        regex,
+        note: if !note.is_empty() { Some(note) } else { None },
+    })
 }
 
 /// UI handler for update parameter command

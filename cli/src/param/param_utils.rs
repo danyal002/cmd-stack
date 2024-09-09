@@ -17,7 +17,7 @@ pub enum ParamUtilError {
 }
 
 pub fn list_parameters(params: Vec<Parameter>, print_limit: u32) -> Result<(), ParamUtilError> {
-    if params.len() == 0 {
+    if params.is_empty() {
         return Err(ParamUtilError::NoParams);
     }
 
@@ -33,25 +33,25 @@ pub fn list_parameters(params: Vec<Parameter>, print_limit: u32) -> Result<(), P
         Err(e) => return Err(ParamUtilError::GetSelectedItemFromUserError(e)),
     };
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn select_parameters(
     params: &Vec<Parameter>,
     print_limit: u32,
 ) -> Result<Parameter, ParamUtilError> {
-    if params.len() == 0 {
+    if params.is_empty() {
         return Err(ParamUtilError::NoParams);
     }
 
-    let formatted_params = format_params_for_printing(&params);
+    let formatted_params = format_params_for_printing(params);
 
     println!(); // Spacing
     let selected_param = match Select::new(
         "Select a parameter (Symbol | Regex | Note):",
         formatted_params,
     )
-    .with_formatter(&|i| format!("{}", &params[i.index].internal_parameter.symbol))
+    .with_formatter(&|i| params[i.index].internal_parameter.symbol.to_string())
     .with_page_size(print_limit as usize)
     .raw_prompt()
     {
@@ -59,7 +59,7 @@ pub fn select_parameters(
         Err(e) => return Err(ParamUtilError::GetSelectedItemFromUserError(e)),
     };
 
-    return Ok(params[selected_param.index].clone());
+    Ok(params[selected_param.index].clone())
 }
 
 fn format_params_for_printing(params: &Vec<Parameter>) -> Vec<String> {
@@ -81,7 +81,7 @@ fn format_params_for_printing(params: &Vec<Parameter>) -> Vec<String> {
         let truncated_regex =
             truncate_string(&param.internal_parameter.regex, regex_width as usize);
         let truncated_note = truncate_string(
-            &param.internal_parameter.note.as_deref().unwrap_or(""),
+            param.internal_parameter.note.as_deref().unwrap_or(""),
             note_width as usize,
         );
 

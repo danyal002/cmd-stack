@@ -47,13 +47,13 @@ pub fn set_command_properties_wizard(
         .prompt()?
         == "Yes";
 
-    return Ok(InternalCommand {
-        command: command,
-        alias: alias,
-        tag: if tag != "" { Some(tag) } else { None },
-        note: if note != "" { Some(note) } else { None },
-        favourite: favourite,
-    });
+    Ok(InternalCommand {
+        command,
+        alias,
+        tag: if !tag.is_empty() { Some(tag) } else { None },
+        note: if !note.is_empty() { Some(note) } else { None },
+        favourite,
+    })
 }
 
 /// UI handler for the update command
@@ -83,9 +83,9 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
     // Get the selected command
     let selected_command = match get_searched_commands(
         SearchCommandArgs {
-            alias: alias,
-            command: command,
-            tag: tag,
+            alias,
+            command,
+            tag,
         },
         print_style,
         print_limit,

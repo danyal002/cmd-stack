@@ -51,7 +51,6 @@ pub fn handle_list_commands(args: ListArgs) {
         Err(e) => {
             // Does not matter much to the user if this does not work
             error!(target: "List Cmd", "Failed to update command last used prop: {:?}", e);
-            return;
         }
     };
 }

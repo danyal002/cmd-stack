@@ -52,4 +52,4 @@ jobs:
           toolchain: stable
 
       - name: Clippy
-        run: cargo clippy --verbose
+        run: cargo clippy --verbose -- -D warnings

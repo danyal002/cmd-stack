@@ -46,9 +46,9 @@ pub fn handle_param_command(param_command: ParamCommands) {
     // Get the selected command
     let selected_command = match get_searched_commands(
         SearchCommandArgs {
-            alias: alias,
-            command: command,
-            tag: tag,
+            alias,
+            command,
+            tag,
         },
         print_style,
         print_limit,

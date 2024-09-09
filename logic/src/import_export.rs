@@ -117,7 +117,7 @@ pub async fn import_data(import_file_path: &Path) -> Result<u32, ImportExportErr
         import_cmd_id_to_db_id.insert(command.id, db_id);
     }
 
-    if import_data.parameters.len() > 0 {
+    if !import_data.parameters.is_empty() {
         let mut insert_params: Vec<InternalParameter> = vec![];
         for param in import_data.parameters {
             let cmd_id = param.command_id;

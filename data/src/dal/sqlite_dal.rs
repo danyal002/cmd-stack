@@ -306,7 +306,7 @@ impl Dal for SqliteDal {
             params.push(Parameter {
                 id: row.get::<i64, _>("id"),
                 internal_parameter: InternalParameter {
-                    command_id: command_id,
+                    command_id,
                     symbol: row.get("symbol"),
                     regex: row.get("regex"),
                     note: row.get("note"),
