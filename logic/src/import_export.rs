@@ -47,7 +47,6 @@ pub enum ImportExportError {
 
 /// Check if the file is a json file
 fn is_file_json(file_path: &Path) -> Result<(), ImportExportError> {
-    // Ensure that the file is a JSON file
     if let Some(extension) = file_path.extension() {
         if extension != "json" {
             return Err(ImportExportError::NotJson);
@@ -59,7 +58,7 @@ fn is_file_json(file_path: &Path) -> Result<(), ImportExportError> {
 }
 
 #[tokio::main]
-/// Returns a JSON string containing all commands and parameters
+/// Handle the export request by writing all data in the database to the requested JSON file
 pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExportError> {
     is_file_json(export_file_path)?;
 
@@ -79,7 +78,8 @@ pub async fn create_export_json(export_file_path: &Path) -> Result<(), ImportExp
 }
 
 #[tokio::main]
-pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportError> {
+/// Handle the import request by importing all data in the given JSON file
+pub async fn import_data(import_file_path: &Path) -> Result<u32, ImportExportError> {
     // Check if the file exists
     if !import_file_path.is_file() {
         return Err(ImportExportError::InvalidFilePath);
@@ -101,6 +101,7 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
     // We keep a map linking command IDs in the json to their respective
     // ids in the database. This is required when inserting the parameters
     // to ensure the foreign key references are correct
+    let num_commands = import_data.commands.len() as u32;
     let mut import_cmd_id_to_db_id: HashMap<i64, i64> = HashMap::new();
     for command in import_data.commands {
         let db_id = match dal
@@ -116,7 +117,7 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
         import_cmd_id_to_db_id.insert(command.id, db_id);
     }
 
-    if import_data.parameters.len() > 0 {
+    if !import_data.parameters.is_empty() {
         let mut insert_params: Vec<InternalParameter> = vec![];
         for param in import_data.parameters {
             let cmd_id = param.command_id;
@@ -140,5 +141,38 @@ pub async fn import_data(import_file_path: &Path) -> Result<(), ImportExportErro
     }
 
     dal.commit(tx).await?;
-    Ok(())
+    Ok(num_commands)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn is_file_json_valid() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test.json");
+
+        let result = is_file_json(&file_path);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn is_file_json_wrong_extension() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test.txt");
+
+        let result = is_file_json(&file_path);
+        assert!(matches!(result, Err(ImportExportError::NotJson)));
+    }
+
+    #[test]
+    fn is_file_json_no_extension() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test");
+
+        let result = is_file_json(&file_path);
+        assert!(matches!(result, Err(ImportExportError::InvalidFilePath)));
+    }
 }

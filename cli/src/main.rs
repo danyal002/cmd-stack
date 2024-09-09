@@ -7,12 +7,14 @@ mod command;
 mod import_export;
 pub mod outputs;
 mod param;
+pub mod utils;
 
 use args::{CmdStackArgs, Command};
 use clap::Parser;
 use log::LevelFilter;
 use log4rs::append::file::FileAppender;
 use log4rs::config::{Appender, Config, Root};
+use outputs::ErrorOutput;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -30,10 +32,10 @@ enum LoggerInitializationError {
     InitializingLogger,
 }
 
-/// Set up logging. Can log in any crate using the log crate
+/// Set up logging for CLI
 ///
 /// If we are doing local development, set up environment logger.
-/// Otherwise (if the app was built with the --release flag), send logs to a file in the user's file statem.
+/// Otherwise (if the app was built with the `--release` flag), send logs to a file in the user's file statem.
 fn initialize_logger() -> Result<(), LoggerInitializationError> {
     if cfg!(debug_assertions) {
         // Set up environment logger
@@ -75,8 +77,8 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
 fn main() {
     match initialize_logger() {
         Ok(_) => {}
-        Err(e) => {
-            eprintln!("Error initializing logger: {}", e);
+        Err(_) => {
+            ErrorOutput::Logger.print();
             std::process::exit(1);
         }
     }

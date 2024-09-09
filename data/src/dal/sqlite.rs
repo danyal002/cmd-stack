@@ -138,8 +138,8 @@ impl SqliteDatabase {
     }
 }
 
-/// Command Table Schema
 #[derive(Iden)]
+/// Command Table Schema
 pub enum Command {
     Table,
     Id,
@@ -151,8 +151,8 @@ pub enum Command {
     Favourite,
 }
 
-// Parameter Table Schema
 #[derive(Iden)]
+/// Parameter Table Schema
 pub enum Parameter {
     Table,
     Id,

@@ -1,4 +1,3 @@
-///! Handle all commands relating to parameters
 use crate::args::ParamCommands;
 use crate::command::search_utils::{
     display_search_args_wizard, get_searched_commands, search_args_wizard,
@@ -47,9 +46,9 @@ pub fn handle_param_command(param_command: ParamCommands) {
     // Get the selected command
     let selected_command = match get_searched_commands(
         SearchCommandArgs {
-            alias: alias,
-            command: command,
-            tag: tag,
+            alias,
+            command,
+            tag,
         },
         print_style,
         print_limit,
@@ -57,7 +56,7 @@ pub fn handle_param_command(param_command: ParamCommands) {
         Ok(c) => c,
         Err(e) => match e {
             GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("No commands found");
+                println!("\nNo commands found");
                 return;
             }
             _ => {

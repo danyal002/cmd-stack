@@ -1,12 +1,11 @@
 use crate::{
     args::SearchAndPrintArgs,
     command::search_utils::{
-        display_search_args_wizard, get_searched_commands, search_args_wizard,
+        copy_text, display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
     outputs::ErrorOutput,
 };
-use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use log::error;
 use logic::command::{handle_update_command_last_used_prop, SearchCommandArgs};
 
@@ -37,9 +36,9 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     // Get the selected command
     let selected_command = match get_searched_commands(
         SearchCommandArgs {
-            alias: alias,
-            command: command,
-            tag: tag,
+            alias,
+            command,
+            tag,
         },
         print_style,
         print_limit,
@@ -47,7 +46,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         Ok(c) => c,
         Err(e) => match e {
             GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("No commands found");
+                println!("\nNo commands found");
                 return;
             }
             _ => {
@@ -71,32 +70,16 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     };
 
     // Copy the selected command to the clipboard
-    let mut clipboard = match ClipboardContext::new() {
-        Ok(ctx) => ctx,
-        Err(e) => {
-            error!(target: "Search Cmd", "Failed to initialize the clipboard: {:?}", e);
-            ErrorOutput::FailedToCommand("copy".to_string()).print();
-            return;
-        }
-    };
-    match clipboard.set_contents(copied_text.clone()) {
-        Ok(()) => println!("\nCommand copied to clipboard: {}", copied_text),
-        Err(e) => {
-            error!(target: "Search Cmd", "Failed copy command to clipboard: {:?}", e);
-            ErrorOutput::FailedToCommand("copy".to_string()).print();
-            return;
-        }
-    }
+    copy_text("Search Cmd", copied_text);
 
     match handle_update_command_last_used_prop(selected_command.id) {
         Ok(_) => {}
         Err(e) => {
-            // Does not matter much to the user if this does not work
+            // Does not matter to the user if this does not work
             error!(
                 target: "Search Cmd", "Failed to update command last used prop: {:?}",
                 e
             );
-            return;
         }
     };
 }

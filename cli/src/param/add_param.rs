@@ -1,5 +1,3 @@
-//! Add a parameter to a command
-
 use data::models::{Command, InternalParameter};
 use inquire::{validator::Validation, InquireError};
 use log::error;
@@ -33,12 +31,12 @@ fn set_param_properties_wizard(command_id: i64) -> Result<InternalParameter, Inq
 
     let note = inquire::Text::new("Note (Optional):").prompt()?;
 
-    return Ok(InternalParameter {
-        command_id: command_id,
-        symbol: symbol,
-        regex: regex,
-        note: if note != "" { Some(note) } else { None },
-    });
+    Ok(InternalParameter {
+        command_id,
+        symbol,
+        regex,
+        note: if !note.is_empty() { Some(note) } else { None },
+    })
 }
 
 fn get_params_from_user(command_id: i64) -> Result<Vec<InternalParameter>, InquireError> {
@@ -55,9 +53,10 @@ fn get_params_from_user(command_id: i64) -> Result<Vec<InternalParameter>, Inqui
         }
     }
 
-    return Ok(params);
+    Ok(params)
 }
 
+/// UI handler for add parameter command
 pub fn handle_add_param_command(command: Command) {
     let params = match get_params_from_user(command.id) {
         Ok(p) => p,

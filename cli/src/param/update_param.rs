@@ -8,11 +8,12 @@ use inquire::{InquireError, Text};
 use log::error;
 
 fn update_param_wizard(
-    cmd_id: i64,
+    command_id: i64,
     cur_symbol: String,
     cur_regex: String,
     cur_note: Option<String>,
 ) -> Result<InternalParameter, InquireError> {
+    println!("\nSet the properties of the parameter");
     let symbol = Text::new("Symbol:")
         .with_initial_value(&cur_symbol)
         .prompt()?;
@@ -25,14 +26,15 @@ fn update_param_wizard(
         .with_initial_value(&cur_note.unwrap_or(String::from("")))
         .prompt()?;
 
-    return Ok(InternalParameter {
-        command_id: cmd_id,
-        symbol: symbol,
-        regex: regex,
-        note: if note != "" { Some(note) } else { None },
-    });
+    Ok(InternalParameter {
+        command_id,
+        symbol,
+        regex,
+        note: if !note.is_empty() { Some(note) } else { None },
+    })
 }
 
+/// UI handler for update parameter command
 pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
     let param_to_update = match select_parameters(&params, print_limit) {
         Ok(param) => param,
@@ -67,7 +69,7 @@ pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
 
     match logic::param::update_param(param_to_update.id, updated_internal_params) {
         Ok(_) => {
-            println!("Parameter updated successfully");
+            println!("\nParameter updated successfully");
         }
         Err(e) => {
             error!(target: "Param Update Cmd", "Error updating parameter: {:?}", e);
