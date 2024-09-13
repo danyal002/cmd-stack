@@ -1,6 +1,7 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
+use std::{env, fs};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -41,26 +42,40 @@ impl SqliteDatabase {
     }
 
     /// Returns path to database
-    ///
-    /// Path: $HOME/.config/cmdstack/database.sqlite
     fn get_db_path() -> Result<String, SQliteDatabaseConnectionError> {
-        let home_dir = match dirs::home_dir() {
-            Some(dir) => match dir.to_str() {
-                Some(path) => path.to_string(),
-                None => {
-                    return Err(SQliteDatabaseConnectionError::DbPath(
-                        "Could not convert home directory to string".to_string(),
-                    ));
-                }
+        let top_level_directory = match env::var_os("CMD_STACK_DIRECTORY") {
+            Some(path) => {
+                path.to_string_lossy().into_owned()
             },
             None => {
-                return Err(SQliteDatabaseConnectionError::DbPath(
-                    "Could not get home directory".to_string(),
-                ));
+                match dirs::config_dir() {
+                    Some(dir) => match dir.to_str() {
+                        Some(path) => path.to_string(),
+                        None => {
+                            return Err(SQliteDatabaseConnectionError::DbPath(
+                                "Could not convert home directory to string".to_string(),
+                            ));
+                        }
+                    },
+                    None => {
+                        return Err(SQliteDatabaseConnectionError::DbPath(
+                            "Could not get config directory".to_string(),
+                        ));
+                    }
+                }
             }
         };
 
-        Ok(home_dir + "/.config/cmdstack/database.sqlite")
+        // We must create he directory to allow SQLite to create the database file
+        let directory = top_level_directory + "/cmdstack/";
+        match fs::create_dir_all(directory.clone()) {
+            Ok(_) => {},
+            Err(e) => {
+                return Err(SQliteDatabaseConnectionError::CreatingDatabase(e));
+            }
+        }
+
+        Ok(directory + "database.sqlite")
     }
 
     async fn establish_db_connection() -> Result<SqlitePool, SQliteDatabaseConnectionError> {
