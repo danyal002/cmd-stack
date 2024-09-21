@@ -65,7 +65,7 @@ pub async fn handle_generate_param(command: Command) -> Result<String, Box<Gener
     // Set up database connection
     let dal = match get_db_connection().await {
         Ok(c) => c,
-        Err(e) => return Err(Box::new(GenerateParamError::DbConnection(e)))
+        Err(e) => return Err(Box::new(GenerateParamError::DbConnection(e))),
     };
 
     // Get the parameters for the command from the database

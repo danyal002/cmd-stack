@@ -44,22 +44,22 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
             .init();
     } else {
         // Log file path: $HOME/.config/cmdstack/cmdstack.log
-        let home_dir = match dirs::home_dir() {
+        let config_dir = match dirs::config_dir() {
             Some(dir) => match dir.to_str() {
                 Some(path) => path.to_string(),
                 None => {
                     return Err(LoggerInitializationError::LogPath(
-                        "Could not convert home directory to string".to_string(),
+                        "Could not convert config directory to string".to_string(),
                     ));
                 }
             },
             None => {
                 return Err(LoggerInitializationError::LogPath(
-                    "Could not get home directory".to_string(),
+                    "Could not get config directory".to_string(),
                 ));
             }
         };
-        let logfile_path = home_dir + "/.config/cmdstack/cmdstack.log";
+        let logfile_path = config_dir + "/cmdstack/cmdstack.log";
 
         let logfile = FileAppender::builder().build(logfile_path)?;
 

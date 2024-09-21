@@ -1,8 +1,8 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
-use std::{env, fs};
 use std::str::FromStr;
+use std::{env, fs};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -44,32 +44,28 @@ impl SqliteDatabase {
     /// Returns path to database
     fn get_db_path() -> Result<String, SQliteDatabaseConnectionError> {
         let top_level_directory = match env::var_os("CMD_STACK_DIRECTORY") {
-            Some(path) => {
-                path.to_string_lossy().into_owned()
-            },
-            None => {
-                match dirs::config_dir() {
-                    Some(dir) => match dir.to_str() {
-                        Some(path) => path.to_string(),
-                        None => {
-                            return Err(SQliteDatabaseConnectionError::DbPath(
-                                "Could not convert home directory to string".to_string(),
-                            ));
-                        }
-                    },
+            Some(path) => path.to_string_lossy().into_owned(),
+            None => match dirs::config_dir() {
+                Some(dir) => match dir.to_str() {
+                    Some(path) => path.to_string(),
                     None => {
                         return Err(SQliteDatabaseConnectionError::DbPath(
-                            "Could not get config directory".to_string(),
+                            "Could not convert home directory to string".to_string(),
                         ));
                     }
+                },
+                None => {
+                    return Err(SQliteDatabaseConnectionError::DbPath(
+                        "Could not get config directory".to_string(),
+                    ));
                 }
-            }
+            },
         };
 
         // We must create he directory to allow SQLite to create the database file
         let directory = top_level_directory + "/cmdstack/";
         match fs::create_dir_all(directory.clone()) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => {
                 return Err(SQliteDatabaseConnectionError::CreatingDatabase(e));
             }

@@ -26,7 +26,11 @@ pub fn search_args_wizard() -> Result<SearchCommandArgs, InquireError> {
 
     Ok(SearchCommandArgs {
         alias: if !alias.is_empty() { Some(alias) } else { None },
-        command: if !command.is_empty() { Some(command) } else { None },
+        command: if !command.is_empty() {
+            Some(command)
+        } else {
+            None
+        },
         tag: if !tag.is_empty() { Some(tag) } else { None },
     })
 }

@@ -1,5 +1,4 @@
 pub fn truncate_string(s: &str, width: usize) -> String {
-    
     if s.chars().count() > width {
         if width < 3 {
             "...".to_string()
@@ -10,7 +9,6 @@ pub fn truncate_string(s: &str, width: usize) -> String {
         s.to_string()
     }
 }
-
 
 #[cfg(test)]
 mod tests {
