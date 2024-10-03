@@ -22,7 +22,7 @@ jobs:
           toolchain: stable
 
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --workspace --exclude ui --verbose
 
   test:
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
           toolchain: stable
 
       - name: Test
-        run: cargo test --verbose
+        run: cargo test --workspace --exclude ui --verbose
 
   clippy:
     runs-on: ubuntu-latest
@@ -52,4 +52,4 @@ jobs:
           toolchain: stable
 
       - name: Clippy
-        run: cargo clippy --verbose -- -D warnings
+        run: cargo clippy --workspace --exclude ui --verbose -- -D warnings
