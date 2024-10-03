@@ -3,5 +3,6 @@ members = [
     "cli", 
     "data",
     "logic",
+    "ui/src-tauri"
 ]
 resolver="2"
