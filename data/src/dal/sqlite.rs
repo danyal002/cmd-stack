@@ -1,8 +1,8 @@
 use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
+use std::fs;
 use std::str::FromStr;
-use std::{env, fs};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -28,38 +28,39 @@ pub enum SQliteDatabaseConnectionError {
 
 /// Represents a connection to a SQLite database
 pub struct SqliteDatabase {
+    pub directory: Option<String>,
     pub pool: sqlx::SqlitePool,
 }
 
 impl SqliteDatabase {
     /// Creates a new connection to a SQLite database
-    pub async fn new() -> Result<Self, SQliteDatabaseConnectionError> {
-        let pool = Self::establish_db_connection().await?;
+    pub async fn new(directory: Option<String>) -> Result<Self, SQliteDatabaseConnectionError> {
+        let pool = Self::establish_db_connection(directory).await?;
 
         Self::create_tables(&pool).await?;
 
-        Ok(Self { pool })
+        Ok(SqliteDatabase {
+            directory: None,
+            pool,
+        })
     }
 
     /// Returns path to database
     fn get_db_path() -> Result<String, SQliteDatabaseConnectionError> {
-        let top_level_directory = match env::var_os("CMD_STACK_DIRECTORY") {
-            Some(path) => path.to_string_lossy().into_owned(),
-            None => match dirs::config_dir() {
-                Some(dir) => match dir.to_str() {
-                    Some(path) => path.to_string(),
-                    None => {
-                        return Err(SQliteDatabaseConnectionError::DbPath(
-                            "Could not convert home directory to string".to_string(),
-                        ));
-                    }
-                },
+        let top_level_directory = match dirs::config_dir() {
+            Some(dir) => match dir.to_str() {
+                Some(path) => path.to_string(),
                 None => {
                     return Err(SQliteDatabaseConnectionError::DbPath(
-                        "Could not get config directory".to_string(),
+                        "Could not convert home directory to string".to_string(),
                     ));
                 }
             },
+            None => {
+                return Err(SQliteDatabaseConnectionError::DbPath(
+                    "Could not get config directory".to_string(),
+                ));
+            }
         };
 
         // We must create he directory to allow SQLite to create the database file
@@ -74,8 +75,14 @@ impl SqliteDatabase {
         Ok(directory + "database.sqlite")
     }
 
-    async fn establish_db_connection() -> Result<SqlitePool, SQliteDatabaseConnectionError> {
-        let db_path = Self::get_db_path()?;
+    async fn establish_db_connection(
+        directory: Option<String>,
+    ) -> Result<SqlitePool, SQliteDatabaseConnectionError> {
+        let db_path = if let Some(d) = directory {
+            d
+        } else {
+            Self::get_db_path()?
+        };
 
         let mut connect_options = match SqliteConnectOptions::from_str(&db_path) {
             Ok(options) => options,

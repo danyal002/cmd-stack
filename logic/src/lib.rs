@@ -6,15 +6,23 @@ pub mod command;
 pub mod import_export;
 pub mod param;
 
-use data::dal::{
-    sqlite::{SQliteDatabaseConnectionError, SqliteDatabase},
-    sqlite_dal::SqliteDal,
-    SqlQueryError,
-};
-use std::sync::OnceLock;
+use data::dal::{sqlite::SQliteDatabaseConnectionError, sqlite_dal::SqliteDal, SqlQueryError};
 use thiserror::Error;
 
-static DB_CONNECTION: OnceLock<SqliteDal> = OnceLock::new();
+pub struct Logic {
+    db_connection: SqliteDal,
+}
+
+impl Logic {
+    pub fn new(dal: SqliteDal) -> Logic {
+        Logic { db_connection: dal }
+    }
+}
+
+pub fn new_logic() -> Result<Logic, SQliteDatabaseConnectionError> {
+    let dal = SqliteDal::new()?;
+    Ok(Logic::new(dal))
+}
 
 #[derive(Debug, Error)]
 pub enum DefaultLogicError {
@@ -35,33 +43,4 @@ pub enum DatabaseConnectionError {
 
     #[error("Got none after initializing db connection")]
     NoneAfterInit,
-}
-
-pub async fn init_db_connection() -> Result<SqliteDal, SQliteDatabaseConnectionError> {
-    let sqlite_db = match SqliteDatabase::new().await {
-        Ok(db) => db,
-        Err(e) => return Err(e),
-    };
-
-    Ok(SqliteDal {
-        sql: Box::new(sqlite_db),
-    })
-}
-
-pub async fn get_db_connection() -> Result<&'static SqliteDal, DatabaseConnectionError> {
-    if let Some(dal) = DB_CONNECTION.get() {
-        Ok(dal)
-    } else {
-        // If it is not initialized
-        let dal = init_db_connection().await?;
-        match DB_CONNECTION.set(dal) {
-            Ok(_) => {}
-            Err(_) => return Err(DatabaseConnectionError::InitDBConnection),
-        }
-
-        match DB_CONNECTION.get() {
-            Some(dal) => Ok(dal),
-            None => Err(DatabaseConnectionError::NoneAfterInit),
-        }
-    }
 }

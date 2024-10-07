@@ -4,7 +4,7 @@ use crate::{
     outputs::ErrorOutput,
 };
 use log::error;
-use logic::command::handle_update_command_last_used_prop;
+use logic::new_logic;
 
 /// UI handler for the list command
 pub fn handle_list_commands(args: ListArgs) {
@@ -46,7 +46,16 @@ pub fn handle_list_commands(args: ListArgs) {
         selected_command.internal_command.command.clone(),
     );
 
-    match handle_update_command_last_used_prop(selected_command.id) {
+    let logic = new_logic();
+    if logic.is_err() {
+        error!(target: "List Cmd", "Failed to update command last used prop: {:?}", logic.err());
+        return;
+    }
+
+    match logic
+        .unwrap()
+        .handle_update_command_last_used_prop(selected_command.id)
+    {
         Ok(_) => {}
         Err(e) => {
             // Does not matter much to the user if this does not work

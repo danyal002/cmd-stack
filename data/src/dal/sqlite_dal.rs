@@ -1,3 +1,4 @@
+use super::sqlite::{SQliteDatabaseConnectionError, SqliteDatabase};
 use super::{sqlite, SqlTxError};
 use super::{Dal, SqlQueryError};
 use async_trait::async_trait;
@@ -11,6 +12,34 @@ use crate::models::*;
 /// Data Access Layer for Sqlite
 pub struct SqliteDal {
     pub sql: Box<sqlite::SqliteDatabase>,
+}
+
+impl SqliteDal {
+    #[tokio::main]
+    pub async fn new() -> Result<SqliteDal, SQliteDatabaseConnectionError> {
+        let sqlite_db = match SqliteDatabase::new(None).await {
+            Ok(db) => db,
+            Err(e) => return Err(e),
+        };
+
+        Ok(SqliteDal {
+            sql: Box::new(sqlite_db),
+        })
+    }
+
+    #[tokio::main]
+    pub async fn new_with_directory(
+        directory: String,
+    ) -> Result<SqliteDal, SQliteDatabaseConnectionError> {
+        let sqlite_db = match SqliteDatabase::new(Some(directory)).await {
+            Ok(db) => db,
+            Err(e) => return Err(e),
+        };
+
+        Ok(SqliteDal {
+            sql: Box::new(sqlite_db),
+        })
+    }
 }
 
 #[async_trait]

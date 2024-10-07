@@ -1,5 +1,6 @@
 use data::models::Parameter;
 use log::error;
+use logic::new_logic;
 
 use crate::outputs::ErrorOutput;
 
@@ -22,7 +23,14 @@ pub fn handle_delete_param_command(params: Vec<Parameter>, print_limit: u32) {
         },
     };
 
-    match logic::param::delete_param(param_to_delete.id) {
+    let logic = new_logic();
+    if logic.is_err() {
+        error!(target: "Param Delete Cmd", "Error deleting parameter: {:?}", logic.err());
+        ErrorOutput::FailedToParam("delete".to_string()).print();
+        return;
+    }
+
+    match logic.as_ref().unwrap().delete_param(param_to_delete.id) {
         Ok(_) => println!("\nParameter deleted successfully"),
         Err(e) => {
             error!(target: "Param Delete Cmd", "Error deleting parameter: {:?}", e);

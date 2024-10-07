@@ -6,6 +6,7 @@ use super::param_utils::{select_parameters, ParamUtilError};
 use data::models::{InternalParameter, Parameter};
 use inquire::{InquireError, Text};
 use log::error;
+use logic::new_logic;
 
 fn update_param_wizard(
     command_id: i64,
@@ -67,7 +68,18 @@ pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
         }
     };
 
-    match logic::param::update_param(param_to_update.id, updated_internal_params) {
+    let logic = new_logic();
+    if logic.is_err() {
+        error!(target: "Param Update Cmd", "Error updating parameter: {:?}", logic.err());
+        ErrorOutput::FailedToParam("update".to_string()).print();
+        return;
+    }
+
+    match logic
+        .as_ref()
+        .unwrap()
+        .update_param(param_to_update.id, updated_internal_params)
+    {
         Ok(_) => {
             println!("\nParameter updated successfully");
         }

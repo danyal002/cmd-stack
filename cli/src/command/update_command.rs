@@ -9,7 +9,7 @@ use crate::{
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::command::SearchCommandArgs;
+use logic::{command::SearchCommandArgs, new_logic};
 
 /// Generates a wizard to set the properties of a command
 ///
@@ -121,8 +121,15 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         }
     };
 
+    let logic = new_logic();
+    if logic.is_err() {
+        error!(target: "Update Cmd", "Failed to update command: {:?}", logic.err());
+        ErrorOutput::FailedToCommand("update".to_string()).print();
+        return;
+    }
+
     // Update the selected command
-    match logic::command::handle_update_command(
+    match logic.as_ref().unwrap().handle_update_command(
         selected_command.id,
         InternalCommand {
             alias: new_command_properties.alias,

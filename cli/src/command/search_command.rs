@@ -7,7 +7,7 @@ use crate::{
     outputs::ErrorOutput,
 };
 use log::error;
-use logic::command::{handle_update_command_last_used_prop, SearchCommandArgs};
+use logic::{command::SearchCommandArgs, new_logic};
 
 /// UI handler for the search command
 pub fn handle_search_commands(args: SearchAndPrintArgs) {
@@ -57,7 +57,21 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         },
     };
 
-    let copied_text = match logic::param::handle_generate_param(selected_command.clone()) {
+    let logic = new_logic();
+    if logic.is_err() {
+        error!(
+            target: "Search Cmd", "Failed to update command last used prop: {:?}",
+            logic.err()
+        );
+        ErrorOutput::GenerateParam.print();
+        return;
+    }
+
+    let copied_text = match logic
+        .as_ref()
+        .unwrap()
+        .handle_generate_param(selected_command.clone())
+    {
         Ok(c) => c,
         Err(e) => {
             error!(target: "Search Cmd",
@@ -72,7 +86,10 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     // Copy the selected command to the clipboard
     copy_text("Search Cmd", copied_text);
 
-    match handle_update_command_last_used_prop(selected_command.id) {
+    match logic
+        .unwrap()
+        .handle_update_command_last_used_prop(selected_command.id)
+    {
         Ok(_) => {}
         Err(e) => {
             // Does not matter to the user if this does not work

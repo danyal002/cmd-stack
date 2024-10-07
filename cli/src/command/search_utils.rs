@@ -3,7 +3,7 @@ use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::command::{handle_list_commands, handle_search_command, SearchCommandArgs};
+use logic::{command::SearchCommandArgs, new_logic, DatabaseConnectionError};
 use prettytable::{format, Cell, Row, Table};
 use termion::terminal_size;
 use thiserror::Error;
@@ -53,7 +53,16 @@ pub fn get_searched_commands(
     print_style: PrintStyle,
     display_limit: u32,
 ) -> Result<Command, GetSelectedItemFromUserError> {
-    let commands = match handle_search_command(search_args) {
+    let logic = match new_logic() {
+        Ok(l) => l,
+        Err(_) => {
+            return Err(GetSelectedItemFromUserError::GetCommands(
+                logic::DefaultLogicError::DbConnection(DatabaseConnectionError::InitDBConnection),
+            ));
+        }
+    };
+
+    let commands = match logic.handle_search_command(search_args) {
         Ok(c) => c,
         Err(e) => {
             error!(target: "Search Utils", "Failed to get commands from DB: {:?}", e);
@@ -79,7 +88,16 @@ pub fn get_listed_commands(
     print_style: PrintStyle,
     display_limit: u32,
 ) -> Result<Command, GetSelectedItemFromUserError> {
-    let commands = match handle_list_commands(order_by_use, favourite) {
+    let logic = match new_logic() {
+        Ok(l) => l,
+        Err(_) => {
+            return Err(GetSelectedItemFromUserError::GetCommands(
+                logic::DefaultLogicError::DbConnection(DatabaseConnectionError::InitDBConnection),
+            ));
+        }
+    };
+
+    let commands = match logic.handle_list_commands(order_by_use, favourite) {
         Ok(c) => c,
         Err(e) => {
             return Err(GetSelectedItemFromUserError::GetCommands(e));

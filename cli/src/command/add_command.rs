@@ -2,6 +2,7 @@ use crate::{args::AddArgs, command::print_internal_command, outputs::ErrorOutput
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
+use logic::new_logic;
 
 #[derive(Debug)]
 struct AddCommandProperties {
@@ -80,7 +81,14 @@ pub fn handle_add_command(args: AddArgs) {
         favourite,
     };
 
-    match logic::command::handle_add_command(internal_command.clone()) {
+    let logic = new_logic();
+    if logic.is_err() {
+        error!(target: "Add Cmd", "Error adding command: {:?}", logic.err());
+        ErrorOutput::AddCmd.print();
+        return;
+    }
+
+    match logic.unwrap().handle_add_command(internal_command.clone()) {
         Ok(_) => {
             if !generate_command_with_wizard {
                 // If the user added the command via CLI arguments, we need to
