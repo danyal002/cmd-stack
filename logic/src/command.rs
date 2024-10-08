@@ -184,6 +184,8 @@ impl Logic {
 
 #[cfg(test)]
 mod tests {
+    use std::{thread, time::Duration};
+
     use data::dal::sqlite_dal::SqliteDal;
     use tempfile::TempDir;
 
@@ -270,5 +272,202 @@ mod tests {
         assert!(commands.len() == 1);
 
         assert!(commands.first().unwrap().internal_command == new_command);
+    }
+
+    #[test]
+    fn test_handle_search_command_success() {
+        let tmp_dir_result = TempDir::new();
+        assert!(tmp_dir_result.is_ok());
+
+        let path = tmp_dir_result
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .into_owned();
+        let dal = SqliteDal::new_with_directory(path);
+        assert!(dal.is_ok());
+        let logic = Logic::new(dal.unwrap());
+
+        let command = InternalCommand {
+            command: "abcd".to_string(),
+            alias: "abcd".to_string(),
+            tag: Some("green".to_string()),
+            note: None,
+            favourite: false,
+        };
+        let result = logic.handle_add_command(command.clone());
+        assert!(result.is_ok());
+
+        let command = InternalCommand {
+            command: "abce".to_string(),
+            alias: "abce".to_string(),
+            tag: Some("greet".to_string()),
+            note: None,
+            favourite: false,
+        };
+        let result = logic.handle_add_command(command.clone());
+        assert!(result.is_ok());
+
+        // search by alias starts with abc
+        let search_command_result = logic.handle_search_command(SearchCommandArgs {
+            alias: Some("abc".to_string()),
+            command: None,
+            tag: None,
+        });
+        assert!(search_command_result.is_ok());
+        let commands = search_command_result.unwrap();
+        assert!(commands.len() == 2);
+
+        // search by alias starts with abcd
+        let search_command_result = logic.handle_search_command(SearchCommandArgs {
+            alias: Some("abcd".to_string()),
+            command: None,
+            tag: None,
+        });
+        assert!(search_command_result.is_ok());
+        let commands = search_command_result.unwrap();
+        assert!(commands.len() == 1);
+
+        // search by alias starts with bc
+        let search_command_result = logic.handle_search_command(SearchCommandArgs {
+            alias: Some("bc".to_string()),
+            command: None,
+            tag: None,
+        });
+        assert!(search_command_result.is_ok());
+        let commands = search_command_result.unwrap();
+        assert!(commands.len() == 0);
+
+        // search by tag starts with gree
+        let search_command_result = logic.handle_search_command(SearchCommandArgs {
+            alias: None,
+            command: None,
+            tag: Some("gree".to_string()),
+        });
+        assert!(search_command_result.is_ok());
+        let commands = search_command_result.unwrap();
+        assert!(commands.len() == 2);
+
+        // search by tag starts with green
+        let search_command_result = logic.handle_search_command(SearchCommandArgs {
+            alias: None,
+            command: None,
+            tag: Some("green".to_string()),
+        });
+        assert!(search_command_result.is_ok());
+        let commands = search_command_result.unwrap();
+        assert!(commands.len() == 1);
+
+        // search by command starts with abc
+        let search_command_result = logic.handle_search_command(SearchCommandArgs {
+            alias: None,
+            command: Some("abc".to_string()),
+            tag: None,
+        });
+        assert!(search_command_result.is_ok());
+        let commands = search_command_result.unwrap();
+        assert!(commands.len() == 2);
+
+        // search by command starts with abcd
+        let search_command_result = logic.handle_search_command(SearchCommandArgs {
+            alias: None,
+            command: Some("abcd".to_string()),
+            tag: None,
+        });
+        assert!(search_command_result.is_ok());
+        let commands = search_command_result.unwrap();
+        assert!(commands.len() == 1);
+    }
+
+    #[test]
+    fn test_handle_delete_command_success() {
+        let tmp_dir_result = TempDir::new();
+        assert!(tmp_dir_result.is_ok());
+
+        let path = tmp_dir_result
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .into_owned();
+        let dal = SqliteDal::new_with_directory(path);
+        assert!(dal.is_ok());
+        let logic = Logic::new(dal.unwrap());
+
+        let command = InternalCommand {
+            command: "test_command".to_string(),
+            alias: "test_alias".to_string(),
+            tag: None,
+            note: None,
+            favourite: false,
+        };
+
+        let result = logic.handle_add_command(command.clone());
+        assert!(result.is_ok());
+
+        let list_commands_result = logic.handle_list_commands(false, false);
+        assert!(list_commands_result.is_ok());
+        let commands = list_commands_result.unwrap();
+        assert!(commands.len() == 1);
+        let command_id = commands.first().unwrap().id;
+
+        let delete_command_result = logic.handle_delete_command(command_id);
+        assert!(delete_command_result.is_ok());
+
+        let list_commands_result = logic.handle_list_commands(false, false);
+        assert!(list_commands_result.is_ok());
+        let commands = list_commands_result.unwrap();
+        assert!(commands.is_empty());
+
+        // delete can be called multiple times
+        let delete_command_result = logic.handle_delete_command(command_id);
+        assert!(delete_command_result.is_ok());
+    }
+
+    #[test]
+    fn test_handle_update_command_last_used_prop_success() {
+        let tmp_dir_result = TempDir::new();
+        assert!(tmp_dir_result.is_ok());
+
+        let path = tmp_dir_result
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .into_owned();
+        let dal = SqliteDal::new_with_directory(path);
+        assert!(dal.is_ok());
+        let logic = Logic::new(dal.unwrap());
+
+        let command = InternalCommand {
+            command: "test_command".to_string(),
+            alias: "test_alias".to_string(),
+            tag: None,
+            note: None,
+            favourite: false,
+        };
+
+        let result = logic.handle_add_command(command.clone());
+        assert!(result.is_ok());
+
+        let list_commands_result = logic.handle_list_commands(false, false);
+        assert!(list_commands_result.is_ok());
+        let commands = list_commands_result.unwrap();
+        assert!(commands.len() == 1);
+        let command_id = commands.first().unwrap().id;
+        let last_used = commands.first().unwrap().last_used;
+
+        // a second gone past so the timestamp will update
+        thread::sleep(Duration::from_millis(1000));
+
+        let update_last_used_result = logic.handle_update_command_last_used_prop(command_id);
+        assert!(update_last_used_result.is_ok());
+
+        // Verify that the last used property has been updated
+        let list_commands_result = logic.handle_list_commands(false, false);
+        assert!(list_commands_result.is_ok());
+        let commands = list_commands_result.unwrap();
+        assert!(commands.len() == 1);
+
+        // last_used has been updated
+        assert!(commands.first().unwrap().last_used > last_used);
     }
 }
