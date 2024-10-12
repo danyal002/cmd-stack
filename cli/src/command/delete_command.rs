@@ -65,7 +65,11 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
     }
 
     // Delete the selected command
-    match logic.unwrap().handle_delete_command(selected_command.id) {
+    match logic
+        .as_ref()
+        .unwrap()
+        .handle_delete_command(selected_command.id)
+    {
         Ok(_) => {}
         Err(e) => {
             error!(target: "Delete Cmd", "Failed to delete command: {:?}", e);

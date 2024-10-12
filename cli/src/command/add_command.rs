@@ -88,7 +88,11 @@ pub fn handle_add_command(args: AddArgs) {
         return;
     }
 
-    match logic.unwrap().handle_add_command(internal_command.clone()) {
+    match logic
+        .as_ref()
+        .unwrap()
+        .handle_add_command(internal_command.clone())
+    {
         Ok(_) => {
             if !generate_command_with_wizard {
                 // If the user added the command via CLI arguments, we need to
