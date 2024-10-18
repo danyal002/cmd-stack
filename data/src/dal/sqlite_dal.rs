@@ -68,7 +68,7 @@ impl Dal for SqliteDal {
         }
     }
 
-    async fn get_unix_timestamp() -> i64 {
+    async fn get_unix_timestamp(&self) -> i64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards")
@@ -120,7 +120,7 @@ impl Dal for SqliteDal {
         command: InternalCommand,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<i64, SqlQueryError> {
-        let current_time = Self::get_unix_timestamp().await;
+        let current_time = self.get_unix_timestamp().await;
 
         let query = Query::insert()
             .into_table(sqlite::Command::Table)
@@ -212,7 +212,7 @@ impl Dal for SqliteDal {
         command_id: i64,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<(), SqlQueryError> {
-        let current_time = Self::get_unix_timestamp().await;
+        let current_time = self.get_unix_timestamp().await;
 
         let query = Query::update()
             .table(sqlite::Command::Table)

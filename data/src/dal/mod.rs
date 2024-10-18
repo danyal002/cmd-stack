@@ -36,7 +36,7 @@ pub enum SqlTxError {
 #[async_trait]
 /// Data Access Layer trait that includes all the methods required to interact with the database
 pub trait Dal: Sync + Send {
-    type Row;
+    type Row: sqlx::Row;
     type DB: sqlx::Database;
 
     /// Begin transaction
@@ -49,7 +49,7 @@ pub trait Dal: Sync + Send {
     async fn rollback(&self, tx: Transaction<'_, Self::DB>) -> Result<(), SqlTxError>;
 
     /// Gets the current Unix timestamp
-    async fn get_unix_timestamp() -> i64;
+    async fn get_unix_timestamp(&self) -> i64;
 
     /// Executes an insert
     async fn execute_insert(

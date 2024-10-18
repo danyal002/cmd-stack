@@ -1,5 +1,5 @@
 use data::{
-    dal::{Dal, SqlQueryError, SqlTxError},
+    dal::{SqlQueryError, SqlTxError},
     models::{Command, InternalParameter},
 };
 use serde::{Deserialize, Serialize};

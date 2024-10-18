@@ -1,5 +1,4 @@
 //! Handles all requests for commands
-use data::dal::Dal;
 use data::dal::SqlQueryError;
 use data::models::{Command, InternalCommand};
 use fuzzy_matcher::skim::SkimMatcherV2;
@@ -203,7 +202,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(Box::new(dal.unwrap()));
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -235,7 +234,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(Box::new(dal.unwrap()));
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -286,7 +285,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(Box::new(dal.unwrap()));
 
         let command = InternalCommand {
             command: "abcd".to_string(),
@@ -391,7 +390,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(Box::new(dal.unwrap()));
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -435,7 +434,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(Box::new(dal.unwrap()));
 
         let command = InternalCommand {
             command: "test_command".to_string(),

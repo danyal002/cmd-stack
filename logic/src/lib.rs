@@ -6,22 +6,24 @@ pub mod command;
 pub mod import_export;
 pub mod param;
 
-use data::dal::{sqlite::SQliteDatabaseConnectionError, sqlite_dal::SqliteDal, SqlQueryError};
+use data::dal::{sqlite::SQliteDatabaseConnectionError, sqlite_dal::SqliteDal, Dal, SqlQueryError};
+use sqlx::sqlite::SqliteRow;
+use sqlx::Sqlite;
 use thiserror::Error;
 
 pub struct Logic {
-    db_connection: SqliteDal,
+    db_connection: Box<dyn Dal<Row = SqliteRow, DB = Sqlite>>,
 }
 
 impl Logic {
-    pub fn new(dal: SqliteDal) -> Logic {
+    pub fn new(dal: Box<dyn Dal<Row = SqliteRow, DB = Sqlite>>) -> Logic {
         Logic { db_connection: dal }
     }
 }
 
 pub fn new_logic() -> Result<Logic, SQliteDatabaseConnectionError> {
     let dal = SqliteDal::new()?;
-    Ok(Logic::new(dal))
+    Ok(Logic::new(Box::new(dal)))
 }
 
 #[derive(Debug, Error)]

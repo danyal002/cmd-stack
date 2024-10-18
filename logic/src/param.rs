@@ -1,8 +1,5 @@
 //! Handles all requests for commands
-use data::{
-    dal::Dal,
-    models::{Command, InternalParameter, Parameter},
-};
+use data::models::{Command, InternalParameter, Parameter};
 use rand::Rng;
 use rand_regex::Regex;
 use thiserror::Error;
