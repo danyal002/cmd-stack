@@ -3,7 +3,7 @@ use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::{command::SearchCommandArgs, new_logic, DatabaseConnectionError};
+use logic::{command::SearchCommandArgs, new_logic};
 use prettytable::{format, Cell, Row, Table};
 use termion::terminal_size;
 use thiserror::Error;
