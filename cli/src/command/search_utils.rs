@@ -55,10 +55,8 @@ pub fn get_searched_commands(
 ) -> Result<Command, GetSelectedItemFromUserError> {
     let logic = match new_logic() {
         Ok(l) => l,
-        Err(_) => {
-            return Err(GetSelectedItemFromUserError::GetCommands(
-                logic::DefaultLogicError::DbConnection(DatabaseConnectionError::InitDBConnection),
-            ));
+        Err(e) => {
+            return Err(GetSelectedItemFromUserError::GetCommands(e));
         }
     };
 
@@ -90,10 +88,8 @@ pub fn get_listed_commands(
 ) -> Result<Command, GetSelectedItemFromUserError> {
     let logic = match new_logic() {
         Ok(l) => l,
-        Err(_) => {
-            return Err(GetSelectedItemFromUserError::GetCommands(
-                logic::DefaultLogicError::DbConnection(DatabaseConnectionError::InitDBConnection),
-            ));
+        Err(e) => {
+            return Err(GetSelectedItemFromUserError::GetCommands(e));
         }
     };
 
