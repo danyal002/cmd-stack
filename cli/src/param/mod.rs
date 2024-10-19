@@ -6,6 +6,7 @@ use crate::command::search_utils::{
 use crate::outputs::ErrorOutput;
 use log::error;
 use logic::command::SearchCommandArgs;
+use logic::new_logic;
 
 mod add_param;
 mod delete_param;
@@ -67,8 +68,15 @@ pub fn handle_param_command(param_command: ParamCommands) {
         },
     };
 
+    let logic = new_logic();
+    if logic.is_err() {
+        error!(target: "Param Cmd", "Failed to initialize logic: {:?}", logic.err());
+        ErrorOutput::FailedToCommand("get parameters".to_string()).print();
+        return;
+    }
+
     // Get the parameters for the selected command
-    let params = match logic::param::get_params(selected_command.id) {
+    let params = match logic.as_ref().unwrap().get_params(selected_command.id) {
         Ok(params) => params,
         Err(e) => {
             error!(target: "Param Cmd", "Error getting parameters: {:?}", e);

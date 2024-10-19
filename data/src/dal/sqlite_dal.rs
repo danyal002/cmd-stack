@@ -1,3 +1,4 @@
+use super::sqlite::{SQliteDatabaseConnectionError, SqliteDatabase};
 use super::{sqlite, SqlTxError};
 use super::{Dal, SqlQueryError};
 use async_trait::async_trait;
@@ -11,6 +12,34 @@ use crate::models::*;
 /// Data Access Layer for Sqlite
 pub struct SqliteDal {
     pub sql: Box<sqlite::SqliteDatabase>,
+}
+
+impl SqliteDal {
+    #[tokio::main]
+    pub async fn new() -> Result<SqliteDal, SQliteDatabaseConnectionError> {
+        let sqlite_db = match SqliteDatabase::new(None).await {
+            Ok(db) => db,
+            Err(e) => return Err(e),
+        };
+
+        Ok(SqliteDal {
+            sql: Box::new(sqlite_db),
+        })
+    }
+
+    #[tokio::main]
+    pub async fn new_with_directory(
+        directory: String,
+    ) -> Result<SqliteDal, SQliteDatabaseConnectionError> {
+        let sqlite_db = match SqliteDatabase::new(Some(directory)).await {
+            Ok(db) => db,
+            Err(e) => return Err(e),
+        };
+
+        Ok(SqliteDal {
+            sql: Box::new(sqlite_db),
+        })
+    }
 }
 
 #[async_trait]
@@ -39,7 +68,7 @@ impl Dal for SqliteDal {
         }
     }
 
-    async fn get_unix_timestamp() -> i64 {
+    async fn get_unix_timestamp(&self) -> i64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards")
@@ -91,7 +120,7 @@ impl Dal for SqliteDal {
         command: InternalCommand,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<i64, SqlQueryError> {
-        let current_time = Self::get_unix_timestamp().await;
+        let current_time = self.get_unix_timestamp().await;
 
         let query = Query::insert()
             .into_table(sqlite::Command::Table)
@@ -183,7 +212,7 @@ impl Dal for SqliteDal {
         command_id: i64,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<(), SqlQueryError> {
-        let current_time = Self::get_unix_timestamp().await;
+        let current_time = self.get_unix_timestamp().await;
 
         let query = Query::update()
             .table(sqlite::Command::Table)

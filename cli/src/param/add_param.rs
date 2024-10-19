@@ -1,6 +1,7 @@
 use data::models::{Command, InternalParameter};
 use inquire::{validator::Validation, InquireError};
 use log::error;
+use logic::new_logic;
 use rand_regex::Regex;
 
 use crate::outputs::ErrorOutput;
@@ -67,7 +68,14 @@ pub fn handle_add_param_command(command: Command) {
         }
     };
 
-    match logic::param::handle_add_param(params) {
+    let logic = new_logic();
+    if logic.is_err() {
+        error!(target: "Add Param Cmd", "Failed to initialize logic: {:?}", logic.err());
+        ErrorOutput::AddParams.print();
+        return;
+    }
+
+    match logic.as_ref().unwrap().handle_add_param(params) {
         Ok(_) => println!("\nParameters added successfully"),
         Err(e) => {
             error!(target: "Add Param Cmd", "Error adding parameters: {:?}", e);
