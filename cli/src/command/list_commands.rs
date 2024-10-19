@@ -48,7 +48,7 @@ pub fn handle_list_commands(args: ListArgs) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "List Cmd", "Failed to update command last used prop: {:?}", logic.err());
+        error!(target: "List Cmd", "Failed to initialize logic: {:?}", logic.err());
         return;
     }
 

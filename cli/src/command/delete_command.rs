@@ -59,7 +59,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Delete Cmd", "Failed to delete command: {:?}", logic.err());
+        error!(target: "Delete Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::FailedToCommand("delete".to_string()).print();
         return;
     }

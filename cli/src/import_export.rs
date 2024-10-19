@@ -9,7 +9,7 @@ pub fn handle_export_command(args: ImportExportArgs) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Export Cmd", "Failed to export command: {:?}", logic.err());
+        error!(target: "Export Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::Export.print();
         return;
     }
@@ -32,7 +32,7 @@ pub fn handle_import_command(args: ImportExportArgs) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Import Cmd", "Failed to import command: {:?}", logic.err());
+        error!(target: "Import Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::Import.print();
         return;
     }

@@ -70,7 +70,7 @@ pub fn handle_param_command(param_command: ParamCommands) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Param Cmd", "Error getting parameters: {:?}", logic.err());
+        error!(target: "Param Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::FailedToCommand("get parameters".to_string()).print();
         return;
     }

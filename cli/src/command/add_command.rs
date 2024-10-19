@@ -83,7 +83,7 @@ pub fn handle_add_command(args: AddArgs) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Add Cmd", "Error adding command: {:?}", logic.err());
+        error!(target: "Add Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::AddCmd.print();
         return;
     }

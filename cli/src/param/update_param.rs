@@ -70,7 +70,7 @@ pub fn handle_update_param_command(params: Vec<Parameter>, print_limit: u32) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Param Update Cmd", "Error updating parameter: {:?}", logic.err());
+        error!(target: "Param Update Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::FailedToParam("update".to_string()).print();
         return;
     }

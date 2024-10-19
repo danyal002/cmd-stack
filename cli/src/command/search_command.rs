@@ -60,7 +60,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     let logic = new_logic();
     if logic.is_err() {
         error!(
-            target: "Search Cmd", "Failed to update command last used prop: {:?}",
+            target: "Search Cmd", "Failed to initialize logic: {:?}",
             logic.err()
         );
         ErrorOutput::GenerateParam.print();

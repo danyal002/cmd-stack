@@ -11,6 +11,15 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::Sqlite;
 use thiserror::Error;
 
+#[derive(Debug, Error)]
+pub enum DefaultLogicError {
+    #[error("failed to initalize the database connection")]
+    DbConnection(#[from] DatabaseConnectionError),
+
+    #[error("unknown data store error")]
+    Query(#[from] SqlQueryError),
+}
+
 pub struct Logic {
     db_connection: Box<dyn Dal<Row = SqliteRow, DB = Sqlite>>,
 }
@@ -21,18 +30,17 @@ impl Logic {
     }
 }
 
-pub fn new_logic() -> Result<Logic, SQliteDatabaseConnectionError> {
-    let dal = SqliteDal::new()?;
+pub fn new_logic() -> Result<Logic, DefaultLogicError> {
+    let dal = match SqliteDal::new() {
+        Ok(dal) => dal,
+        Err(e) => {
+            return Err(DefaultLogicError::DbConnection(
+                DatabaseConnectionError::SqliteError(e),
+            ))
+        }
+    };
+
     Ok(Logic::new(Box::new(dal)))
-}
-
-#[derive(Debug, Error)]
-pub enum DefaultLogicError {
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("unknown data store error")]
-    Query(#[from] SqlQueryError),
 }
 
 #[derive(Debug, Error)]

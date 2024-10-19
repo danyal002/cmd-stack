@@ -70,7 +70,7 @@ pub fn handle_add_param_command(command: Command) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Add Param Cmd", "Error adding parameters: {:?}", logic.err());
+        error!(target: "Add Param Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::AddParams.print();
         return;
     }

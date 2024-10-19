@@ -25,7 +25,7 @@ pub fn handle_delete_param_command(params: Vec<Parameter>, print_limit: u32) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Param Delete Cmd", "Error deleting parameter: {:?}", logic.err());
+        error!(target: "Param Delete Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::FailedToParam("delete".to_string()).print();
         return;
     }

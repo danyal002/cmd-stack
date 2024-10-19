@@ -123,7 +123,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
 
     let logic = new_logic();
     if logic.is_err() {
-        error!(target: "Update Cmd", "Failed to update command: {:?}", logic.err());
+        error!(target: "Update Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::FailedToCommand("update".to_string()).print();
         return;
     }
