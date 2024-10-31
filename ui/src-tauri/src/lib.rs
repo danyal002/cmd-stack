@@ -1,4 +1,5 @@
 use logic::new_logic;
+use serde::{Deserialize, Serialize};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -6,8 +7,19 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Command {
+    pub id: i64,
+    pub last_used: i64,
+    pub alias: String,
+    pub command: String,
+    pub tag: Option<String>,
+    pub note: Option<String>,
+    pub favourite: bool,
+}
+
 #[tauri::command]
-fn list_commands() -> Result<Vec<String>, String> {
+fn list_commands() -> Result<Vec<Command>, String> {
     let logic = match new_logic() {
         Ok(l) => l,
         Err(e) => return Err(format!("Failed to initialize Logic: {:?}", e)),
@@ -17,12 +29,12 @@ fn list_commands() -> Result<Vec<String>, String> {
         Ok(c) => c,
         Err(e) => return Err(format!("Error listing commands: {:?}", e)),
     };
-    let command_strings: Vec<String> = commands
+    let commands: Vec<Command> = commands
         .iter()
-        .map(|c| c.internal_command.alias.clone())
+        .map(|c| Command { id: c.id, last_used: c.last_used, alias: c.internal_command.alias.clone(), command: c.internal_command.command.clone(), tag: c.internal_command.tag.clone(), note: c.internal_command.note.clone(), favourite: c.internal_command.favourite})
         .collect();
 
-    Ok(command_strings)
+    Ok(commands)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

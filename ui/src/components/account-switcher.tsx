@@ -10,14 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Account } from "@/data"
 
 interface AccountSwitcherProps {
   isCollapsed: boolean
-  accounts: {
-    label: string
-    email: string
-    icon: React.ReactNode
-  }[]
+  accounts: Account[]
 }
 
 export function AccountSwitcher({
@@ -25,7 +22,7 @@ export function AccountSwitcher({
   accounts,
 }: AccountSwitcherProps) {
   const [selectedAccount, setSelectedAccount] = React.useState<string>(
-    accounts[0].email
+    accounts[0].label
   )
 
   return (
@@ -39,10 +36,10 @@ export function AccountSwitcher({
         aria-label="Select account"
       >
         <SelectValue placeholder="Select an account">
-          {accounts.find((account) => account.email === selectedAccount)?.icon}
+          {accounts.find((account) => account.label === selectedAccount)?.icon}
           <span className={cn("ml-2", isCollapsed && "hidden")}>
             {
-              accounts.find((account) => account.email === selectedAccount)
+              accounts.find((account) => account.label === selectedAccount)
                 ?.label
             }
           </span>
@@ -50,10 +47,10 @@ export function AccountSwitcher({
       </SelectTrigger>
       <SelectContent>
         {accounts.map((account) => (
-          <SelectItem key={account.email} value={account.email}>
+          <SelectItem key={account.label} value={account.label}>
             <div className="flex items-center gap-3 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:text-foreground">
               {account.icon}
-              {account.email}
+              {account.label}
             </div>
           </SelectItem>
         ))}
