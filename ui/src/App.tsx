@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import CommandList from './components/CommandList';
-import './App.css';
+import './index.css'
+import MailPage from './page';
 
 function App() {
   const [greetMsg, setGreetMsg] = useState('');
@@ -14,23 +14,7 @@ function App() {
 
   return (
     <main className="container">
-      <h1>Welcome to CmdStack!</h1>
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-      <CommandList />
+      <MailPage />
     </main>
   );
 }
