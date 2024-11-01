@@ -1,57 +1,32 @@
-import addDays from "date-fns/addDays"
-import addHours from "date-fns/addHours"
-import format from "date-fns/format"
-import nextSaturday from "date-fns/nextSaturday"
+import format from 'date-fns/format';
 import {
   Archive,
-  ArchiveX,
-  Clock,
-  Forward,
   MoreVertical,
-  Reply,
-  ReplyAll,
-  Trash2,
-} from "lucide-react"
+  Trash2
+} from 'lucide-react';
 
-import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Label } from "@/components/ui/label"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
+} from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from '@/components/ui/tooltip';
 
-import { Command } from "@/types/command"
+import { Command } from '@/types/command';
 
-interface MailDisplayProps {
-  command: Command | null
+interface CommandDisplayProps {
+  command: Command | null;
 }
 
-export function MailDisplay({ command }: MailDisplayProps) {
-  const today = new Date()
-
+export function CommandDisplay({ command }: CommandDisplayProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center p-2">
@@ -75,8 +50,7 @@ export function MailDisplay({ command }: MailDisplayProps) {
             <TooltipContent>Move to trash</TooltipContent>
           </Tooltip>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-        </div>
+        <div className="ml-auto flex items-center gap-2"></div>
         <Separator orientation="vertical" className="mx-2 h-6" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -100,9 +74,7 @@ export function MailDisplay({ command }: MailDisplayProps) {
             <div className="flex items-start gap-4 text-sm">
               <Avatar>
                 <AvatarImage alt={command.id} />
-                <AvatarFallback>
-                  {command.id}
-                </AvatarFallback>
+                <AvatarFallback>{command.id}</AvatarFallback>
               </Avatar>
               <div className="grid gap-1">
                 <div className="font-semibold">{command.alias}</div>
@@ -111,7 +83,7 @@ export function MailDisplay({ command }: MailDisplayProps) {
             </div>
             {command.last_used && (
               <div className="ml-auto text-xs text-muted-foreground">
-                {format(new Date(command.last_used * 1000), "PPpp")}
+                {format(new Date(command.last_used * 1000), 'PPpp')}
               </div>
             )}
           </div>
@@ -149,9 +121,9 @@ export function MailDisplay({ command }: MailDisplayProps) {
         </div>
       ) : (
         <div className="p-8 text-center text-muted-foreground">
-          No message selected
+          No command selected
         </div>
       )}
     </div>
-  )
+  );
 }

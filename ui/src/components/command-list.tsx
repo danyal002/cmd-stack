@@ -4,15 +4,15 @@ import formatDistanceToNow from "date-fns/formatDistanceToNow"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useMail } from "@/use-mail"
+import { useCommand } from "@/use-command"
 import { Command } from "@/types/command"
 
-interface MailListProps {
+interface CommandListProps {
   items: Command[]
 }
 
-export function MailList({ items }: MailListProps) {
-  const [mail, setMail] = useMail()
+export function CommandList({ items }: CommandListProps) {
+  const [command, setCommand] = useCommand()
 
   return (
     <ScrollArea className="h-screen">
@@ -22,11 +22,11 @@ export function MailList({ items }: MailListProps) {
             key={item.id}
             className={cn(
               "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
-              mail.selected === item.id && "bg-muted"
+              command.selected === item.id && "bg-muted"
             )}
             onClick={() =>
-              setMail({
-                ...mail,
+              setCommand({
+                ...command,
                 selected: item.id,
               })
             }
@@ -39,7 +39,7 @@ export function MailList({ items }: MailListProps) {
                 <div
                   className={cn(
                     "ml-auto text-xs",
-                    mail.selected === item.id
+                    command.selected === item.id
                       ? "text-foreground"
                       : "text-muted-foreground"
                   )}

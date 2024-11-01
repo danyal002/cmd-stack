@@ -1,10 +1,10 @@
-import { Mail } from "@/components/mail"
+import { MainCommandPage } from "@/components/command"
 import { accounts } from "@/data"
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Command } from "./types/command";
 
-export default function MailPage() {
+export default function CommandPage() {
   const [commands, setCommands] = useState<Command[]>([]);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function MailPage() {
   return (
     <>
       <div className="hidden flex-col md:flex">
-        <Mail
+        <MainCommandPage
           accounts={accounts}
           commands={commands}
           defaultLayout={defaultLayout}

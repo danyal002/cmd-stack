@@ -1,12 +1,6 @@
 use logic::new_logic;
 use serde::{Deserialize, Serialize};
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Command {
     pub id: i64,
@@ -41,7 +35,7 @@ fn list_commands() -> Result<Vec<Command>, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet, list_commands])
+        .invoke_handler(tauri::generate_handler![list_commands])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

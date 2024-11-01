@@ -2,18 +2,9 @@
 
 import * as React from "react"
 import {
-  AlertCircle,
-  Archive,
-  ArchiveX,
   File,
-  Inbox,
-  MessagesSquare,
   Search,
-  Send,
   Settings,
-  ShoppingCart,
-  Trash2,
-  Users2,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -32,14 +23,14 @@ import {
 } from "./ui/tabs"
 import { TooltipProvider } from "./ui/tooltip"
 import { AccountSwitcher } from "@/components/account-switcher"
-import { MailDisplay } from "@/components/mail-display"
-import { MailList } from "@/components/mail-list"
+import { CommandDisplay } from "@/components/command-display"
+import { CommandList } from "@/components/command-list"
 import { Nav } from "@/components/nav"
 import { Account } from "@/data"
-import { useMail } from "@/use-mail"
+import { useCommand } from "@/use-command"
 import { Command } from "@/types/command"
 
-interface MailProps {
+interface MainCommandPageProps {
   accounts: Account[]
   commands: Command[]
   defaultLayout: number[] | undefined
@@ -47,15 +38,15 @@ interface MailProps {
   navCollapsedSize: number
 }
 
-export function Mail({
+export function MainCommandPage({
   accounts,
   commands,
   defaultLayout = [20, 32, 48],
   defaultCollapsed = false,
   navCollapsedSize,
-}: MailProps) {
+}: MainCommandPageProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
-  const [mail] = useMail()
+  const [command] = useCommand()
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -153,17 +144,17 @@ export function Mail({
               </form>
             </div>
             <TabsContent value="all" className="m-0">
-              <MailList items={commands} />
+              <CommandList items={commands} />
             </TabsContent>
             <TabsContent value="favourite" className="m-0">
-              <MailList items={commands.filter((item) => item.favourite)} />
+              <CommandList items={commands.filter((item) => item.favourite)} />
             </TabsContent>
           </Tabs>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
-          <MailDisplay
-            command={commands.find((item) => item.id === mail.selected) || null}
+          <CommandDisplay
+            command={commands.find((item) => item.id === command.selected) || null}
           />
         </ResizablePanel>
       </ResizablePanelGroup>
