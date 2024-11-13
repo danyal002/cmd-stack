@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use rand::{rngs::ThreadRng, Rng};
 use regex::Regex;
 use thiserror::Error;
@@ -38,7 +40,7 @@ impl RandomNumberGenerator for MockRng {
 
         let length = high - low + 1;
 
-        return low + (value as i32 % length);
+        low + (value as i32 % length)
     }
 }
 
@@ -52,12 +54,14 @@ pub struct StringParameter {
 }
 
 impl StringParameter {
-    pub fn default() -> Self {
-        Self { min: 5, max: 10 }
-    }
-
     pub fn new(min: u32, max: u32) -> Self {
         Self { min, max }
+    }
+}
+
+impl Default for StringParameter {
+    fn default() -> Self {
+        Self { min: 5, max: 10 }
     }
 }
 
@@ -65,7 +69,9 @@ impl Parameter for StringParameter {
     fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
         let charset: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-        let random_string: String = (self.min..self.max)
+        let length = rng.generate_range(self.min as i32, self.max as i32) as usize;
+
+        let random_string: String = (0..length)
             .map(|_| {
                 let idx = rng.generate_range(0, charset.len() as i32);
                 charset[idx as usize] as char
@@ -75,18 +81,54 @@ impl Parameter for StringParameter {
     }
 }
 
+impl FromStr for StringParameter {
+    type Err = ParameterError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let re = Regex::new(r"@string\[(\d+),\s*(\d+)\]").map_err(|_| ParameterError::Parsing)?;
+        if let Some(caps) = re.captures(s) {
+            let min = caps[1]
+                .parse::<u32>()
+                .map_err(|_| ParameterError::Parsing)?;
+            let max = caps[2]
+                .parse::<u32>()
+                .map_err(|_| ParameterError::Parsing)?;
+
+            return Ok(StringParameter::new(min, max));
+        }
+
+        match s {
+            "@string" => Ok(StringParameter::default()),
+            _ => Err(ParameterError::InvalidParameter),
+        }
+    }
+}
+
 pub struct IntParameter {
     min: i32,
     max: i32,
 }
 
 impl IntParameter {
-    pub fn default() -> Self {
-        Self { min: 5, max: 10 }
-    }
-
     pub fn new(min: i32, max: i32) -> Self {
         Self { min, max }
+    }
+}
+
+impl Default for IntParameter {
+    fn default() -> Self {
+        Self { min: 5, max: 10 }
+    }
+}
+
+impl FromStr for IntParameter {
+    type Err = ParameterError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "@int" => Ok(IntParameter::default()),
+            _ => Err(ParameterError::InvalidParameter),
+        }
     }
 }
 
@@ -102,21 +144,22 @@ pub struct ParameterHandler {
 }
 
 impl ParameterHandler {
-    pub fn default() -> Self {
-        let rng = rand::thread_rng();
-        Self { rng: Box::new(rng) }
-    }
-
     pub fn new(rng: Box<dyn RandomNumberGenerator>) -> Self {
         Self { rng }
     }
 
     pub fn parse_parameter(&self, s: String) -> Result<Box<dyn Parameter>, ParameterError> {
-        match s.as_str() {
-            "@string" => Ok(Box::new(StringParameter::default())),
-            "@int" => Ok(Box::new(IntParameter::default())),
-            _ => Err(ParameterError::InvalidParameter),
+        let ret = StringParameter::from_str(&s);
+        if let Ok(ph) = ret {
+            return Ok(Box::new(ph));
         }
+
+        let ret = IntParameter::from_str(&s);
+        if let Ok(ph) = ret {
+            return Ok(Box::new(ph));
+        }
+
+        Err(ParameterError::InvalidParameter)
     }
 
     pub fn validate_parameters(&mut self, s: String) -> Result<(), ParameterError> {
@@ -140,11 +183,18 @@ impl ParameterHandler {
             }
         });
 
-        if err.is_some() {
-            return Err(err.unwrap());
+        if let Some(e) = err {
+            return Err(e);
         }
 
         Ok(result.to_string())
+    }
+}
+
+impl Default for ParameterHandler {
+    fn default() -> Self {
+        let rng = rand::thread_rng();
+        Self { rng: Box::new(rng) }
     }
 }
 
@@ -165,18 +215,40 @@ mod tests {
         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 1, 2, 4])));
         let ret = ph.replace_parameters("red-{@int} @nothing {@string} {@int}".to_string());
         assert!(ret.is_ok());
-        assert_eq!("red-5 @nothing BCEAB 7", ret.unwrap());
+        assert_eq!("red-5 @nothing CEABCE 5", ret.unwrap());
 
         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2, 0, 2])));
         let ret = ph.replace_parameters("red-{@int} @nothing {@string} {@int}".to_string());
         assert!(ret.is_ok());
-        assert_eq!("red-5 @nothing CACAC 5", ret.unwrap());
+        assert_eq!("red-5 @nothing ACACACA 7", ret.unwrap());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![2, 3, 4, 7])));
+        let ret = ph.replace_parameters("ls {@int} {@int} {@string} {@string}".to_string());
+        assert!(ret.is_ok());
+        assert_eq!("ls 7 8 HCDEHCDEH DEHCDEH", ret.unwrap());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![2, 2, 2, 2])));
+        let ret = ph.replace_parameters("ls {@string[7,7]} {@string[3,3]}".to_string());
+        assert!(ret.is_ok());
+        assert_eq!("ls CCCCCCC CCC", ret.unwrap());
     }
 
     #[test]
     fn test_validate_parameters() {
         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
         let ret = ph.validate_parameters("fasd {@bad-command}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
+        let ret = ph.validate_parameters("fasd {@string[cat, dog]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
+        let ret = ph.validate_parameters("fasd {@string[3]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
+        let ret = ph.validate_parameters("fasd {@string[,]}".to_string());
         assert!(ret.is_err());
     }
 }
