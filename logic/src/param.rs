@@ -148,7 +148,7 @@ impl ParameterHandler {
         Self { rng }
     }
 
-    pub fn parse_parameter(&self, s: String) -> Result<Box<dyn Parameter>, ParameterError> {
+    fn parse_parameter(&self, s: String) -> Result<Box<dyn Parameter>, ParameterError> {
         let ret = StringParameter::from_str(&s);
         if let Ok(ph) = ret {
             return Ok(Box::new(ph));

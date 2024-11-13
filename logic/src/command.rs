@@ -41,6 +41,9 @@ impl Logic {
             return Err(CommandLogicError::InvalidCommand);
         }
 
+        // Verify parameters are formatted correct
+        ParameterHandler::default().validate_parameters(command.command.clone())?;
+
         // Add the command to the database
         match self.db_connection.add_command(command, None).await {
             Ok(_) => {}
@@ -158,6 +161,9 @@ impl Logic {
         {
             return Err(CommandLogicError::InvalidCommand);
         }
+
+        // Verify parameters are formatted correct
+        ParameterHandler::default().validate_parameters(new_command_props.command.clone())?;
 
         // Update the command
         match self
@@ -483,5 +489,10 @@ mod tests {
 
         // last_used has been updated
         assert!(commands.first().unwrap().last_used > last_used);
+    }
+
+    #[test]
+    fn test_handle_generate_param() {
+        
     }
 }

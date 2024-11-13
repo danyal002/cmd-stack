@@ -40,17 +40,30 @@ pub fn handle_list_commands(args: ListArgs) {
         },
     };
 
-    // Copy the selected command to the clipboard
-    copy_text(
-        "List Cmd",
-        selected_command.internal_command.command.clone(),
-    );
-
     let logic = new_logic();
     if logic.is_err() {
         error!(target: "List Cmd", "Failed to initialize logic: {:?}", logic.err());
         return;
     }
+
+    let copied_text = match logic
+        .as_ref()
+        .unwrap()
+        .handle_generate_param(selected_command.clone())
+    {
+        Ok(c) => c,
+        Err(e) => {
+            error!(target: "List Cmd",
+                "List Cmd: Failed to generate parameters for selected command: {:?}",
+                e
+            );
+            ErrorOutput::GenerateParam.print();
+            return;
+        }
+    };
+
+    // Copy the selected command to the clipboard
+    copy_text("List Cmd", copied_text);
 
     match logic
         .unwrap()
