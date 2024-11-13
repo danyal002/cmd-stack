@@ -38,8 +38,7 @@ fn list_commands() -> Result<Vec<DisplayCommand>, String> {
         Ok(c) => c,
         Err(e) => return Err(format!("Error listing commands: {:?}", e)),
     };
-    let commands: Vec<DisplayCommand> = commands.iter().map(|c| DisplayCommand::from(c)).collect();
-
+    let commands: Vec<DisplayCommand> = commands.iter().map(DisplayCommand::from).collect();
     Ok(commands)
 }
 

@@ -5,7 +5,7 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
 
-use crate::param::{replace_parameters, ParameterError};
+use crate::param::{ParameterError, ParameterHandler};
 use crate::{DatabaseConnectionError, DefaultLogicError, Logic};
 
 #[derive(Error, Debug)]
@@ -190,7 +190,8 @@ impl Logic {
         &self,
         command: Command,
     ) -> Result<String, CommandLogicError> {
-        let parameterized_command = replace_parameters(command.internal_command.command)?;
+        let parameterized_command =
+            ParameterHandler::default().replace_parameters(command.internal_command.command)?;
         Ok(parameterized_command)
     }
 }
