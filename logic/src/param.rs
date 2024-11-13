@@ -1,145 +1,83 @@
-//! Handles all requests for commands
-use data::models::{Command, InternalParameter, Parameter};
 use rand::Rng;
-use rand_regex::Regex;
+use regex::Regex;
 use thiserror::Error;
 
-use data::dal::SqlQueryError;
-
-use crate::{DatabaseConnectionError, DefaultLogicError, Logic};
-
-#[derive(Error, Debug)]
-pub enum AddParamError {
-    #[error("invalid parameter")]
-    InvalidParam,
-
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("error executing database query")]
-    Query(#[from] SqlQueryError),
+pub trait Parameter {
+    fn generate_random(&self) -> String;
 }
 
-#[derive(Error, Debug)]
-pub enum GenerateParamError {
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("error executing database query")]
-    Query(#[from] SqlQueryError),
-
-    #[error("invalid regex pattern")]
-    InvalidRegexPattern(#[from] regex_syntax::Error),
-
-    #[error("invalid Hir (high-level intermediate representation) for the regex pattern")]
-    InvalidHir(#[from] rand_regex::Error),
-}
-
-impl Logic {
-    #[tokio::main]
-    /// Handles the addition of parameters
-    pub async fn handle_add_param(
-        &self,
-        params: Vec<InternalParameter>,
-    ) -> Result<(), AddParamError> {
-        for param in params.iter() {
-            if param.symbol.trim().is_empty() || param.regex.trim().is_empty() {
-                return Err(AddParamError::InvalidParam);
-            }
-        }
-
-        // Add the parameters to the database
-        match self.db_connection.add_params(params, None).await {
-            Ok(_) => {}
-            Err(e) => return Err(AddParamError::Query(e)),
-        };
-
-        Ok(())
-    }
-
-    #[tokio::main]
-    /// Handles the generation of parameters for a command
-    pub async fn handle_generate_param(
-        &self,
-        command: Command,
-    ) -> Result<String, Box<GenerateParamError>> {
-        // Get the parameters for the command from the database
-        let params: Vec<Parameter> = match self.db_connection.get_params(command.id, None).await {
-            Ok(p) => p,
-            Err(e) => return Err(Box::new(GenerateParamError::Query(e))),
-        };
-
-        // If there are no parameters, return the command
-        if params.is_empty() {
-            return Ok(command.internal_command.command);
-        }
-
-        // Generate the parameters
+pub struct StringParameter {}
+impl Parameter for StringParameter {
+    fn generate_random(&self) -> String {
+        let charset: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                               abcdefghijklmnopqrstuvwxyz\
+                               0123456789";
         let mut rng = rand::thread_rng();
+        let random_string: String = (0..10)
+            .map(|_| {
+                let idx = rng.gen_range(0..charset.len());
+                charset[idx] as char
+            })
+            .collect();
+        random_string
+    }
+}
 
-        let mut param_string = String::new();
-        for param in params.iter() {
-            let mut parser = regex_syntax::ParserBuilder::new().unicode(false).build();
-            let hir = match parser.parse(&param.internal_parameter.regex) {
-                Ok(hir) => hir,
-                Err(e) => {
-                    return Err(Box::new(GenerateParamError::InvalidRegexPattern(e)));
-                }
-            };
+pub struct IntParameter {}
+impl Parameter for IntParameter {
+    fn generate_random(&self) -> String {
+        let mut rng = rand::thread_rng();
+        let random_int: i32 = rng.gen_range(0..10000);
+        random_int.to_string()
+    }
+}
 
-            let gen = match Regex::with_hir(hir, 100) {
-                Ok(r) => r,
-                Err(e) => return Err(Box::new(GenerateParamError::InvalidHir(e))),
-            };
-            let param_value = (&mut rng)
-                .sample_iter(&gen)
-                .take(1)
-                .collect::<Vec<String>>();
+#[derive(Error, Debug)]
+pub enum ParameterError {
+    #[error("error parsing parameters from string")]
+    Parsing,
+    #[error("error invalid parameter")]
+    InvalidParameter,
+}
 
-            param_string.push_str(&format!(
-                "{} {} ",
-                param.internal_parameter.symbol, param_value[0]
-            ));
-        }
+pub fn parse_parameter(s: String) -> Result<Box<dyn Parameter>, ParameterError> {
+    match s.as_str() {
+        "@string" => Ok(Box::new(StringParameter {})),
+        "@int" => Ok(Box::new(IntParameter {})),
+        _ => Err(ParameterError::InvalidParameter),
+    }
+}
 
-        Ok(command.internal_command.command + " " + &param_string)
+pub fn validate_parameters(s: String) -> Result<(), ParameterError> {
+    let _ = replace_parameters(s)?;
+    Ok(())
+}
+
+pub fn replace_parameters(s: String) -> Result<String, ParameterError> {
+    let re = Regex::new(r"\{([^}]*)\}").map_err(|_| ParameterError::Parsing)?;
+    let result = re.replace_all(&s, |caps: &regex::Captures| {
+        let param_str = &caps[1];
+        let param = parse_parameter(param_str.to_owned()).unwrap();
+        param.generate_random()
+    });
+    Ok(result.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::replace_parameters;
+    use super::validate_parameters;
+
+    #[test]
+    fn test_zero_parameters() {
+        let ret = validate_parameters("fasd @email @wadsf @test".to_string());
+        assert!(ret.is_ok());
     }
 
-    #[tokio::main]
-    /// Get all parameters associated with the given command
-    pub async fn get_params(&self, command_id: i64) -> Result<Vec<Parameter>, DefaultLogicError> {
-        // Get the parameters for the command from the database
-        let params: Vec<Parameter> = match self.db_connection.get_params(command_id, None).await {
-            Ok(p) => p,
-            Err(e) => return Err(DefaultLogicError::Query(e)),
-        };
-
-        Ok(params)
-    }
-
-    #[tokio::main]
-    pub async fn update_param(
-        &self,
-        param_id: i64,
-        param: InternalParameter,
-    ) -> Result<(), DefaultLogicError> {
-        // Update the parameter in the database
-        match self.db_connection.update_param(param_id, param, None).await {
-            Ok(_) => {}
-            Err(e) => return Err(DefaultLogicError::Query(e)),
-        };
-
-        Ok(())
-    }
-
-    #[tokio::main]
-    pub async fn delete_param(&self, param_id: i64) -> Result<(), DefaultLogicError> {
-        // Delete the parameter from the database
-        match self.db_connection.delete_param(param_id, None).await {
-            Ok(_) => {}
-            Err(e) => return Err(DefaultLogicError::Query(e)),
-        };
-
-        Ok(())
+    #[test]
+    fn test_replace_parameters() {
+        let ret = replace_parameters("red-{@int} @nothing {@string} {@int}".to_string());
+        assert!(ret.is_ok());
+        println!("{}", ret.unwrap());
     }
 }

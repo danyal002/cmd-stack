@@ -108,39 +108,4 @@ pub trait Dal: Sync + Send {
         new_command_props: InternalCommand,
         tx: Option<&mut Transaction<'_, Self::DB>>,
     ) -> Result<(), SqlQueryError>;
-
-    /// Adds parameters to the database
-    async fn add_params(
-        &self,
-        params: Vec<InternalParameter>,
-        tx: Option<&mut Transaction<'_, Self::DB>>,
-    ) -> Result<(), SqlQueryError>;
-
-    /// Get parameters for a command
-    async fn get_params(
-        &self,
-        command_id: i64,
-        tx: Option<&mut Transaction<'_, Self::DB>>,
-    ) -> Result<Vec<Parameter>, SqlQueryError>;
-
-    /// Update a parameter
-    async fn update_param(
-        &self,
-        param_id: i64,
-        param: InternalParameter,
-        tx: Option<&mut Transaction<'_, Self::DB>>,
-    ) -> Result<(), SqlQueryError>;
-
-    /// Delete a parameter
-    async fn delete_param(
-        &self,
-        param_id: i64,
-        tx: Option<&mut Transaction<'_, Self::DB>>,
-    ) -> Result<(), SqlQueryError>;
-
-    /// Get all parameters
-    async fn get_all_internal_parameters(
-        &self,
-        tx: Option<&mut Transaction<'_, Self::DB>>,
-    ) -> Result<Vec<InternalParameter>, SqlQueryError>;
 }

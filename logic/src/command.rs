@@ -5,6 +5,7 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
 
+use crate::param::{replace_parameters, ParameterError};
 use crate::{DatabaseConnectionError, DefaultLogicError, Logic};
 
 #[derive(Error, Debug)]
@@ -17,6 +18,9 @@ pub enum CommandLogicError {
 
     #[error("error executing database query")]
     Query(#[from] SqlQueryError),
+
+    #[error("error generating params")]
+    GenerateParamError(#[from] ParameterError),
 }
 
 #[derive(Debug)]
@@ -178,6 +182,16 @@ impl Logic {
         };
 
         Ok(())
+    }
+
+    #[tokio::main]
+    /// Handles the generation of parameters for a command
+    pub async fn handle_generate_param(
+        &self,
+        command: Command,
+    ) -> Result<String, CommandLogicError> {
+        let parameterized_command = replace_parameters(command.internal_command.command)?;
+        Ok(parameterized_command)
     }
 }
 

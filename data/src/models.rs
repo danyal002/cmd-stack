@@ -18,20 +18,3 @@ pub struct Command {
     pub last_used: i64,
     pub internal_command: InternalCommand,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-/// Represents the properties of a parameter that the user will
-/// have knowledge about
-pub struct InternalParameter {
-    pub command_id: i64,
-    pub symbol: String,
-    pub regex: String,
-    pub note: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-/// Stores all properties of a parameter in the database
-pub struct Parameter {
-    pub id: i64,
-    pub internal_parameter: InternalParameter,
-}

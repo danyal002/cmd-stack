@@ -1,6 +1,6 @@
 use data::{
     dal::{SqlQueryError, SqlTxError},
-    models::{Command, InternalParameter},
+    models::Command,
 };
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -12,7 +12,6 @@ use crate::{DatabaseConnectionError, Logic};
 #[derive(Debug, Serialize, Deserialize)]
 struct ExportFormat {
     commands: Vec<Command>,
-    parameters: Vec<InternalParameter>,
 }
 
 #[derive(Error, Debug)]
@@ -72,7 +71,6 @@ impl Logic {
                 .db_connection
                 .get_all_commands(false, false, None)
                 .await?,
-            parameters: self.db_connection.get_all_internal_parameters(None).await?,
         };
 
         let json_string = serde_json::to_string(&export_data)?;
@@ -117,33 +115,6 @@ impl Logic {
                 }
             };
             import_cmd_id_to_db_id.insert(command.id, db_id);
-        }
-
-        if !import_data.parameters.is_empty() {
-            let mut insert_params: Vec<InternalParameter> = vec![];
-            for param in import_data.parameters {
-                let cmd_id = param.command_id;
-                insert_params.push(InternalParameter {
-                    command_id: match import_cmd_id_to_db_id.get(&cmd_id) {
-                        Some(id) => *id,
-                        None => {
-                            self.db_connection.rollback(tx).await?;
-                            return Err(ImportExportError::InvalidData);
-                        }
-                    },
-                    symbol: param.symbol,
-                    regex: param.regex,
-                    note: param.note,
-                })
-            }
-            if let Err(e) = self
-                .db_connection
-                .add_params(insert_params, Some(&mut tx))
-                .await
-            {
-                self.db_connection.rollback(tx).await?;
-                return Err(ImportExportError::DbQuery(e));
-            }
         }
 
         self.db_connection.commit(tx).await?;
