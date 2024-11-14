@@ -244,6 +244,54 @@ mod tests {
     }
 
     #[test]
+    fn test_handle_invalid_command() {
+        let tmp_dir_result = TempDir::new();
+        assert!(tmp_dir_result.is_ok());
+
+        let path = tmp_dir_result
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .into_owned();
+        let dal = SqliteDal::new_with_directory(path);
+        assert!(dal.is_ok());
+        let logic = Logic::new(Box::new(dal.unwrap()));
+
+        let mut invalid_command = InternalCommand {
+            command: "${bad}".to_string(),
+            alias: "asdf".to_string(),
+            tag: None,
+            note: None,
+            favourite: false,
+        };
+
+        let result = logic.handle_add_command(invalid_command.clone());
+        assert!(result.is_err());
+
+        // Now a valid command
+        invalid_command.command = "asdf".to_string();
+
+        let result = logic.handle_add_command(invalid_command.clone());
+        assert!(result.is_ok());
+
+        // Now an invalid command
+        invalid_command.command = "${what}".to_string();
+
+        let list_commands_result = logic.handle_list_commands(false, false);
+        let commands = list_commands_result.unwrap();
+        assert!(commands.len() == 1);
+        
+        let result = logic.handle_update_command(commands[0].id, invalid_command.clone());
+        assert!(result.is_err());
+
+        // Now a valid command
+        invalid_command.command = "${int}".to_string();
+
+        let result = logic.handle_update_command(commands[0].id, invalid_command.clone());
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn test_handle_update_command_success() {
         let tmp_dir_result = TempDir::new();
         assert!(tmp_dir_result.is_ok());
