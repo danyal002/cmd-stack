@@ -24,10 +24,6 @@ pub enum Command {
     /// List all commands
     List(ListArgs),
 
-    /// Parameter generation management
-    #[clap(subcommand)]
-    Param(ParamCommands),
-
     /// Export commands to a file
     Export(ImportExportArgs),
 

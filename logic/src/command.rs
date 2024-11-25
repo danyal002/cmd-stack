@@ -5,6 +5,7 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
 
+use crate::param::{ParameterError, ParameterHandler};
 use crate::{DatabaseConnectionError, DefaultLogicError, Logic};
 
 #[derive(Error, Debug)]
@@ -17,6 +18,9 @@ pub enum CommandLogicError {
 
     #[error("error executing database query")]
     Query(#[from] SqlQueryError),
+
+    #[error("error generating params")]
+    GenerateParamError(#[from] ParameterError),
 }
 
 #[derive(Debug)]
@@ -36,6 +40,9 @@ impl Logic {
         if command.command.trim().is_empty() || command.alias.trim().is_empty() {
             return Err(CommandLogicError::InvalidCommand);
         }
+
+        // Verify parameters are formatted correct
+        ParameterHandler::default().validate_parameters(command.command.clone())?;
 
         // Add the command to the database
         match self.db_connection.add_command(command, None).await {
@@ -155,6 +162,9 @@ impl Logic {
             return Err(CommandLogicError::InvalidCommand);
         }
 
+        // Verify parameters are formatted correct
+        ParameterHandler::default().validate_parameters(new_command_props.command.clone())?;
+
         // Update the command
         match self
             .db_connection
@@ -178,6 +188,17 @@ impl Logic {
         };
 
         Ok(())
+    }
+
+    #[tokio::main]
+    /// Handles the generation of parameters for a command
+    pub async fn handle_generate_param(
+        &self,
+        command: Command,
+    ) -> Result<String, CommandLogicError> {
+        let parameterized_command =
+            ParameterHandler::default().replace_parameters(command.internal_command.command)?;
+        Ok(parameterized_command)
     }
 }
 
@@ -220,6 +241,54 @@ mod tests {
         let commands = list_commands_result.unwrap();
         assert!(commands.len() == 1);
         assert!(commands.first().unwrap().internal_command == command);
+    }
+
+    #[test]
+    fn test_handle_invalid_command() {
+        let tmp_dir_result = TempDir::new();
+        assert!(tmp_dir_result.is_ok());
+
+        let path = tmp_dir_result
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .into_owned();
+        let dal = SqliteDal::new_with_directory(path);
+        assert!(dal.is_ok());
+        let logic = Logic::new(Box::new(dal.unwrap()));
+
+        let mut invalid_command = InternalCommand {
+            command: "@{bad}".to_string(),
+            alias: "asdf".to_string(),
+            tag: None,
+            note: None,
+            favourite: false,
+        };
+
+        let result = logic.handle_add_command(invalid_command.clone());
+        assert!(result.is_err());
+
+        // Now a valid command
+        invalid_command.command = "asdf".to_string();
+
+        let result = logic.handle_add_command(invalid_command.clone());
+        assert!(result.is_ok());
+
+        // Now an invalid command
+        invalid_command.command = "@{what}".to_string();
+
+        let list_commands_result = logic.handle_list_commands(false, false);
+        let commands = list_commands_result.unwrap();
+        assert!(commands.len() == 1);
+
+        let result = logic.handle_update_command(commands[0].id, invalid_command.clone());
+        assert!(result.is_err());
+
+        // Now a valid command
+        invalid_command.command = "@{int}".to_string();
+
+        let result = logic.handle_update_command(commands[0].id, invalid_command.clone());
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -468,5 +537,41 @@ mod tests {
 
         // last_used has been updated
         assert!(commands.first().unwrap().last_used > last_used);
+    }
+
+    #[test]
+    fn test_handle_generate_param_success() {
+        let tmp_dir_result = TempDir::new();
+        assert!(tmp_dir_result.is_ok());
+
+        let path = tmp_dir_result
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .into_owned();
+        let dal = SqliteDal::new_with_directory(path);
+        assert!(dal.is_ok());
+        let logic = Logic::new(Box::new(dal.unwrap()));
+
+        let command = InternalCommand {
+            command: "echo @{int}".to_string(),
+            alias: "test_alias".to_string(),
+            tag: None,
+            note: None,
+            favourite: false,
+        };
+
+        let result = logic.handle_add_command(command.clone());
+        assert!(result.is_ok());
+
+        let list_commands_result = logic.handle_list_commands(false, false);
+        assert!(list_commands_result.is_ok());
+        let commands = list_commands_result.unwrap();
+        assert!(commands.len() == 1);
+
+        let generated_param_result = logic.handle_generate_param(commands.first().unwrap().clone());
+        assert!(generated_param_result.is_ok());
+        let generated_param = generated_param_result.unwrap();
+        assert_ne!(generated_param, "echo @{int}");
     }
 }

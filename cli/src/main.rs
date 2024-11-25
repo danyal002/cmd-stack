@@ -6,7 +6,6 @@ mod args;
 mod command;
 mod import_export;
 pub mod outputs;
-mod param;
 pub mod utils;
 
 use args::{CmdStackArgs, Command};
@@ -100,7 +99,6 @@ fn main() {
             command::search_command::handle_search_commands(search_args)
         }
         Command::List(list_args) => command::list_commands::handle_list_commands(list_args),
-        Command::Param(param_args) => param::handle_param_command(param_args),
         Command::Export(import_export_args) => {
             import_export::handle_export_command(import_export_args)
         }

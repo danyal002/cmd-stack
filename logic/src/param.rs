@@ -1,145 +1,280 @@
-//! Handles all requests for commands
-use data::models::{Command, InternalParameter, Parameter};
-use rand::Rng;
-use rand_regex::Regex;
+use std::str::FromStr;
+
+use rand::{rngs::ThreadRng, Rng};
+use regex::Regex;
 use thiserror::Error;
 
-use data::dal::SqlQueryError;
-
-use crate::{DatabaseConnectionError, DefaultLogicError, Logic};
-
 #[derive(Error, Debug)]
-pub enum AddParamError {
-    #[error("invalid parameter")]
-    InvalidParam,
-
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("error executing database query")]
-    Query(#[from] SqlQueryError),
+pub enum ParameterError {
+    #[error("error parsing parameters from string")]
+    Parsing,
+    #[error("error invalid parameter")]
+    InvalidParameter,
 }
 
-#[derive(Error, Debug)]
-pub enum GenerateParamError {
-    #[error("failed to initalize the database connection")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("error executing database query")]
-    Query(#[from] SqlQueryError),
-
-    #[error("invalid regex pattern")]
-    InvalidRegexPattern(#[from] regex_syntax::Error),
-
-    #[error("invalid Hir (high-level intermediate representation) for the regex pattern")]
-    InvalidHir(#[from] rand_regex::Error),
+pub trait RandomNumberGenerator {
+    fn generate_range(&mut self, low: i32, high: i32) -> i32;
 }
 
-impl Logic {
-    #[tokio::main]
-    /// Handles the addition of parameters
-    pub async fn handle_add_param(
-        &self,
-        params: Vec<InternalParameter>,
-    ) -> Result<(), AddParamError> {
-        for param in params.iter() {
-            if param.symbol.trim().is_empty() || param.regex.trim().is_empty() {
-                return Err(AddParamError::InvalidParam);
+impl RandomNumberGenerator for ThreadRng {
+    fn generate_range(&mut self, low: i32, high: i32) -> i32 {
+        self.gen_range(low..high + 1)
+    }
+}
+
+pub struct MockRng {
+    values: Vec<u32>,
+    index: usize,
+}
+
+impl MockRng {
+    pub fn new(values: Vec<u32>) -> Self {
+        Self { values, index: 0 }
+    }
+}
+
+impl RandomNumberGenerator for MockRng {
+    fn generate_range(&mut self, low: i32, high: i32) -> i32 {
+        let value = self.values[self.index];
+        self.index = (self.index + 1) % self.values.len();
+
+        let length = high - low + 1;
+
+        low + (value as i32 % length)
+    }
+}
+
+pub trait Parameter {
+    fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String;
+}
+
+pub struct StringParameter {
+    min: u32,
+    max: u32,
+}
+
+impl StringParameter {
+    pub fn new(min: u32, max: u32) -> Self {
+        Self { min, max }
+    }
+}
+
+impl Default for StringParameter {
+    fn default() -> Self {
+        Self { min: 5, max: 10 }
+    }
+}
+
+impl Parameter for StringParameter {
+    fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
+        let charset: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        let length = rng.generate_range(self.min as i32, self.max as i32) as usize;
+
+        let random_string: String = (0..length)
+            .map(|_| {
+                let idx = rng.generate_range(0, charset.len() as i32);
+                charset[idx as usize] as char
+            })
+            .collect();
+        random_string
+    }
+}
+
+impl FromStr for StringParameter {
+    type Err = ParameterError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let re = Regex::new(r"string\[(\d+),\s*(\d+)\]").map_err(|_| ParameterError::Parsing)?;
+        if let Some(caps) = re.captures(s) {
+            let min = caps[1]
+                .parse::<u32>()
+                .map_err(|_| ParameterError::Parsing)?;
+            let max = caps[2]
+                .parse::<u32>()
+                .map_err(|_| ParameterError::Parsing)?;
+
+            if min > max {
+                return Err(ParameterError::InvalidParameter);
             }
+
+            return Ok(StringParameter::new(min, max));
         }
 
-        // Add the parameters to the database
-        match self.db_connection.add_params(params, None).await {
-            Ok(_) => {}
-            Err(e) => return Err(AddParamError::Query(e)),
-        };
+        match s {
+            "string" => Ok(StringParameter::default()),
+            _ => Err(ParameterError::InvalidParameter),
+        }
+    }
+}
 
+pub struct IntParameter {
+    min: i32,
+    max: i32,
+}
+
+impl IntParameter {
+    pub fn new(min: i32, max: i32) -> Self {
+        Self { min, max }
+    }
+}
+
+impl Default for IntParameter {
+    fn default() -> Self {
+        Self { min: 5, max: 10 }
+    }
+}
+
+impl FromStr for IntParameter {
+    type Err = ParameterError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "int" => Ok(IntParameter::default()),
+            _ => Err(ParameterError::InvalidParameter),
+        }
+    }
+}
+
+impl Parameter for IntParameter {
+    fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
+        let random_int = rng.generate_range(self.min, self.max);
+        random_int.to_string()
+    }
+}
+
+pub struct ParameterHandler {
+    rng: Box<dyn RandomNumberGenerator>,
+}
+
+impl ParameterHandler {
+    pub fn new(rng: Box<dyn RandomNumberGenerator>) -> Self {
+        Self { rng }
+    }
+
+    fn parse_parameter(&self, s: String) -> Result<Box<dyn Parameter>, ParameterError> {
+        let ret = StringParameter::from_str(&s);
+        if let Ok(ph) = ret {
+            return Ok(Box::new(ph));
+        }
+
+        let ret = IntParameter::from_str(&s);
+        if let Ok(ph) = ret {
+            return Ok(Box::new(ph));
+        }
+
+        Err(ParameterError::InvalidParameter)
+    }
+
+    pub fn validate_parameters(&mut self, s: String) -> Result<(), ParameterError> {
+        let _ = self.replace_parameters(s)?;
         Ok(())
     }
 
-    #[tokio::main]
-    /// Handles the generation of parameters for a command
-    pub async fn handle_generate_param(
-        &self,
-        command: Command,
-    ) -> Result<String, Box<GenerateParamError>> {
-        // Get the parameters for the command from the database
-        let params: Vec<Parameter> = match self.db_connection.get_params(command.id, None).await {
-            Ok(p) => p,
-            Err(e) => return Err(Box::new(GenerateParamError::Query(e))),
-        };
+    pub fn replace_parameters(&mut self, s: String) -> Result<String, ParameterError> {
+        let re = Regex::new(r"\@\{([^}]*)\}").map_err(|_| ParameterError::Parsing)?;
 
-        // If there are no parameters, return the command
-        if params.is_empty() {
-            return Ok(command.internal_command.command);
-        }
+        let mut err: Option<ParameterError> = None;
 
-        // Generate the parameters
-        let mut rng = rand::thread_rng();
-
-        let mut param_string = String::new();
-        for param in params.iter() {
-            let mut parser = regex_syntax::ParserBuilder::new().unicode(false).build();
-            let hir = match parser.parse(&param.internal_parameter.regex) {
-                Ok(hir) => hir,
+        let result = re.replace_all(&s, |caps: &regex::Captures| {
+            let param_str = &caps[1];
+            match self.parse_parameter(param_str.to_owned()) {
+                Ok(param) => param.generate_random(self.rng.as_mut()),
                 Err(e) => {
-                    return Err(Box::new(GenerateParamError::InvalidRegexPattern(e)));
+                    err = Some(e);
+                    "".to_string()
                 }
-            };
+            }
+        });
 
-            let gen = match Regex::with_hir(hir, 100) {
-                Ok(r) => r,
-                Err(e) => return Err(Box::new(GenerateParamError::InvalidHir(e))),
-            };
-            let param_value = (&mut rng)
-                .sample_iter(&gen)
-                .take(1)
-                .collect::<Vec<String>>();
-
-            param_string.push_str(&format!(
-                "{} {} ",
-                param.internal_parameter.symbol, param_value[0]
-            ));
+        if let Some(e) = err {
+            return Err(e);
         }
 
-        Ok(command.internal_command.command + " " + &param_string)
+        Ok(result.to_string())
+    }
+}
+
+impl Default for ParameterHandler {
+    fn default() -> Self {
+        let rng = rand::thread_rng();
+        Self { rng: Box::new(rng) }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::param::{MockRng, ParameterHandler};
+
+    #[test]
+    fn test_zero_parameters() {
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
+        let ret = ph.replace_parameters("fasd @ @email @wadsf @test {} @".to_string());
+        assert!(ret.is_ok());
+        assert_eq!("fasd @ @email @wadsf @test {} @", ret.unwrap());
     }
 
-    #[tokio::main]
-    /// Get all parameters associated with the given command
-    pub async fn get_params(&self, command_id: i64) -> Result<Vec<Parameter>, DefaultLogicError> {
-        // Get the parameters for the command from the database
-        let params: Vec<Parameter> = match self.db_connection.get_params(command_id, None).await {
-            Ok(p) => p,
-            Err(e) => return Err(DefaultLogicError::Query(e)),
-        };
+    #[test]
+    fn test_replace_parameters() {
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 1, 2, 4])));
+        let ret = ph.replace_parameters("red-@{int} @nothing @{string} @{int}".to_string());
+        assert!(ret.is_ok());
+        assert_eq!("red-5 @nothing CEABCE 5", ret.unwrap());
 
-        Ok(params)
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2, 0, 2])));
+        let ret = ph.replace_parameters("red-@{int} @nothing @{string} @{int}".to_string());
+        assert!(ret.is_ok());
+        assert_eq!("red-5 @nothing ACACACA 7", ret.unwrap());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![2, 3, 4, 7])));
+        let ret = ph.replace_parameters("ls @{int} @{int} @{string} @{string}".to_string());
+        assert!(ret.is_ok());
+        assert_eq!("ls 7 8 HCDEHCDEH DEHCDEH", ret.unwrap());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![2, 2, 2, 2])));
+        let ret = ph.replace_parameters("ls @{string[7,7]} @{string[3,3]}".to_string());
+        assert!(ret.is_ok());
+        assert_eq!("ls CCCCCCC CCC", ret.unwrap());
     }
 
-    #[tokio::main]
-    pub async fn update_param(
-        &self,
-        param_id: i64,
-        param: InternalParameter,
-    ) -> Result<(), DefaultLogicError> {
-        // Update the parameter in the database
-        match self.db_connection.update_param(param_id, param, None).await {
-            Ok(_) => {}
-            Err(e) => return Err(DefaultLogicError::Query(e)),
-        };
+    #[test]
+    fn test_validate_parameters() {
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{bad-command}".to_string());
+        assert!(ret.is_err());
 
-        Ok(())
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[cat, dog]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[3]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[,]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[-1,5]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[-1,5]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[7,5]}".to_string());
+        assert!(ret.is_err());
     }
 
-    #[tokio::main]
-    pub async fn delete_param(&self, param_id: i64) -> Result<(), DefaultLogicError> {
-        // Delete the parameter from the database
-        match self.db_connection.delete_param(param_id, None).await {
-            Ok(_) => {}
-            Err(e) => return Err(DefaultLogicError::Query(e)),
-        };
+    #[test]
+    fn test_default_random() {
+        let mut ph = ParameterHandler::default();
+        let ret = ph.validate_parameters("asdfjkf  @{string[1, 1]}".to_string());
+        assert!(!ret.is_err());
 
-        Ok(())
+        let ret = ph.validate_parameters("asdfjkf  @{string[1, 0]}".to_string());
+        assert!(ret.is_err());
     }
 }
