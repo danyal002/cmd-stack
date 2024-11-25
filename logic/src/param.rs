@@ -18,7 +18,7 @@ pub trait RandomNumberGenerator {
 
 impl RandomNumberGenerator for ThreadRng {
     fn generate_range(&mut self, low: i32, high: i32) -> i32 {
-        self.gen_range(low..high)
+        self.gen_range(low..high + 1)
     }
 }
 
@@ -94,6 +94,10 @@ impl FromStr for StringParameter {
                 .parse::<u32>()
                 .map_err(|_| ParameterError::Parsing)?;
 
+            if min > max {
+                return Err(ParameterError::InvalidParameter);
+            }
+
             return Ok(StringParameter::new(min, max));
         }
 
@@ -168,7 +172,7 @@ impl ParameterHandler {
     }
 
     pub fn replace_parameters(&mut self, s: String) -> Result<String, ParameterError> {
-        let re = Regex::new(r"\$\{([^}]*)\}").map_err(|_| ParameterError::Parsing)?;
+        let re = Regex::new(r"\@\{([^}]*)\}").map_err(|_| ParameterError::Parsing)?;
 
         let mut err: Option<ParameterError> = None;
 
@@ -205,50 +209,72 @@ mod tests {
     #[test]
     fn test_zero_parameters() {
         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
-        let ret = ph.replace_parameters("fasd $ @email @wadsf @test {} $".to_string());
+        let ret = ph.replace_parameters("fasd @ @email @wadsf @test {} @".to_string());
         assert!(ret.is_ok());
-        assert_eq!("fasd $ @email @wadsf @test {} $", ret.unwrap());
+        assert_eq!("fasd @ @email @wadsf @test {} @", ret.unwrap());
     }
 
     #[test]
     fn test_replace_parameters() {
         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 1, 2, 4])));
-        let ret = ph.replace_parameters("red-${int} @nothing ${string} ${int}".to_string());
+        let ret = ph.replace_parameters("red-@{int} @nothing @{string} @{int}".to_string());
         assert!(ret.is_ok());
         assert_eq!("red-5 @nothing CEABCE 5", ret.unwrap());
 
         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2, 0, 2])));
-        let ret = ph.replace_parameters("red-${int} @nothing ${string} ${int}".to_string());
+        let ret = ph.replace_parameters("red-@{int} @nothing @{string} @{int}".to_string());
         assert!(ret.is_ok());
         assert_eq!("red-5 @nothing ACACACA 7", ret.unwrap());
 
         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![2, 3, 4, 7])));
-        let ret = ph.replace_parameters("ls ${int} ${int} ${string} ${string}".to_string());
+        let ret = ph.replace_parameters("ls @{int} @{int} @{string} @{string}".to_string());
         assert!(ret.is_ok());
         assert_eq!("ls 7 8 HCDEHCDEH DEHCDEH", ret.unwrap());
 
         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![2, 2, 2, 2])));
-        let ret = ph.replace_parameters("ls ${string[7,7]} ${string[3,3]}".to_string());
+        let ret = ph.replace_parameters("ls @{string[7,7]} @{string[3,3]}".to_string());
         assert!(ret.is_ok());
         assert_eq!("ls CCCCCCC CCC", ret.unwrap());
     }
 
     #[test]
     fn test_validate_parameters() {
-        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
-        let ret = ph.validate_parameters("fasd ${bad-command}".to_string());
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{bad-command}".to_string());
         assert!(ret.is_err());
 
-        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
-        let ret = ph.validate_parameters("fasd ${string[cat, dog]}".to_string());
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[cat, dog]}".to_string());
         assert!(ret.is_err());
 
-        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
-        let ret = ph.validate_parameters("fasd ${string[3]}".to_string());
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[3]}".to_string());
         assert!(ret.is_err());
 
-        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
-        let ret = ph.validate_parameters("fasd ${string[,]}".to_string());
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[,]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[-1,5]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[-1,5]}".to_string());
+        assert!(ret.is_err());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+        let ret = ph.validate_parameters("fasd @{string[7,5]}".to_string());
+        assert!(ret.is_err());
+    }
+
+    #[test]
+    fn test_default_random() {
+        let mut ph = ParameterHandler::default();
+        let ret = ph.validate_parameters("asdfjkf  @{string[1, 1]}".to_string());
+        assert!(!ret.is_err());
+
+        let ret = ph.validate_parameters("asdfjkf  @{string[1, 0]}".to_string());
         assert!(ret.is_err());
     }
 }

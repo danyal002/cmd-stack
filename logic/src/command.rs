@@ -258,7 +258,7 @@ mod tests {
         let logic = Logic::new(Box::new(dal.unwrap()));
 
         let mut invalid_command = InternalCommand {
-            command: "${bad}".to_string(),
+            command: "@{bad}".to_string(),
             alias: "asdf".to_string(),
             tag: None,
             note: None,
@@ -275,17 +275,17 @@ mod tests {
         assert!(result.is_ok());
 
         // Now an invalid command
-        invalid_command.command = "${what}".to_string();
+        invalid_command.command = "@{what}".to_string();
 
         let list_commands_result = logic.handle_list_commands(false, false);
         let commands = list_commands_result.unwrap();
         assert!(commands.len() == 1);
-        
+
         let result = logic.handle_update_command(commands[0].id, invalid_command.clone());
         assert!(result.is_err());
 
         // Now a valid command
-        invalid_command.command = "${int}".to_string();
+        invalid_command.command = "@{int}".to_string();
 
         let result = logic.handle_update_command(commands[0].id, invalid_command.clone());
         assert!(result.is_ok());
@@ -554,7 +554,7 @@ mod tests {
         let logic = Logic::new(Box::new(dal.unwrap()));
 
         let command = InternalCommand {
-            command: "echo ${int}".to_string(),
+            command: "echo @{int}".to_string(),
             alias: "test_alias".to_string(),
             tag: None,
             note: None,
@@ -572,6 +572,6 @@ mod tests {
         let generated_param_result = logic.handle_generate_param(commands.first().unwrap().clone());
         assert!(generated_param_result.is_ok());
         let generated_param = generated_param_result.unwrap();
-        assert_ne!(generated_param, "echo ${int}");
+        assert_ne!(generated_param, "echo @{int}");
     }
 }
