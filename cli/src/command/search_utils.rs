@@ -3,7 +3,7 @@ use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::{command::SearchCommandArgs, new_logic};
+use logic::{command::SearchCommandArgs, Logic};
 use prettytable::{format, Cell, Row, Table};
 use termion::terminal_size;
 use thiserror::Error;
@@ -18,11 +18,11 @@ pub fn display_search_args_wizard(
 
 /// Generates a wizard to set the properties for command searching
 pub fn search_args_wizard() -> Result<SearchCommandArgs, InquireError> {
-    let command = Text::new("Command").prompt()?;
+    let command = Text::new("Command (Leave blank for no filter):").prompt()?;
 
-    let alias = Text::new("Alias").prompt()?;
+    let alias = Text::new("Alias (Leave blank for no filter):").prompt()?;
 
-    let tag = Text::new("Tag").prompt()?;
+    let tag = Text::new("Tag (Leave blank for no filter):").prompt()?;
 
     Ok(SearchCommandArgs {
         alias: if !alias.is_empty() { Some(alias) } else { None },
@@ -53,7 +53,7 @@ pub fn get_searched_commands(
     print_style: PrintStyle,
     display_limit: u32,
 ) -> Result<Command, GetSelectedItemFromUserError> {
-    let logic = match new_logic() {
+    let logic = match Logic::try_default() {
         Ok(l) => l,
         Err(e) => {
             return Err(GetSelectedItemFromUserError::GetCommands(e));
@@ -86,7 +86,7 @@ pub fn get_listed_commands(
     print_style: PrintStyle,
     display_limit: u32,
 ) -> Result<Command, GetSelectedItemFromUserError> {
-    let logic = match new_logic() {
+    let logic = match Logic::try_default() {
         Ok(l) => l,
         Err(e) => {
             return Err(GetSelectedItemFromUserError::GetCommands(e));
@@ -150,7 +150,7 @@ fn format_commands_for_printing(
     match print_style {
         PrintStyle::All => (
             format_internal_commands(commands),
-            "(Alias | Command | Tag | Note | Favourite [YES/NO])",
+            "(ID | Alias | Command | Tag | Note | Favourite [YES/NO])",
         ),
         PrintStyle::Alias => (
             commands

@@ -9,7 +9,7 @@ use crate::{
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::{command::SearchCommandArgs, new_logic};
+use logic::{command::SearchCommandArgs, Logic};
 
 /// Generates a wizard to set the properties of a command
 ///
@@ -121,7 +121,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         }
     };
 
-    let logic = new_logic();
+    let logic = Logic::try_default();
     if logic.is_err() {
         error!(target: "Update Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::FailedToCommand("update".to_string()).print();

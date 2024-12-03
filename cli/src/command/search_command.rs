@@ -7,7 +7,7 @@ use crate::{
     outputs::ErrorOutput,
 };
 use log::error;
-use logic::{command::SearchCommandArgs, new_logic};
+use logic::{command::SearchCommandArgs, Logic};
 
 /// UI handler for the search command
 pub fn handle_search_commands(args: SearchAndPrintArgs) {
@@ -57,7 +57,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
         },
     };
 
-    let logic = new_logic();
+    let logic = Logic::try_default();
     if logic.is_err() {
         error!(
             target: "Search Cmd", "Failed to initialize logic: {:?}",

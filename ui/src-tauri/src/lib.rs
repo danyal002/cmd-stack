@@ -1,5 +1,5 @@
 use data::models::Command;
-use logic::new_logic;
+use logic::Logic;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,7 +29,7 @@ impl From<&Command> for DisplayCommand {
 
 #[tauri::command]
 fn list_commands() -> Result<Vec<DisplayCommand>, String> {
-    let logic = match new_logic() {
+    let logic = match Logic::try_default() {
         Ok(l) => l,
         Err(e) => return Err(format!("Failed to initialize Logic: {:?}", e)),
     };

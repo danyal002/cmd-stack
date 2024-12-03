@@ -4,7 +4,7 @@ use crate::{
     outputs::ErrorOutput,
 };
 use log::error;
-use logic::new_logic;
+use logic::Logic;
 
 /// UI handler for the list command
 pub fn handle_list_commands(args: ListArgs) {
@@ -40,7 +40,7 @@ pub fn handle_list_commands(args: ListArgs) {
         },
     };
 
-    let logic = new_logic();
+    let logic = Logic::try_default();
     if logic.is_err() {
         error!(target: "List Cmd", "Failed to initialize logic: {:?}", logic.err());
         return;

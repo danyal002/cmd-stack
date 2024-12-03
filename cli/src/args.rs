@@ -12,10 +12,10 @@ pub enum Command {
     /// Add a command
     Add(AddArgs),
 
-    /// Update a command
+    /// Update a command, first searches for commands then updates
     Update(SearchAndPrintArgs),
 
-    /// Delete a command
+    /// Delete a command, first searches for commands then deletes
     Delete(SearchAndPrintArgs),
 
     /// Search for a command
@@ -109,22 +109,6 @@ pub struct ListArgs {
     /// Only display your favourite commands
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
-}
-
-#[derive(Debug, Subcommand)]
-/// Parameter management commands
-pub enum ParamCommands {
-    /// Add a parameter
-    Add(SearchAndPrintArgs),
-
-    /// Update a parameter
-    Update(SearchAndPrintArgs),
-
-    /// Delete a parameter
-    Delete(SearchAndPrintArgs),
-
-    /// List all parameters
-    List(SearchAndPrintArgs),
 }
 
 #[derive(Debug, Args)]

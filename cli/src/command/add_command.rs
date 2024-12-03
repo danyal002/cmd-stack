@@ -2,7 +2,7 @@ use crate::{args::AddArgs, command::print_internal_command, outputs::ErrorOutput
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::new_logic;
+use logic::Logic;
 
 #[derive(Debug)]
 struct AddCommandProperties {
@@ -81,7 +81,7 @@ pub fn handle_add_command(args: AddArgs) {
         favourite,
     };
 
-    let logic = new_logic();
+    let logic = Logic::try_default();
     if logic.is_err() {
         error!(target: "Add Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::AddCmd.print();
