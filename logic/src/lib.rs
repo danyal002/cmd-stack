@@ -28,19 +28,19 @@ impl Logic {
     pub fn new(dal: Box<dyn Dal<Row = SqliteRow, DB = Sqlite>>) -> Logic {
         Logic { db_connection: dal }
     }
-}
 
-pub fn new_logic() -> Result<Logic, DefaultLogicError> {
-    let dal = match SqliteDal::new() {
-        Ok(dal) => dal,
-        Err(e) => {
-            return Err(DefaultLogicError::DbConnection(
-                DatabaseConnectionError::SqliteError(e),
-            ))
-        }
-    };
-
-    Ok(Logic::new(Box::new(dal)))
+    pub fn try_default() -> Result<Logic, DefaultLogicError> {
+        let dal = match SqliteDal::new() {
+            Ok(dal) => dal,
+            Err(e) => {
+                return Err(DefaultLogicError::DbConnection(
+                    DatabaseConnectionError::SqliteError(e),
+                ))
+            }
+        };
+    
+        Ok(Logic::new(Box::new(dal)))
+    }
 }
 
 #[derive(Debug, Error)]

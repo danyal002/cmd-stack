@@ -76,6 +76,11 @@ impl Logic {
             .filter(|command| {
                 // The minimum threshold for a match to be considered valid
                 let min_threshold = 50; // TODO: Adjust this threshold
+                
+                // All commands if there is no filter
+                if params.alias.is_none() && params.command.is_none() && params.tag.is_none() {
+                    return true
+                }
 
                 let alias_match = match &params.alias {
                     Some(a) => match matcher.fuzzy_match(&command.internal_command.alias, a) {
