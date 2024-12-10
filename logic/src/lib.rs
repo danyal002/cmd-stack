@@ -38,7 +38,7 @@ impl Logic {
                 ))
             }
         };
-    
+
         Ok(Logic::new(Box::new(dal)))
     }
 }
