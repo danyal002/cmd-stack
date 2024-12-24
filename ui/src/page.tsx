@@ -3,6 +3,7 @@ import { accounts } from "@/data"
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Command } from "./types/command";
+import { Toaster } from "./components/ui/toaster";
 
 export default function CommandPage() {
   const [commands, setCommands] = useState<Command[]>([]);
@@ -28,6 +29,7 @@ export default function CommandPage() {
           defaultCollapsed={defaultCollapsed}
           navCollapsedSize={4}
         />
+        <Toaster />
       </div>
     </>
   )
