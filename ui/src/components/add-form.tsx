@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { Switch } from './ui/switch';
 import { useRefresh } from '@/use-command';
+import { Switch } from './ui/switch';
 
 const FormSchema = z.object({
   command: z.string().min(1, {
@@ -27,6 +27,8 @@ const FormSchema = z.object({
   alias: z.string().min(1, {
     message: 'Alias must be at least 1 character.',
   }),
+  tag: z.string(),
+  note: z.string(),
   favourite: z.boolean(),
 });
 
@@ -38,6 +40,8 @@ export function AddForm() {
     defaultValues: {
       command: '',
       alias: '',
+      tag: '',
+      note: '',
       favourite: false,
     },
   });
@@ -47,26 +51,15 @@ export function AddForm() {
       .then((res) => {
         console.log(res);
         toast({
-          title: 'You submitted the following values:',
-          description: (
-            <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-              <code className="text-white">
-                {JSON.stringify(data, null, 2)}
-              </code>
-            </pre>
-          ),
+          title: 'Command added ✅',
         });
 
         refreshData();
       })
       .catch((error) => {
+        console.log(error);
         toast({
-          title: 'Error:',
-          description: (
-            <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-              <code className="text-white">{error}</code>
-            </pre>
-          ),
+          title: 'Error ❌',
         });
       });
   }
@@ -99,6 +92,38 @@ export function AddForm() {
               </FormControl>
               <FormDescription>
                 This is your alias for the command.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="tag"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tag</FormLabel>
+              <FormControl>
+                <Input placeholder="shadcn" {...field} />
+              </FormControl>
+              <FormDescription>
+                This is your tag for the command.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="note"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Note</FormLabel>
+              <FormControl>
+                <Input placeholder="shadcn" {...field} />
+              </FormControl>
+              <FormDescription>
+                This is your note for the command.
               </FormDescription>
               <FormMessage />
             </FormItem>
