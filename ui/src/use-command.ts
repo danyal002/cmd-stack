@@ -18,7 +18,7 @@ export function useCommand() {
 
 const responseAsync = atom<Command[]>([]) 
 
-const setAsyncCommandsAtom = atom(null, async (get, set) => {
+const setAsyncCommandsAtom = atom(null, async (_get, set) => {
   const res = await invoke<Command[]>('list_commands')
   set(responseAsync, res)
 });

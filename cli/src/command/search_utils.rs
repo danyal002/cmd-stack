@@ -215,7 +215,7 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
     }
 
     let table_str = table.to_string();
-    return table_str.lines().map(|s| s.to_string()).collect();
+    table_str.lines().map(|s| s.to_string()).collect()
 }
 
 pub fn copy_text(cmd: &str, text_to_copy: String) {
