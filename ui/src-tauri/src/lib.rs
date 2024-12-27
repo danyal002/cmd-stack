@@ -72,10 +72,10 @@ fn add_command(command: AddCommand) -> Result<(), String> {
 
     let internal_command = InternalCommand::from(&command);
 
-    return match logic.handle_add_command(internal_command) {
+    match logic.handle_add_command(internal_command) {
         Ok(_c) => Ok(()),
-        Err(e) => return Err(format!("Error adding command: {:?}", e)),
-    };
+        Err(e) => Err(format!("Error adding command: {:?}", e)),
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

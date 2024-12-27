@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { Switch } from './ui/switch';
+import { useRefresh } from '@/use-command';
 
 const FormSchema = z.object({
   command: z.string().min(1, {
@@ -30,6 +31,8 @@ const FormSchema = z.object({
 });
 
 export function AddForm() {
+  const [, refreshData] = useRefresh();
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -53,6 +56,8 @@ export function AddForm() {
             </pre>
           ),
         });
+
+        refreshData();
       })
       .catch((error) => {
         toast({

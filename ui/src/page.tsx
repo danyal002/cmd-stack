@@ -1,30 +1,26 @@
-import { MainCommandPage } from "@/components/command"
-import { accounts } from "@/data"
-import { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { Command } from "./types/command";
-import { Toaster } from "./components/ui/toaster";
+import { MainCommandPage } from '@/components/command';
+import { accounts } from '@/data';
+import { useEffect } from 'react';
+import { Toaster } from './components/ui/toaster';
+import { useCommands, useRefresh } from './use-command';
 
 export default function CommandPage() {
-  const [commands, setCommands] = useState<Command[]>([]);
+  const [, refreshData] = useRefresh();
+  const [commands] = useCommands();
+
+  const defaultLayout = undefined;
+  const defaultCollapsed = undefined;
 
   useEffect(() => {
-    invoke<Command[]>('list_commands')
-      .then((res) => {
-        return setCommands(res);
-      })
-      .catch((error) => console.error(error));
+    refreshData();
   }, []);
-
-  const defaultLayout = undefined
-  const defaultCollapsed = undefined
 
   return (
     <>
       <div className="hidden flex-col md:flex">
         <MainCommandPage
           accounts={accounts}
-          commands={commands}
+          commands={commands.state == 'hasData' ? commands.data : []}
           defaultLayout={defaultLayout}
           defaultCollapsed={defaultCollapsed}
           navCollapsedSize={4}
@@ -32,5 +28,5 @@ export default function CommandPage() {
         <Toaster />
       </div>
     </>
-  )
+  );
 }
