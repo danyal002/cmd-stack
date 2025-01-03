@@ -32,7 +32,11 @@ const FormSchema = z.object({
   favourite: z.boolean(),
 });
 
-export function AddForm() {
+interface AddFormProps {
+  onSuccess: () => void;
+}
+
+export function AddForm({ onSuccess }: AddFormProps) {
   const [, refreshData] = useRefresh();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -55,6 +59,8 @@ export function AddForm() {
         });
 
         refreshData();
+
+        onSuccess();
       })
       .catch((error) => {
         console.log(error);
@@ -66,7 +72,7 @@ export function AddForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
         <FormField
           control={form.control}
           name="command"

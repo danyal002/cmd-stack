@@ -150,7 +150,7 @@ fn format_commands_for_printing(
     match print_style {
         PrintStyle::All => (
             format_internal_commands(commands),
-            "(ID | Alias | Command | Tag | Note | Favourite [YES/NO])",
+            "(Alias | Command | Tag | Note | Favourite [YES/NO])",
         ),
         PrintStyle::Alias => (
             commands
