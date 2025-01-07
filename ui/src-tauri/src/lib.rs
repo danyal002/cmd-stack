@@ -1,5 +1,5 @@
-use data::models::Command;
-use logic::new_logic;
+use data::models::{Command, InternalCommand};
+use logic::Logic;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,7 +29,7 @@ impl From<&Command> for DisplayCommand {
 
 #[tauri::command]
 fn list_commands() -> Result<Vec<DisplayCommand>, String> {
-    let logic = match new_logic() {
+    let logic = match Logic::try_default() {
         Ok(l) => l,
         Err(e) => return Err(format!("Failed to initialize Logic: {:?}", e)),
     };
@@ -42,11 +42,47 @@ fn list_commands() -> Result<Vec<DisplayCommand>, String> {
     Ok(commands)
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddCommand {
+    pub alias: String,
+    pub command: String,
+    pub tag: Option<String>,
+    pub note: Option<String>,
+    pub favourite: bool,
+}
+
+impl From<&AddCommand> for InternalCommand {
+    fn from(c: &AddCommand) -> Self {
+        InternalCommand {
+            alias: c.alias.clone(),
+            command: c.command.clone(),
+            tag: c.tag.clone(),
+            note: c.note.clone(),
+            favourite: c.favourite,
+        }
+    }
+}
+
+#[tauri::command]
+fn add_command(command: AddCommand) -> Result<(), String> {
+    let logic = match Logic::try_default() {
+        Ok(l) => l,
+        Err(e) => return Err(format!("Failed to initialize Logic: {:?}", e)),
+    };
+
+    let internal_command = InternalCommand::from(&command);
+
+    match logic.handle_add_command(internal_command) {
+        Ok(_c) => Ok(()),
+        Err(e) => Err(format!("Error adding command: {:?}", e)),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![list_commands])
+        .invoke_handler(tauri::generate_handler![list_commands, add_command])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -7,7 +7,7 @@ use crate::{
     outputs::ErrorOutput,
 };
 use log::error;
-use logic::{command::SearchCommandArgs, new_logic};
+use logic::{command::SearchCommandArgs, Logic};
 
 /// UI handler for the delete command
 pub fn handle_delete_command(args: SearchAndPrintArgs) {
@@ -57,7 +57,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
         },
     };
 
-    let logic = new_logic();
+    let logic = Logic::try_default();
     if logic.is_err() {
         error!(target: "Delete Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::FailedToCommand("delete".to_string()).print();

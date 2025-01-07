@@ -143,6 +143,39 @@ impl Parameter for IntParameter {
     }
 }
 
+pub struct BooleanParameter {
+    min: i32,
+    max: i32,
+}
+
+impl Default for BooleanParameter {
+    fn default() -> Self {
+        Self { min: 0, max: 1 }
+    }
+}
+
+impl FromStr for BooleanParameter {
+    type Err = ParameterError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "boolean" => Ok(BooleanParameter::default()),
+            _ => Err(ParameterError::InvalidParameter),
+        }
+    }
+}
+
+impl Parameter for BooleanParameter {
+    fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
+        let random_int = rng.generate_range(self.min, self.max);
+        if random_int == 0 {
+            "false".to_string()
+        } else {
+            "true".to_string()
+        }
+    }
+}
+
 pub struct ParameterHandler {
     rng: Box<dyn RandomNumberGenerator>,
 }
@@ -159,6 +192,11 @@ impl ParameterHandler {
         }
 
         let ret = IntParameter::from_str(&s);
+        if let Ok(ph) = ret {
+            return Ok(Box::new(ph));
+        }
+
+        let ret: Result<BooleanParameter, ParameterError> = BooleanParameter::from_str(&s);
         if let Ok(ph) = ret {
             return Ok(Box::new(ph));
         }
@@ -235,6 +273,11 @@ mod tests {
         let ret = ph.replace_parameters("ls @{string[7,7]} @{string[3,3]}".to_string());
         assert!(ret.is_ok());
         assert_eq!("ls CCCCCCC CCC", ret.unwrap());
+
+        let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![1, 2, 3])));
+        let ret = ph.replace_parameters("ls @{boolean} @{boolean} @{boolean}".to_string());
+        assert!(ret.is_ok());
+        assert_eq!("ls true false true", ret.unwrap());
     }
 
     #[test]

@@ -29,6 +29,7 @@ import { Nav } from "@/components/nav"
 import { Account } from "@/data"
 import { useCommand } from "@/use-command"
 import { Command } from "@/types/command"
+import { AddDialog } from "./add-dialog"
 
 interface MainCommandPageProps {
   accounts: Account[]
@@ -113,6 +114,8 @@ export function MainCommandPage({
               },
             ]}
           />
+          <Separator />
+          <AddDialog />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>

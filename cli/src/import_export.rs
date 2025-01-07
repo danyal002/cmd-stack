@@ -1,13 +1,13 @@
 use crate::{args::ImportExportArgs, outputs::ErrorOutput};
 use log::error;
-use logic::{import_export::ImportExportError, new_logic};
+use logic::{import_export::ImportExportError, Logic};
 use std::path::Path;
 
 /// UI handler for export command
 pub fn handle_export_command(args: ImportExportArgs) {
     let file_path = Path::new(&args.file);
 
-    let logic = new_logic();
+    let logic = Logic::try_default();
     if logic.is_err() {
         error!(target: "Export Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::Export.print();
@@ -30,7 +30,7 @@ pub fn handle_export_command(args: ImportExportArgs) {
 pub fn handle_import_command(args: ImportExportArgs) {
     let file_path = Path::new(&args.file);
 
-    let logic = new_logic();
+    let logic = Logic::try_default();
     if logic.is_err() {
         error!(target: "Import Cmd", "Failed to initialize logic: {:?}", logic.err());
         ErrorOutput::Import.print();
