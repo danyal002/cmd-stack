@@ -1,9 +1,5 @@
 import format from 'date-fns/format';
-import {
-  Archive,
-  MoreVertical,
-  Trash2
-} from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -14,13 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 import { Command } from '@/types/command';
+import { RemoveDialog } from './remove-dialog';
 
 interface CommandDisplayProps {
   command: Command | null;
@@ -31,24 +23,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     <div className="flex h-full flex-col">
       <div className="flex items-center p-2">
         <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" disabled={!command}>
-                <Archive className="h-4 w-4" />
-                <span className="sr-only">Archive</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Archive</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" disabled={!command}>
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Move to trash</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Move to trash</TooltipContent>
-          </Tooltip>
+          <RemoveDialog command={command} />
         </div>
         <div className="ml-auto flex items-center gap-2"></div>
         <Separator orientation="vertical" className="mx-2 h-6" />

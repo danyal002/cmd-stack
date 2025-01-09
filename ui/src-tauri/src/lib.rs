@@ -78,11 +78,29 @@ fn add_command(command: AddCommand) -> Result<(), String> {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteCommand {
+    pub id: i64,
+}
+
+#[tauri::command]
+fn delete_command(command: DeleteCommand) -> Result<(), String> {
+    let logic = match Logic::try_default() {
+        Ok(l) => l,
+        Err(e) => return Err(format!("Failed to initialize Logic: {:?}", e)),
+    };
+
+    match logic.handle_delete_command(command.id) {
+        Ok(_c) => Ok(()),
+        Err(e) => Err(format!("Error adding command: {:?}", e)),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![list_commands, add_command])
+        .invoke_handler(tauri::generate_handler![list_commands, add_command, delete_command])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
