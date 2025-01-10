@@ -1,12 +1,12 @@
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { Command } from '@/types/command';
@@ -60,10 +60,10 @@ export function RemoveDialog({ command }: RemoveDialogProps) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Are you absolutely sure?</DialogTitle>
+          <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogDescription>
-            This action cannot be undone. Are you sure you want to permanently
-            delete this command?
+            Are you sure you want to permanently delete this command? This
+            action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
