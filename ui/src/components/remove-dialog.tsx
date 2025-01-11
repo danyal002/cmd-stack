@@ -50,7 +50,7 @@ export function RemoveDialog({ command }: RemoveDialogProps) {
       <DialogTrigger disabled={!command}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" disabled={!command}>
               <Trash2 className="h-4 w-4" />
               <span className="sr-only">Move to trash</span>
             </Button>
