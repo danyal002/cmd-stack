@@ -16,6 +16,7 @@ pub struct SqliteDal {
 }
 
 impl SqliteDal {
+    /// Connects to the database at the default location
     #[tokio::main]
     pub async fn new() -> Result<SqliteDal, SqliteDbConnectionError> {
         let sqlite_db = SqliteConnectionPool::new(None).await?;
@@ -24,11 +25,12 @@ impl SqliteDal {
         })
     }
 
+    /// Connects to the database at the provided file path
     #[tokio::main]
-    pub async fn new_with_directory(
-        directory: String,
+    pub async fn new_with_custom_path(
+        custom_path: String,
     ) -> Result<SqliteDal, SqliteDbConnectionError> {
-        let sqlite_db = SqliteConnectionPool::new(Some(directory)).await?;
+        let sqlite_db = SqliteConnectionPool::new(Some(custom_path)).await?;
         Ok(SqliteDal {
             sqlite_conn: sqlite_db,
         })

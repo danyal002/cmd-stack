@@ -226,7 +226,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -258,7 +258,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -306,7 +306,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -357,7 +357,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -472,7 +472,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -516,7 +516,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -564,7 +564,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
