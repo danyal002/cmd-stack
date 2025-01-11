@@ -6,9 +6,7 @@ pub mod command;
 pub mod import_export;
 pub mod param;
 
-use data::dal::{sqlite::SQliteDatabaseConnectionError, sqlite_dal::SqliteDal, Dal, SqlQueryError};
-use sqlx::sqlite::SqliteRow;
-use sqlx::Sqlite;
+use data::dal::{sqlite::SqliteDbConnectionError, sqlite_dal::SqliteDal, SqlQueryError};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -21,11 +19,11 @@ pub enum DefaultLogicError {
 }
 
 pub struct Logic {
-    db_connection: Box<dyn Dal<Row = SqliteRow, DB = Sqlite>>,
+    db_connection: SqliteDal,
 }
 
 impl Logic {
-    pub fn new(dal: Box<dyn Dal<Row = SqliteRow, DB = Sqlite>>) -> Logic {
+    pub fn new(dal: SqliteDal) -> Logic {
         Logic { db_connection: dal }
     }
 
@@ -39,14 +37,14 @@ impl Logic {
             }
         };
 
-        Ok(Logic::new(Box::new(dal)))
+        Ok(Logic::new(dal))
     }
 }
 
 #[derive(Debug, Error)]
 pub enum DatabaseConnectionError {
     #[error("Failed to create database")]
-    SqliteError(#[from] SQliteDatabaseConnectionError),
+    SqliteError(#[from] SqliteDbConnectionError),
 
     #[error("Failed to initialize DB_CONNECTION")]
     InitDBConnection,

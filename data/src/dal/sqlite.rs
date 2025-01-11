@@ -1,4 +1,4 @@
-use sea_query::{ColumnDef, ForeignKey, ForeignKeyAction, Iden, SqliteQueryBuilder, Table};
+use sea_query::{ColumnDef, Iden, SqliteQueryBuilder, Table};
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
 use std::fs;
@@ -6,7 +6,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum SQliteDatabaseConnectionError {
+pub enum SqliteDbConnectionError {
     #[error("Could not get the database path")]
     DbPath(String),
 
@@ -21,87 +21,64 @@ pub enum SQliteDatabaseConnectionError {
 
     #[error("Could not create command table")]
     Command(#[source] sqlx::Error),
-
-    #[error("Could not create parameter table")]
-    Parameter(#[source] sqlx::Error),
 }
 
-/// Represents a connection to a SQLite database
-pub struct SqliteDatabase {
-    pub directory: Option<String>,
-    pub pool: sqlx::SqlitePool,
+pub(crate) struct SqliteConnectionPool {
+    pub(crate) pool: sqlx::SqlitePool,
 }
 
-impl SqliteDatabase {
-    /// Creates a new connection to a SQLite database
-    pub async fn new(directory: Option<String>) -> Result<Self, SQliteDatabaseConnectionError> {
-        let pool = Self::establish_db_connection(directory).await?;
+impl SqliteConnectionPool {
+    pub async fn new(db_path: Option<String>) -> Result<Self, SqliteDbConnectionError> {
+        let db_path = match db_path {
+            Some(path) => path,
+            None => Self::default_db_path()?,
+        };
+
+        let pool = Self::create_connection_pool(db_path).await?;
 
         Self::create_tables(&pool).await?;
 
-        Ok(SqliteDatabase {
-            directory: None,
-            pool,
+        Ok(SqliteConnectionPool { pool })
+    }
+
+    /// Returns the default path to the database file. The default location for the database
+    /// file is in the `cmdstack` directory which is located in the OS config directory.
+    ///
+    /// If the `cmdstack` directory does not exist, it is created
+    fn default_db_path() -> Result<String, SqliteDbConnectionError> {
+        let mut path = dirs::config_dir().ok_or_else(|| {
+            SqliteDbConnectionError::DbPath("Could not get config directory".to_string())
+        })?;
+        path.push("cmdstack");
+
+        // Create the config directory if it does not exist
+        fs::create_dir_all(path.as_path()).map_err(|_| {
+            SqliteDbConnectionError::DbPath(format!(
+                "Could not create config directory: {:?}",
+                path.to_str()
+            ))
+        })?;
+
+        path.push("database.sqlite"); // Add the database file to the path
+        path.to_str().map(|s| s.to_string()).ok_or_else(|| {
+            SqliteDbConnectionError::DbPath("Could not generate the default db path".to_string())
         })
     }
 
-    /// Returns path to database
-    fn get_db_path() -> Result<String, SQliteDatabaseConnectionError> {
-        let top_level_directory = match dirs::config_dir() {
-            Some(dir) => match dir.to_str() {
-                Some(path) => path.to_string(),
-                None => {
-                    return Err(SQliteDatabaseConnectionError::DbPath(
-                        "Could not convert home directory to string".to_string(),
-                    ));
-                }
-            },
-            None => {
-                return Err(SQliteDatabaseConnectionError::DbPath(
-                    "Could not get config directory".to_string(),
-                ));
-            }
-        };
+    async fn create_connection_pool(
+        db_path: String,
+    ) -> Result<SqlitePool, SqliteDbConnectionError> {
+        let connect_options = SqliteConnectOptions::from_str(&db_path)
+            .map_err(SqliteDbConnectionError::SqliteOptionsInitialization)?
+            .create_if_missing(true);
 
-        // We must create he directory to allow SQLite to create the database file
-        let directory = top_level_directory + "/cmdstack/";
-        match fs::create_dir_all(directory.clone()) {
-            Ok(_) => {}
-            Err(e) => {
-                return Err(SQliteDatabaseConnectionError::CreatingDatabase(e));
-            }
-        }
-
-        Ok(directory + "database.sqlite")
+        SqlitePool::connect_with(connect_options)
+            .await
+            .map_err(SqliteDbConnectionError::PoolInitialization)
     }
 
-    async fn establish_db_connection(
-        directory: Option<String>,
-    ) -> Result<SqlitePool, SQliteDatabaseConnectionError> {
-        let db_path = if let Some(d) = directory {
-            d
-        } else {
-            Self::get_db_path()?
-        };
-
-        let mut connect_options = match SqliteConnectOptions::from_str(&db_path) {
-            Ok(options) => options,
-            Err(e) => {
-                return Err(SQliteDatabaseConnectionError::SqliteOptionsInitialization(
-                    e,
-                ))
-            }
-        };
-        // Enable foreign keys and ensure database file is created if it does not exist
-        connect_options = connect_options.foreign_keys(true).create_if_missing(true);
-
-        match SqlitePool::connect_with(connect_options).await {
-            Ok(pool) => Ok(pool),
-            Err(e) => Err(SQliteDatabaseConnectionError::PoolInitialization(e)),
-        }
-    }
-
-    async fn create_tables(pool: &SqlitePool) -> Result<(), SQliteDatabaseConnectionError> {
+    /// Initializes the tables in the Sqlite database if they do not exist
+    async fn create_tables(pool: &SqlitePool) -> Result<(), SqliteDbConnectionError> {
         let command_table_sql = Table::create()
             .table(Command::Table)
             .if_not_exists()
@@ -120,39 +97,11 @@ impl SqliteDatabase {
             .col(ColumnDef::new(Command::Favourite).boolean().default(false))
             .build(SqliteQueryBuilder);
 
-        let parameter_table_sql = Table::create()
-            .table(Parameter::Table)
-            .if_not_exists()
-            .col(
-                ColumnDef::new(Parameter::Id)
-                    .integer()
-                    .not_null()
-                    .primary_key()
-                    .auto_increment(),
-            )
-            .col(ColumnDef::new(Parameter::CommandId).integer().not_null())
-            .col(ColumnDef::new(Parameter::Symbol).string().not_null())
-            .col(ColumnDef::new(Parameter::Regex).string().not_null())
-            .col(ColumnDef::new(Parameter::Note).string())
-            .foreign_key(
-                ForeignKey::create()
-                    .name("fk_69420")
-                    .from(Parameter::Table, Parameter::CommandId)
-                    .to(Command::Table, Command::Id)
-                    .on_delete(ForeignKeyAction::Cascade),
-            )
-            .build(SqliteQueryBuilder);
-
-        match sqlx::query(&command_table_sql).execute(pool).await {
-            Ok(_) => {}
-            Err(e) => {
-                return Err(SQliteDatabaseConnectionError::Command(e));
-            }
-        }
-        match sqlx::query(&parameter_table_sql).execute(pool).await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(SQliteDatabaseConnectionError::Parameter(e)),
-        }
+        sqlx::query(&command_table_sql)
+            .execute(pool)
+            .await
+            .map(|_| ())
+            .map_err(SqliteDbConnectionError::Command)
     }
 }
 
@@ -167,15 +116,4 @@ pub enum Command {
     Note,
     LastUsed,
     Favourite,
-}
-
-#[derive(Iden)]
-/// Parameter Table Schema
-pub enum Parameter {
-    Table,
-    Id,
-    CommandId,
-    Symbol,
-    Regex,
-    Note,
 }
