@@ -29,15 +29,12 @@ impl From<&Command> for DisplayCommand {
 
 #[tauri::command]
 fn list_commands() -> Result<Vec<DisplayCommand>, String> {
-    let logic = match Logic::try_default() {
-        Ok(l) => l,
-        Err(e) => return Err(format!("Failed to initialize Logic: {:?}", e)),
-    };
+    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
 
-    let commands = match logic.handle_list_commands(false, false) {
-        Ok(c) => c,
-        Err(e) => return Err(format!("Error listing commands: {:?}", e)),
-    };
+    let commands = logic
+        .handle_list_commands(false, false)
+        .map_err(|e| format!("Error listing commands: {:?}", e))?;
+
     let commands: Vec<DisplayCommand> = commands.iter().map(DisplayCommand::from).collect();
     Ok(commands)
 }
@@ -65,24 +62,38 @@ impl From<&AddCommand> for InternalCommand {
 
 #[tauri::command]
 fn add_command(command: AddCommand) -> Result<(), String> {
-    let logic = match Logic::try_default() {
-        Ok(l) => l,
-        Err(e) => return Err(format!("Failed to initialize Logic: {:?}", e)),
-    };
+    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
 
     let internal_command = InternalCommand::from(&command);
 
-    match logic.handle_add_command(internal_command) {
-        Ok(_c) => Ok(()),
-        Err(e) => Err(format!("Error adding command: {:?}", e)),
-    }
+    logic
+        .handle_add_command(internal_command)
+        .map_err(|e| format!("Error adding command: {:?}", e))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteCommand {
+    pub id: i64,
+}
+
+#[tauri::command]
+fn delete_command(command: DeleteCommand) -> Result<(), String> {
+    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
+
+    logic
+        .handle_delete_command(command.id)
+        .map_err(|e| format!("Error deleting command: {:?}", e))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![list_commands, add_command])
+        .invoke_handler(tauri::generate_handler![
+            list_commands,
+            add_command,
+            delete_command
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

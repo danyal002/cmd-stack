@@ -1,7 +1,6 @@
-use super::sqlite::{SQliteDatabaseConnectionError, SqliteDatabase};
+use super::sqlite::{SqliteConnectionPool, SqliteDbConnectionError};
+use super::SqlQueryError;
 use super::{sqlite, SqlTxError};
-use super::{Dal, SqlQueryError};
-use async_trait::async_trait;
 use sea_query::{Expr, Query, SqliteQueryBuilder};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Row, Sqlite, Transaction};
@@ -11,64 +10,46 @@ use crate::models::*;
 
 /// Data Access Layer for Sqlite
 pub struct SqliteDal {
-    pub sql: Box<sqlite::SqliteDatabase>,
+    pub(crate) sql: sqlite::SqliteConnectionPool,
 }
 
 impl SqliteDal {
     #[tokio::main]
-    pub async fn new() -> Result<SqliteDal, SQliteDatabaseConnectionError> {
-        let sqlite_db = match SqliteDatabase::new(None).await {
-            Ok(db) => db,
-            Err(e) => return Err(e),
-        };
-
-        Ok(SqliteDal {
-            sql: Box::new(sqlite_db),
-        })
+    pub async fn new() -> Result<SqliteDal, SqliteDbConnectionError> {
+        let sqlite_db = SqliteConnectionPool::new(None).await?;
+        Ok(SqliteDal { sql: sqlite_db })
     }
 
     #[tokio::main]
     pub async fn new_with_directory(
         directory: String,
-    ) -> Result<SqliteDal, SQliteDatabaseConnectionError> {
-        let sqlite_db = match SqliteDatabase::new(Some(directory)).await {
-            Ok(db) => db,
-            Err(e) => return Err(e),
-        };
-
-        Ok(SqliteDal {
-            sql: Box::new(sqlite_db),
-        })
+    ) -> Result<SqliteDal, SqliteDbConnectionError> {
+        let sqlite_db = SqliteConnectionPool::new(Some(directory)).await?;
+        Ok(SqliteDal { sql: sqlite_db })
     }
-}
 
-#[async_trait]
-impl Dal for SqliteDal {
-    type Row = SqliteRow;
-    type DB = Sqlite;
-
-    async fn begin(&self) -> Result<Transaction<'_, Sqlite>, SqlTxError> {
+    pub async fn begin(&self) -> Result<Transaction<'_, Sqlite>, SqlTxError> {
         match self.sql.pool.begin().await {
             Ok(tx) => Ok(tx),
             Err(e) => Err(SqlTxError::TxBegin(e)),
         }
     }
 
-    async fn rollback(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
+    pub async fn rollback(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
         match tx.rollback().await {
             Ok(_) => Ok(()),
             Err(e) => Err(SqlTxError::TxRollback(e)),
         }
     }
 
-    async fn commit(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
+    pub async fn commit(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
         match tx.commit().await {
             Ok(_) => Ok(()),
             Err(e) => Err(SqlTxError::TxCommit(e)),
         }
     }
 
-    async fn get_unix_timestamp(&self) -> i64 {
+    fn get_unix_timestamp(&self) -> i64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards")
@@ -105,7 +86,7 @@ impl Dal for SqliteDal {
         &self,
         query: &str,
         tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<Vec<Self::Row>, sqlx::Error> {
+    ) -> Result<Vec<SqliteRow>, sqlx::Error> {
         let rows;
         if let Some(trans) = tx {
             rows = sqlx::query(query).fetch_all(&mut **trans).await?;
@@ -115,12 +96,12 @@ impl Dal for SqliteDal {
         Ok(rows)
     }
 
-    async fn add_command(
+    pub async fn add_command(
         &self,
         command: InternalCommand,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<i64, SqlQueryError> {
-        let current_time = self.get_unix_timestamp().await;
+        let current_time = self.get_unix_timestamp();
 
         let query = Query::insert()
             .into_table(sqlite::Command::Table)
@@ -150,7 +131,7 @@ impl Dal for SqliteDal {
         Ok(inserted_row_id)
     }
 
-    async fn get_all_commands(
+    pub async fn get_all_commands(
         &self,
         order_by_use: bool,
         favourites_only: bool,
@@ -207,12 +188,12 @@ impl Dal for SqliteDal {
         Ok(commands)
     }
 
-    async fn update_command_last_used_prop(
+    pub async fn update_command_last_used_prop(
         &self,
         command_id: i64,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<(), SqlQueryError> {
-        let current_time = self.get_unix_timestamp().await;
+        let current_time = self.get_unix_timestamp();
 
         let query = Query::update()
             .table(sqlite::Command::Table)
@@ -228,7 +209,7 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn delete_command(
+    pub async fn delete_command(
         &self,
         command_id: i64,
         tx: Option<&mut Transaction<'_, Sqlite>>,
@@ -246,7 +227,7 @@ impl Dal for SqliteDal {
         Ok(())
     }
 
-    async fn update_command(
+    pub async fn update_command(
         &self,
         command_id: i64,
         new_command_props: InternalCommand,

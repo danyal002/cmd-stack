@@ -234,7 +234,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(Box::new(dal.unwrap()));
+        let logic = Logic::new(dal.unwrap());
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -266,7 +266,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(Box::new(dal.unwrap()));
+        let logic = Logic::new(dal.unwrap());
 
         let mut invalid_command = InternalCommand {
             command: "@{bad}".to_string(),
@@ -314,7 +314,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(Box::new(dal.unwrap()));
+        let logic = Logic::new(dal.unwrap());
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -365,7 +365,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(Box::new(dal.unwrap()));
+        let logic = Logic::new(dal.unwrap());
 
         let command = InternalCommand {
             command: "abcd".to_string(),
@@ -496,7 +496,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(Box::new(dal.unwrap()));
+        let logic = Logic::new(dal.unwrap());
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -540,7 +540,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(Box::new(dal.unwrap()));
+        let logic = Logic::new(dal.unwrap());
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -588,7 +588,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_directory(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(Box::new(dal.unwrap()));
+        let logic = Logic::new(dal.unwrap());
 
         let command = InternalCommand {
             command: "echo @{int}".to_string(),
