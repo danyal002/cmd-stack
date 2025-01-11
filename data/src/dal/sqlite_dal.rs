@@ -16,11 +16,7 @@ pub struct SqliteDal {
 impl SqliteDal {
     #[tokio::main]
     pub async fn new() -> Result<SqliteDal, SqliteDbConnectionError> {
-        let sqlite_db = match SqliteConnectionPool::new(None).await {
-            Ok(db) => db,
-            Err(e) => return Err(e),
-        };
-
+        let sqlite_db = SqliteConnectionPool::new(None).await?;
         Ok(SqliteDal { sql: sqlite_db })
     }
 
@@ -28,11 +24,7 @@ impl SqliteDal {
     pub async fn new_with_directory(
         directory: String,
     ) -> Result<SqliteDal, SqliteDbConnectionError> {
-        let sqlite_db = match SqliteConnectionPool::new(Some(directory)).await {
-            Ok(db) => db,
-            Err(e) => return Err(e),
-        };
-
+        let sqlite_db = SqliteConnectionPool::new(Some(directory)).await?;
         Ok(SqliteDal { sql: sqlite_db })
     }
 

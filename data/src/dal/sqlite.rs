@@ -23,17 +23,15 @@ pub enum SqliteDbConnectionError {
     Command(#[source] sqlx::Error),
 }
 
-/// Represents a connection to a SQLite database
 pub(crate) struct SqliteConnectionPool {
     pub(crate) pool: sqlx::SqlitePool,
 }
 
 impl SqliteConnectionPool {
     pub async fn new(db_path: Option<String>) -> Result<Self, SqliteDbConnectionError> {
-        let db_path = if let Some(d) = db_path {
-            d
-        } else {
-            Self::default_db_path()?
+        let db_path = match db_path {
+            Some(path) => path,
+            None => Self::default_db_path()?,
         };
 
         let pool = Self::create_connection_pool(db_path).await?;
@@ -60,14 +58,13 @@ impl SqliteConnectionPool {
             }
         };
 
-        // We must create the directory to allow SQLite to create the database file
-        let directory = top_level_directory + "/cmdstack/";
-        match fs::create_dir_all(directory.clone()) {
-            Ok(_) => {}
-            Err(e) => {
-                return Err(SqliteDbConnectionError::CreatingDatabase(e));
-            }
-        }
+        // We must create the directory that the database file will be stored in
+        let directory = top_level_directory
+            + std::path::MAIN_SEPARATOR_STR
+            + "cmdstack"
+            + std::path::MAIN_SEPARATOR_STR;
+
+        fs::create_dir_all(&directory).map_err(SqliteDbConnectionError::CreatingDatabase)?;
 
         Ok(directory + "database.sqlite")
     }
@@ -75,18 +72,13 @@ impl SqliteConnectionPool {
     async fn create_connection_pool(
         db_path: String,
     ) -> Result<SqlitePool, SqliteDbConnectionError> {
-        let mut connect_options = match SqliteConnectOptions::from_str(&db_path) {
-            Ok(options) => options,
-            Err(e) => return Err(SqliteDbConnectionError::SqliteOptionsInitialization(e)),
-        };
+        let connect_options = SqliteConnectOptions::from_str(&db_path)
+            .map_err(SqliteDbConnectionError::SqliteOptionsInitialization)?
+            .create_if_missing(true);
 
-        // Ensure database file is created if it does not exist
-        connect_options = connect_options.create_if_missing(true);
-
-        match SqlitePool::connect_with(connect_options).await {
-            Ok(pool) => Ok(pool),
-            Err(e) => Err(SqliteDbConnectionError::PoolInitialization(e)),
-        }
+        SqlitePool::connect_with(connect_options)
+            .await
+            .map_err(SqliteDbConnectionError::PoolInitialization)
     }
 
     /// Initializes the tables in the Sqlite database if they do not exist
@@ -109,10 +101,11 @@ impl SqliteConnectionPool {
             .col(ColumnDef::new(Command::Favourite).boolean().default(false))
             .build(SqliteQueryBuilder);
 
-        match sqlx::query(&command_table_sql).execute(pool).await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(SqliteDbConnectionError::Command(e)),
-        }
+        sqlx::query(&command_table_sql)
+            .execute(pool)
+            .await
+            .map(|_| ())
+            .map_err(SqliteDbConnectionError::Command)
     }
 }
 
