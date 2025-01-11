@@ -46,7 +46,7 @@ pub struct AddArgs {
     #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
-    /// Favourites the command if true
+    /// If used, favourites the command
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
 }
@@ -79,11 +79,11 @@ pub struct SearchAndPrintArgs {
     #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
-    /// If true, displays commands in order of most recent use
+    /// If used, displays commands in order of most recent use
     #[clap(long = "recent", short = 'r', action)]
     pub recent: bool,
 
-    /// If true, only displays favourited commands
+    /// If used, only displays favourited commands
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
 
@@ -99,6 +99,6 @@ pub struct SearchAndPrintArgs {
 /// Arguments for importing/exporting commands
 #[derive(Debug, Args)]
 pub struct ImportExportArgs {
-    /// The path of the export file
+    /// The relative path of the file
     pub file: String,
 }
