@@ -41,28 +41,28 @@ impl SqliteConnectionPool {
         Ok(SqliteConnectionPool { pool })
     }
 
+    /// Returns the default path to the database file. The default location for the database
+    /// file is in the `cmdstack` directory which is located in the OS config directory.
+    ///
+    /// If the `cmdstack` directory does not exist, it is created
     fn default_db_path() -> Result<String, SqliteDbConnectionError> {
-        let mut config_dir_path = dirs::config_dir().ok_or_else(|| {
+        let mut path = dirs::config_dir().ok_or_else(|| {
             SqliteDbConnectionError::DbPath("Could not get config directory".to_string())
         })?;
-        config_dir_path.push("cmdstack");
+        path.push("cmdstack");
 
         // Create the config directory if it does not exist
-        fs::create_dir_all(config_dir_path.as_path()).map_err(|_| {
+        fs::create_dir_all(path.as_path()).map_err(|_| {
             SqliteDbConnectionError::DbPath(format!(
                 "Could not create config directory: {:?}",
-                config_dir_path.to_str()
+                path.to_str()
             ))
         })?;
 
-        // Add the database file to the path and return it
-        config_dir_path.push("database.sqlite");
-        config_dir_path
-            .to_str()
-            .map(|s| s.to_string())
-            .ok_or_else(|| {
-                SqliteDbConnectionError::DbPath("Could not generate default db path".to_string())
-            })
+        path.push("database.sqlite"); // Add the database file to the path
+        path.to_str().map(|s| s.to_string()).ok_or_else(|| {
+            SqliteDbConnectionError::DbPath("Could not generate the default db path".to_string())
+        })
     }
 
     async fn create_connection_pool(
