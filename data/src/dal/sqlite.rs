@@ -42,31 +42,27 @@ impl SqliteConnectionPool {
     }
 
     fn default_db_path() -> Result<String, SqliteDbConnectionError> {
-        let top_level_directory = match dirs::config_dir() {
-            Some(dir) => match dir.to_str() {
-                Some(path) => path.to_string(),
-                None => {
-                    return Err(SqliteDbConnectionError::DbPath(
-                        "Could not convert config directory to string".to_string(),
-                    ));
-                }
-            },
-            None => {
-                return Err(SqliteDbConnectionError::DbPath(
-                    "Could not get config directory".to_string(),
-                ));
-            }
-        };
+        let mut config_dir_path = dirs::config_dir().ok_or_else(|| {
+            SqliteDbConnectionError::DbPath("Could not get config directory".to_string())
+        })?;
+        config_dir_path.push("cmdstack");
 
-        // We must create the directory that the database file will be stored in
-        let directory = top_level_directory
-            + std::path::MAIN_SEPARATOR_STR
-            + "cmdstack"
-            + std::path::MAIN_SEPARATOR_STR;
+        // Create the config directory if it does not exist
+        fs::create_dir_all(config_dir_path.as_path()).map_err(|_| {
+            SqliteDbConnectionError::DbPath(format!(
+                "Could not create config directory: {:?}",
+                config_dir_path.to_str()
+            ))
+        })?;
 
-        fs::create_dir_all(&directory).map_err(SqliteDbConnectionError::CreatingDatabase)?;
-
-        Ok(directory + "database.sqlite")
+        // Add the database file to the path and return it
+        config_dir_path.push("database.sqlite");
+        config_dir_path
+            .to_str()
+            .map(|s| s.to_string())
+            .ok_or_else(|| {
+                SqliteDbConnectionError::DbPath("Could not generate default db path".to_string())
+            })
     }
 
     async fn create_connection_pool(
