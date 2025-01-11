@@ -2,22 +2,26 @@ use super::sqlite::{SqliteConnectionPool, SqliteDbConnectionError};
 use super::SqlQueryError;
 use super::{sqlite, SqlTxError};
 use sea_query::{Expr, Query, SqliteQueryBuilder};
-use sqlx::sqlite::SqliteRow;
+use sqlx::sqlite::{SqliteQueryResult, SqliteRow};
 use sqlx::{Row, Sqlite, Transaction};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::models::*;
 
-/// Data Access Layer for Sqlite
+/// The Data Access Layer
+///
+/// The interface of this struct allows for the use of transactions
 pub struct SqliteDal {
-    pub(crate) sql: sqlite::SqliteConnectionPool,
+    pub(crate) sqlite_conn: sqlite::SqliteConnectionPool,
 }
 
 impl SqliteDal {
     #[tokio::main]
     pub async fn new() -> Result<SqliteDal, SqliteDbConnectionError> {
         let sqlite_db = SqliteConnectionPool::new(None).await?;
-        Ok(SqliteDal { sql: sqlite_db })
+        Ok(SqliteDal {
+            sqlite_conn: sqlite_db,
+        })
     }
 
     #[tokio::main]
@@ -25,74 +29,56 @@ impl SqliteDal {
         directory: String,
     ) -> Result<SqliteDal, SqliteDbConnectionError> {
         let sqlite_db = SqliteConnectionPool::new(Some(directory)).await?;
-        Ok(SqliteDal { sql: sqlite_db })
+        Ok(SqliteDal {
+            sqlite_conn: sqlite_db,
+        })
     }
 
     pub async fn begin(&self) -> Result<Transaction<'_, Sqlite>, SqlTxError> {
-        match self.sql.pool.begin().await {
-            Ok(tx) => Ok(tx),
-            Err(e) => Err(SqlTxError::TxBegin(e)),
-        }
+        self.sqlite_conn
+            .pool
+            .begin()
+            .await
+            .map_err(|e| SqlTxError::TxBegin(e))
     }
 
+    /// Takes ownership of the given transaction object
     pub async fn rollback(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
-        match tx.rollback().await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(SqlTxError::TxRollback(e)),
-        }
+        tx.rollback().await.map_err(|e| SqlTxError::TxRollback(e))
     }
 
+    /// Takes ownership of the given transaction object
     pub async fn commit(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
-        match tx.commit().await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(SqlTxError::TxCommit(e)),
-        }
+        tx.commit().await.map_err(|e| SqlTxError::TxCommit(e))
     }
 
-    fn get_unix_timestamp(&self) -> i64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards")
-            .as_secs() as i64
+    /// Returns the current unix timestamp in seconds
+    fn get_unix_timestamp(&self) -> Result<i64, SqlQueryError> {
+        let duration_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH)?;
+        Ok(duration_since_epoch.as_secs() as i64)
     }
 
-    async fn execute_insert(
+    async fn execute_query(
         &self,
         query: &str,
         tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<i64, sqlx::Error> {
-        let query_result;
-        if let Some(trans) = tx {
-            query_result = sqlx::query(query).execute(&mut **trans).await?;
-        } else {
-            query_result = sqlx::query(query).execute(&self.sql.pool).await?;
-        }
-        Ok(query_result.last_insert_rowid())
+    ) -> Result<SqliteQueryResult, sqlx::Error> {
+        let result = match tx {
+            Some(transaction) => sqlx::query(query).execute(&mut **transaction).await?,
+            None => sqlx::query(query).execute(&self.sqlite_conn.pool).await?,
+        };
+        Ok(result)
     }
 
-    async fn execute(
-        &self,
-        query: &str,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<(), sqlx::Error> {
-        if let Some(trans) = tx {
-            sqlx::query(query).execute(&mut **trans).await.map(|_| ())
-        } else {
-            sqlx::query(query).execute(&self.sql.pool).await.map(|_| ())
-        }
-    }
-
-    async fn query(
+    async fn read_rows(
         &self,
         query: &str,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<Vec<SqliteRow>, sqlx::Error> {
-        let rows;
-        if let Some(trans) = tx {
-            rows = sqlx::query(query).fetch_all(&mut **trans).await?;
-        } else {
-            rows = sqlx::query(query).fetch_all(&self.sql.pool).await?;
-        }
+        let rows = match tx {
+            Some(transaction) => sqlx::query(query).fetch_all(&mut **transaction).await?,
+            None => sqlx::query(query).fetch_all(&self.sqlite_conn.pool).await?,
+        };
         Ok(rows)
     }
 
@@ -101,7 +87,7 @@ impl SqliteDal {
         command: InternalCommand,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<i64, SqlQueryError> {
-        let current_time = self.get_unix_timestamp();
+        let current_time = self.get_unix_timestamp()?;
 
         let query = Query::insert()
             .into_table(sqlite::Command::Table)
@@ -123,12 +109,12 @@ impl SqliteDal {
             ])
             .to_string(SqliteQueryBuilder);
 
-        let inserted_row_id = match self.execute_insert(&query, tx).await {
+        let result = match self.execute_query(&query, tx).await {
             Ok(id) => id,
             Err(e) => return Err(SqlQueryError::AddCommand(e)),
         };
 
-        Ok(inserted_row_id)
+        Ok(result.last_insert_rowid())
     }
 
     pub async fn get_all_commands(
@@ -165,7 +151,7 @@ impl SqliteDal {
             .from(sqlite::Command::Table)
             .to_string(SqliteQueryBuilder);
 
-        let rows = match self.query(&query, tx).await {
+        let rows = match self.read_rows(&query, tx).await {
             Ok(rows) => rows,
             Err(e) => return Err(SqlQueryError::SearchCommand(e)),
         };
@@ -193,7 +179,7 @@ impl SqliteDal {
         command_id: i64,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<(), SqlQueryError> {
-        let current_time = self.get_unix_timestamp();
+        let current_time = self.get_unix_timestamp()?;
 
         let query = Query::update()
             .table(sqlite::Command::Table)
@@ -201,7 +187,7 @@ impl SqliteDal {
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute(&query, tx).await {
+        match self.execute_query(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
         };
@@ -219,7 +205,7 @@ impl SqliteDal {
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute(&query, tx).await {
+        match self.execute_query(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
         };
@@ -248,7 +234,7 @@ impl SqliteDal {
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute(&query, tx).await {
+        match self.execute_query(&query, tx).await {
             Ok(_) => {}
             Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
         };

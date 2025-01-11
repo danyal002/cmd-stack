@@ -16,6 +16,9 @@ pub enum SqlQueryError {
 
     #[error("failed to add parameter")]
     AddParam(#[source] sqlx::Error),
+
+    #[error("failed to get time")]
+    UnixTimestamp(#[from] std::time::SystemTimeError),
 }
 
 #[derive(Error, Debug)]
