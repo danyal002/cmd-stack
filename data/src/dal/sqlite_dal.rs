@@ -83,8 +83,7 @@ impl SqliteDal {
         };
         Ok(rows)
     }
-
-
+  
     pub async fn get_all_commands(
         &self,
         order_by_use: bool,
