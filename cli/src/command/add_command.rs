@@ -1,7 +1,7 @@
 use crate::{
     args::AddArgs,
     command::print_internal_command,
-    outputs::{process_text_for_output, ErrorOutput},
+    outputs::{format_output, ErrorOutput},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -18,28 +18,25 @@ struct AddCommandProperties {
 
 /// Generates a wizard to set the properties of a command
 fn set_command_properties_wizard(command: &str) -> Result<AddCommandProperties, InquireError> {
-    let alias = Text::new(&process_text_for_output(
+    let alias = Text::new(&format_output(
         "<bold>Alias</bold> <italics>(Equal to the command by default)</italics><bold>:</bold>",
     ))
     .with_default(command)
     .prompt()?;
 
-    let tag = Text::new(&process_text_for_output(
+    let tag = Text::new(&format_output(
         "<bold>Tag</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
     ))
     .prompt()?;
 
-    let note = Text::new(&process_text_for_output(
+    let note = Text::new(&format_output(
         "<bold>Note</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
     ))
     .prompt()?;
 
-    let favourite = Select::new(
-        &process_text_for_output("<bold>Favourite:</bold>"),
-        vec!["Yes", "No"],
-    )
-    .with_starting_cursor(1)
-    .prompt()?
+    let favourite = Select::new(&format_output("<bold>Favourite:</bold>"), vec!["Yes", "No"])
+        .with_starting_cursor(1)
+        .prompt()?
         == "Yes";
 
     Ok(AddCommandProperties {

@@ -4,7 +4,7 @@ use crate::{
         display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
-    outputs::{process_text_for_output, ErrorOutput},
+    outputs::{format_output, ErrorOutput},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -26,32 +26,29 @@ pub fn set_command_properties_wizard(
     cur_note: Option<String>,
     cur_favourite: bool,
 ) -> Result<InternalCommand, InquireError> {
-    let command = Text::new(&process_text_for_output("<bold>Command</bold>:"))
+    let command = Text::new(&format_output("<bold>Command</bold>:"))
         .with_initial_value(&cur_command)
         .prompt()?;
 
-    let alias = Text::new(&process_text_for_output("<bold>Alias</bold>:"))
+    let alias = Text::new(&format_output("<bold>Alias</bold>:"))
         .with_initial_value(&cur_alias)
         .prompt()?;
 
-    let tag = Text::new(&process_text_for_output(
+    let tag = Text::new(&format_output(
         "<bold>Tag</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
     ))
     .with_initial_value(&cur_tag.unwrap_or(String::from("")))
     .prompt()?;
 
-    let note = Text::new(&process_text_for_output(
+    let note = Text::new(&format_output(
         "<bold>Note</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
     ))
     .with_initial_value(&cur_note.unwrap_or(String::from("")))
     .prompt()?;
 
-    let favourite = Select::new(
-        &process_text_for_output("<bold>Favourite:</bold>"),
-        vec!["Yes", "No"],
-    )
-    .with_starting_cursor(if cur_favourite { 0 } else { 1 })
-    .prompt()?
+    let favourite = Select::new(&format_output("<bold>Favourite:</bold>"), vec!["Yes", "No"])
+        .with_starting_cursor(if cur_favourite { 0 } else { 1 })
+        .prompt()?
         == "Yes";
 
     Ok(InternalCommand {

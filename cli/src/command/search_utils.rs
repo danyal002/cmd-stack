@@ -1,6 +1,6 @@
 use crate::{
     args::PrintStyle,
-    outputs::{process_text_for_output, ErrorOutput},
+    outputs::{format_output, ErrorOutput},
     utils::truncate_string,
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
@@ -28,17 +28,17 @@ pub fn display_search_args_wizard(
 
 /// Generates a wizard to set the properties for command searching
 pub fn search_args_wizard() -> Result<SearchArgsWizardInput, InquireError> {
-    let command = Text::new(&process_text_for_output(
+    let command = Text::new(&format_output(
         "<bold>Command</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
     ))
     .prompt()?;
 
-    let alias = Text::new(&process_text_for_output(
+    let alias = Text::new(&format_output(
         "<bold>Alias</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
     ))
     .prompt()?;
 
-    let tag = Text::new(&process_text_for_output(
+    let tag = Text::new(&format_output(
         "<bold>Tag</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
     ))
     .prompt()?;
@@ -111,7 +111,7 @@ fn get_selected_item_from_user(
 
     println!(); // Spacing
     let selected_command = match Select::new(
-        &process_text_for_output(
+        &format_output(
             &("<bold>Select a command</bold> <italics>".to_owned()
                 + columns
                 + "</italics><bold>:</bold>"),
