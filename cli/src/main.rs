@@ -98,7 +98,6 @@ fn main() {
         Command::Search(search_args) => {
             command::search_command::handle_search_commands(search_args)
         }
-        Command::List(list_args) => command::list_commands::handle_list_commands(list_args),
         Command::Export(import_export_args) => {
             import_export::handle_export_command(import_export_args)
         }

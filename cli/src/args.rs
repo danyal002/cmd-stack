@@ -21,9 +21,6 @@ pub enum Command {
     /// Search for a command
     Search(SearchAndPrintArgs),
 
-    /// List all commands
-    List(ListArgs),
-
     /// Export commands to a file
     Export(ImportExportArgs),
 
@@ -82,26 +79,6 @@ pub struct SearchAndPrintArgs {
     #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
-    /// How commands should be displayed
-    #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
-    pub print_style: PrintStyle,
-
-    /// The number of commands to list at a time
-    #[clap(long = "display-limit", default_value = "10")]
-    pub display_limit: u32,
-}
-
-#[derive(Debug, Args)]
-/// Arguments for listing commands
-pub struct ListArgs {
-    /// Choose how the commands should be displayed
-    #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
-    pub print_style: PrintStyle,
-
-    /// The number of commands to list at a time
-    #[clap(long = "display-limit", default_value = "10")]
-    pub display_limit: u32,
-
     /// Order the commands by most recent use
     #[clap(long = "recent", short = 'r', action)]
     pub recent: bool,
@@ -109,6 +86,14 @@ pub struct ListArgs {
     /// Only display your favourite commands
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
+
+    /// How commands should be displayed
+    #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
+    pub print_style: PrintStyle,
+
+    /// The number of commands to list at a time
+    #[clap(long = "display-limit", default_value = "10")]
+    pub display_limit: u32,
 }
 
 #[derive(Debug, Args)]

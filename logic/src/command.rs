@@ -28,6 +28,12 @@ pub struct SearchCommandArgs {
     pub alias: Option<String>,
     pub command: Option<String>,
     pub tag: Option<String>,
+
+    /// Order the commands returned by their last used timestamp
+    pub order_by_use: bool,
+
+    /// Only return commands that are marked as "favourite"
+    pub favourites_only: bool,
 }
 
 impl Logic {
@@ -62,7 +68,7 @@ impl Logic {
         // Get all commands from the database
         let commands = match self
             .db_connection
-            .get_all_commands(false, false, None)
+            .get_all_commands(params.order_by_use, params.favourites_only, None)
             .await
         {
             Ok(results) => results,
@@ -386,6 +392,8 @@ mod tests {
             alias: Some("abc".to_string()),
             command: None,
             tag: None,
+            order_by_use: false,
+            favourites_only: false,
         });
         assert!(search_command_result.is_ok());
         let commands = search_command_result.unwrap();
@@ -396,6 +404,8 @@ mod tests {
             alias: Some("abcd".to_string()),
             command: None,
             tag: None,
+            order_by_use: false,
+            favourites_only: false,
         });
         assert!(search_command_result.is_ok());
         let commands = search_command_result.unwrap();
@@ -406,6 +416,8 @@ mod tests {
             alias: Some("bc".to_string()),
             command: None,
             tag: None,
+            order_by_use: false,
+            favourites_only: false,
         });
         assert!(search_command_result.is_ok());
         let commands = search_command_result.unwrap();
@@ -416,6 +428,8 @@ mod tests {
             alias: None,
             command: None,
             tag: Some("gree".to_string()),
+            order_by_use: false,
+            favourites_only: false,
         });
         assert!(search_command_result.is_ok());
         let commands = search_command_result.unwrap();
@@ -426,6 +440,8 @@ mod tests {
             alias: None,
             command: None,
             tag: Some("green".to_string()),
+            order_by_use: false,
+            favourites_only: false,
         });
         assert!(search_command_result.is_ok());
         let commands = search_command_result.unwrap();
@@ -436,6 +452,8 @@ mod tests {
             alias: None,
             command: Some("abc".to_string()),
             tag: None,
+            order_by_use: false,
+            favourites_only: false,
         });
         assert!(search_command_result.is_ok());
         let commands = search_command_result.unwrap();
@@ -446,6 +464,8 @@ mod tests {
             alias: None,
             command: Some("abcd".to_string()),
             tag: None,
+            order_by_use: false,
+            favourites_only: false,
         });
         assert!(search_command_result.is_ok());
         let commands = search_command_result.unwrap();
@@ -456,6 +476,8 @@ mod tests {
             alias: None,
             command: None,
             tag: None,
+            order_by_use: false,
+            favourites_only: false,
         });
         assert!(search_command_result.is_ok());
         let commands = search_command_result.unwrap();

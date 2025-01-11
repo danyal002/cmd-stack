@@ -14,6 +14,8 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
     let mut command = args.command;
     let mut alias = args.alias;
     let mut tag = args.tag;
+    let order_by_use = args.recent;
+    let favourites_only = args.favourite;
     let print_style = args.print_style;
     let print_limit = args.display_limit;
 
@@ -39,6 +41,8 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
             alias,
             command,
             tag,
+            order_by_use,
+            favourites_only,
         },
         print_style,
         print_limit,
