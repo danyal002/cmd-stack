@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub enum ErrorOutput {
     UserInput,
     SelectCmd,
@@ -41,4 +43,20 @@ impl ErrorOutput {
             ErrorOutput::Logger => println!("Failed to initialize logger"),
         }
     }
+}
+
+/// Converts the given coded text into text for output to the CLI
+pub fn process_text_for_output(text: &str) -> String {
+    let replacements = HashMap::from([
+        ("<bold>", "\x1b[1m"),
+        ("</bold>", "\x1b[22m"),
+        ("<italics>", "\x1b[3m"),
+        ("</italics>", "\x1b[23m"),
+    ]);
+
+    replacements
+        .into_iter()
+        .fold(text.to_string(), |accumulator, (key, replacement_val)| {
+            accumulator.replace(key, replacement_val)
+        })
 }

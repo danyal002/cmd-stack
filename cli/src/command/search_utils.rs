@@ -1,4 +1,8 @@
-use crate::{args::PrintStyle, outputs::ErrorOutput, utils::truncate_string};
+use crate::{
+    args::PrintStyle,
+    outputs::{process_text_for_output, ErrorOutput},
+    utils::truncate_string,
+};
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
@@ -24,11 +28,20 @@ pub fn display_search_args_wizard(
 
 /// Generates a wizard to set the properties for command searching
 pub fn search_args_wizard() -> Result<SearchArgsWizardInput, InquireError> {
-    let command = Text::new("Command (Leave blank for no filter):").prompt()?;
+    let command = Text::new(&process_text_for_output(
+        "<bold>Command</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
 
-    let alias = Text::new("Alias (Leave blank for no filter):").prompt()?;
+    let alias = Text::new(&process_text_for_output(
+        "<bold>Alias</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
 
-    let tag = Text::new("Tag (Leave blank for no filter):").prompt()?;
+    let tag = Text::new(&process_text_for_output(
+        "<bold>Tag</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
 
     Ok(SearchArgsWizardInput {
         alias: if !alias.is_empty() { Some(alias) } else { None },
@@ -98,7 +111,11 @@ fn get_selected_item_from_user(
 
     println!(); // Spacing
     let selected_command = match Select::new(
-        &("Select a command ".to_owned() + columns + ":"),
+        &process_text_for_output(
+            &("<bold>Select a command</bold> <italics>".to_owned()
+                + columns
+                + "</italics><bold>:</bold>"),
+        ),
         formatted_commands,
     )
     // Only display the command once the user makes a selection
