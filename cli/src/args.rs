@@ -9,96 +9,96 @@ pub struct CmdStackArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Add a command
+    /// Add a command to your stack
     Add(AddArgs),
 
-    /// Update a command, first searches for commands then updates
+    /// Update a command in your stack
     Update(SearchAndPrintArgs),
 
-    /// Delete a command, first searches for commands then deletes
+    /// Delete a command in your stack
     Delete(SearchAndPrintArgs),
 
-    /// Search for a command
+    /// Search for a command in your stack
     Search(SearchAndPrintArgs),
 
-    /// Export commands to a file
+    /// Export commands to a JSON file
     Export(ImportExportArgs),
 
-    /// Import commands from a file
+    /// Import commands from a JSON file
     Import(ImportExportArgs),
 }
 
-#[derive(Debug, Args)]
 /// Arguments for adding a command
+#[derive(Debug, Args)]
 pub struct AddArgs {
-    /// The command to add
+    /// The command to add to your stack
     pub command: String,
 
-    /// The command alias
+    /// The alias for the command
     #[clap(long = "alias", short = 'a')]
     pub alias: Option<String>,
 
-    /// The command description
+    /// Notes relating to the command (optional)
     #[clap(long = "note", short = 'n')]
     pub note: Option<String>,
 
-    /// The command tag
+    /// The tag for the command (optional)
     #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
-    /// Add the command to your favourites
+    /// Favourites the command if true
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
 }
 
-#[derive(Debug, ValueEnum, Clone)]
 /// Different supported printing styles for commands
+#[derive(Debug, ValueEnum, Clone)]
 pub enum PrintStyle {
-    /// Display the alias, value, tag, and notes
+    /// Display the alias, command, tag, and notes
     All,
-
-    /// Only display the command
-    Command,
 
     /// Only display the alias
     Alias,
+
+    /// Only display the command
+    Command,
 }
 
-#[derive(Debug, Args)]
 /// Arguments for searching and printing commands
+#[derive(Debug, Args)]
 pub struct SearchAndPrintArgs {
-    /// The command to add
+    /// The text to compare against commands in your stack
     #[clap(long = "command", short = 'c')]
     pub command: Option<String>,
 
-    /// The command alias
+    /// The text to compare against aliases in your stack
     #[clap(long = "alias", short = 'a')]
     pub alias: Option<String>,
 
-    /// The command tag
+    /// The text to compare against tags in your stack
     #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
-    /// Order the commands by most recent use
+    /// If true, displays commands in order of most recent use
     #[clap(long = "recent", short = 'r', action)]
     pub recent: bool,
 
-    /// Only display your favourite commands
+    /// If true, only displays favourited commands
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
 
-    /// How commands should be displayed
+    /// Configure how commands are displayed
     #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
     pub print_style: PrintStyle,
 
-    /// The number of commands to list at a time
+    /// Configure how many commands are displayed at a time
     #[clap(long = "display-limit", default_value = "10")]
     pub display_limit: u32,
 }
 
-#[derive(Debug, Args)]
 /// Arguments for importing/exporting commands
+#[derive(Debug, Args)]
 pub struct ImportExportArgs {
-    /// The file to export to
+    /// The path of the export file
     pub file: String,
 }
