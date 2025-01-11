@@ -45,7 +45,7 @@ impl Logic {
         ParameterHandler::default().validate_parameters(command.command.clone())?;
 
         // Add the command to the database
-        match self.db_connection.add_command(command, None).await {
+        match self.db_connection.insert_command(command, None).await {
             Ok(_) => {}
             Err(e) => return Err(CommandLogicError::Query(e)),
         };

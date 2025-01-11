@@ -41,17 +41,17 @@ impl SqliteDal {
             .pool
             .begin()
             .await
-            .map_err(|e| SqlTxError::TxBegin(e))
+            .map_err(SqlTxError::TxBegin)
     }
 
     /// Takes ownership of the given transaction object
     pub async fn rollback(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
-        tx.rollback().await.map_err(|e| SqlTxError::TxRollback(e))
+        tx.rollback().await.map_err(SqlTxError::TxRollback)
     }
 
     /// Takes ownership of the given transaction object
     pub async fn commit(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
-        tx.commit().await.map_err(|e| SqlTxError::TxCommit(e))
+        tx.commit().await.map_err(SqlTxError::TxCommit)
     }
 
     /// Returns the current unix timestamp in seconds
@@ -65,9 +65,10 @@ impl SqliteDal {
         query: &str,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<SqliteQueryResult, sqlx::Error> {
-        let result = match tx {
-            Some(transaction) => sqlx::query(query).execute(&mut **transaction).await?,
-            None => sqlx::query(query).execute(&self.sqlite_conn.pool).await?,
+        let result = if let Some(transaction) = tx {
+            sqlx::query(query).execute(&mut **transaction).await?
+        } else {
+            sqlx::query(query).execute(&self.sqlite_conn.pool).await?
         };
         Ok(result)
     }
@@ -77,13 +78,14 @@ impl SqliteDal {
         query: &str,
         tx: Option<&mut Transaction<'_, Sqlite>>,
     ) -> Result<Vec<SqliteRow>, sqlx::Error> {
-        let rows = match tx {
-            Some(transaction) => sqlx::query(query).fetch_all(&mut **transaction).await?,
-            None => sqlx::query(query).fetch_all(&self.sqlite_conn.pool).await?,
+        let rows = if let Some(transaction) = tx {
+            sqlx::query(query).fetch_all(&mut **transaction).await?
+        } else {
+            sqlx::query(query).fetch_all(&self.sqlite_conn.pool).await?
         };
         Ok(rows)
     }
-  
+
     pub async fn get_all_commands(
         &self,
         order_by_use: bool,
@@ -121,11 +123,11 @@ impl SqliteDal {
         let rows = self
             .read_rows(&query, tx)
             .await
-            .map_err(|e| SqlQueryError::SelectCommand(e))?;
+            .map_err(SqlQueryError::SelectCommand)?;
 
-        let mut commands = Vec::new();
-        for row in rows {
-            commands.push(Command {
+        let commands: Vec<Command> = rows
+            .into_iter()
+            .map(|row| Command {
                 internal_command: InternalCommand {
                     alias: row.get("alias"),
                     command: row.get("command"),
@@ -133,16 +135,16 @@ impl SqliteDal {
                     note: row.get("note"),
                     favourite: row.get("favourite"),
                 },
-                id: row.get::<i64, _>("id"),
-                last_used: row.get::<i64, _>("last_used"),
-            });
-        }
+                id: row.get("id"),
+                last_used: row.get("last_used"),
+            })
+            .collect();
 
         Ok(commands)
     }
 
-    /// Returns the ID of the inserted command
-    pub async fn add_command(
+    /// Inserts a command and returns the ID of the inserted command
+    pub async fn insert_command(
         &self,
         command: InternalCommand,
         tx: Option<&mut Transaction<'_, Sqlite>>,
@@ -172,7 +174,7 @@ impl SqliteDal {
         let result = self
             .execute_query(&query, tx)
             .await
-            .map_err(|e| SqlQueryError::InsertCommand(e))?;
+            .map_err(SqlQueryError::InsertCommand)?;
 
         Ok(result.last_insert_rowid())
     }
@@ -193,7 +195,7 @@ impl SqliteDal {
         let result = self
             .execute_query(&query, tx)
             .await
-            .map_err(|e| SqlQueryError::UpdateCommand(e))?;
+            .map_err(SqlQueryError::UpdateCommand)?;
 
         if result.rows_affected() == 0 {
             return Err(SqlQueryError::NoRowsAffected);
@@ -214,7 +216,7 @@ impl SqliteDal {
 
         self.execute_query(&query, tx)
             .await
-            .map_err(|e| SqlQueryError::DeleteCommand(e))?;
+            .map_err(SqlQueryError::DeleteCommand)?;
 
         Ok(())
     }
@@ -243,7 +245,7 @@ impl SqliteDal {
         let result = self
             .execute_query(&query, tx)
             .await
-            .map_err(|e| SqlQueryError::UpdateCommand(e))?;
+            .map_err(SqlQueryError::UpdateCommand)?;
 
         if result.rows_affected() == 0 {
             return Err(SqlQueryError::NoRowsAffected);
