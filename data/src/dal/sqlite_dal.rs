@@ -84,40 +84,6 @@ impl SqliteDal {
         Ok(rows)
     }
 
-    pub async fn add_command(
-        &self,
-        command: InternalCommand,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<i64, SqlQueryError> {
-        let current_time = self.get_unix_timestamp()?;
-
-        let query = Query::insert()
-            .into_table(sqlite::Command::Table)
-            .columns([
-                sqlite::Command::Alias,
-                sqlite::Command::Command,
-                sqlite::Command::Tag,
-                sqlite::Command::Note,
-                sqlite::Command::Favourite,
-                sqlite::Command::LastUsed,
-            ])
-            .values_panic([
-                command.alias.into(),
-                command.command.into(),
-                command.tag.into(),
-                command.note.into(),
-                command.favourite.into(),
-                current_time.into(),
-            ])
-            .to_string(SqliteQueryBuilder);
-
-        let result = match self.execute_query(&query, tx).await {
-            Ok(id) => id,
-            Err(e) => return Err(SqlQueryError::AddCommand(e)),
-        };
-
-        Ok(result.last_insert_rowid())
-    }
 
     pub async fn get_all_commands(
         &self,
@@ -153,10 +119,10 @@ impl SqliteDal {
             .from(sqlite::Command::Table)
             .to_string(SqliteQueryBuilder);
 
-        let rows = match self.read_rows(&query, tx).await {
-            Ok(rows) => rows,
-            Err(e) => return Err(SqlQueryError::SearchCommand(e)),
-        };
+        let rows = self
+            .read_rows(&query, tx)
+            .await
+            .map_err(|e| SqlQueryError::SelectCommand(e))?;
 
         let mut commands = Vec::new();
         for row in rows {
@@ -176,6 +142,42 @@ impl SqliteDal {
         Ok(commands)
     }
 
+    /// Returns the ID of the inserted command
+    pub async fn add_command(
+        &self,
+        command: InternalCommand,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<i64, SqlQueryError> {
+        let current_time = self.get_unix_timestamp()?;
+
+        let query = Query::insert()
+            .into_table(sqlite::Command::Table)
+            .columns([
+                sqlite::Command::Alias,
+                sqlite::Command::Command,
+                sqlite::Command::Tag,
+                sqlite::Command::Note,
+                sqlite::Command::Favourite,
+                sqlite::Command::LastUsed,
+            ])
+            .values_panic([
+                command.alias.into(),
+                command.command.into(),
+                command.tag.into(),
+                command.note.into(),
+                command.favourite.into(),
+                current_time.into(),
+            ])
+            .to_string(SqliteQueryBuilder);
+
+        let result = self
+            .execute_query(&query, tx)
+            .await
+            .map_err(|e| SqlQueryError::InsertCommand(e))?;
+
+        Ok(result.last_insert_rowid())
+    }
+
     pub async fn update_command_last_used_prop(
         &self,
         command_id: i64,
@@ -189,10 +191,14 @@ impl SqliteDal {
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute_query(&query, tx).await {
-            Ok(_) => {}
-            Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
-        };
+        let result = self
+            .execute_query(&query, tx)
+            .await
+            .map_err(|e| SqlQueryError::UpdateCommand(e))?;
+
+        if result.rows_affected() == 0 {
+            return Err(SqlQueryError::NoRowsAffected);
+        }
 
         Ok(())
     }
@@ -207,10 +213,9 @@ impl SqliteDal {
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute_query(&query, tx).await {
-            Ok(_) => {}
-            Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
-        };
+        self.execute_query(&query, tx)
+            .await
+            .map_err(|e| SqlQueryError::DeleteCommand(e))?;
 
         Ok(())
     }
@@ -236,10 +241,14 @@ impl SqliteDal {
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        match self.execute_query(&query, tx).await {
-            Ok(_) => {}
-            Err(e) => return Err(SqlQueryError::UpdateCommandLastUsed(e)),
-        };
+        let result = self
+            .execute_query(&query, tx)
+            .await
+            .map_err(|e| SqlQueryError::UpdateCommand(e))?;
+
+        if result.rows_affected() == 0 {
+            return Err(SqlQueryError::NoRowsAffected);
+        }
 
         Ok(())
     }

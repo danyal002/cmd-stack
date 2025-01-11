@@ -5,20 +5,23 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SqlQueryError {
-    #[error("failed to add command")]
-    AddCommand(#[source] sqlx::Error),
+    #[error("failed to select commands")]
+    SelectCommand(#[source] sqlx::Error),
 
-    #[error("failed to search for command")]
-    SearchCommand(#[source] sqlx::Error),
+    #[error("failed to insert a command")]
+    InsertCommand(#[source] sqlx::Error),
 
-    #[error("failed to update command last used property")]
-    UpdateCommandLastUsed(#[source] sqlx::Error),
+    #[error("failed to delete a command")]
+    DeleteCommand(#[source] sqlx::Error),
 
-    #[error("failed to add parameter")]
-    AddParam(#[source] sqlx::Error),
+    #[error("failed to update a command")]
+    UpdateCommand(#[source] sqlx::Error),
 
-    #[error("failed to get time")]
+    #[error("failed to get the unix timestamp")]
     UnixTimestamp(#[from] std::time::SystemTimeError),
+
+    #[error("expected rows to be affected by the operation but none were affected")]
+    NoRowsAffected,
 }
 
 #[derive(Error, Debug)]
