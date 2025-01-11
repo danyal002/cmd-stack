@@ -124,7 +124,7 @@ fn format_commands_for_printing(
     match print_style {
         PrintStyle::All => (
             format_internal_commands(commands),
-            "(Alias | Command | Tag | Note | Favourite [YES/NO])",
+            "(Alias | Command | Tag | Note | Favourite [*])",
         ),
         PrintStyle::Alias => (
             commands
@@ -181,9 +181,9 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
             Cell::new(&truncated_tag),
             Cell::new(&truncated_note),
             Cell::new(if command.internal_command.favourite {
-                "YES"
+                "*"
             } else {
-                "NO"
+                ""
             }),
         ]));
     }
