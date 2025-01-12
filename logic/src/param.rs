@@ -71,9 +71,11 @@ impl Parameter for StringParameter {
 
         let length = rng.generate_range(self.min as i32, self.max as i32) as usize;
 
+        assert!(charset.len() > 0);
+
         let random_string: String = (0..length)
             .map(|_| {
-                let idx = rng.generate_range(0, charset.len() as i32);
+                let idx = rng.generate_range(0, (charset.len() - 1) as i32);
                 charset[idx as usize] as char
             })
             .collect();
