@@ -1,6 +1,6 @@
 use crate::{
     args::PrintStyle,
-    outputs::{format_output, ErrorOutput, Output},
+    outputs::{format_output, spacing, ErrorOutput, Output},
     utils::truncate_string,
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
@@ -29,6 +29,8 @@ pub fn display_search_args_wizard(
 
 /// Generates a wizard to set the properties for command searching
 pub fn search_args_wizard() -> Result<SearchArgsWizardInput, InquireError> {
+    spacing();
+
     let command = Text::new(&format_output(
         "<bold>Command</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
     ))
@@ -110,7 +112,7 @@ fn get_selected_item_from_user(
 
     let (formatted_commands, columns) = format_commands_for_printing(&commands, print_style);
 
-    println!(); // Spacing
+    spacing();
     let selected_command = match Select::new(
         &format_output(
             &("<bold>Select a command</bold> <italics>".to_owned()

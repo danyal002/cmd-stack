@@ -36,7 +36,7 @@ pub fn format_output(text: &str) -> String {
 
 /// Prints an command using the `prettytable` crate
 pub fn print_internal_command(internal_command: &InternalCommand) {
-    println!(); // Spacing
+    spacing();
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_CLEAN);
@@ -74,6 +74,11 @@ pub fn print_internal_command(internal_command: &InternalCommand) {
     table.printstd();
 }
 
+/// Printing vertical space
+pub fn spacing() {
+    println!();
+}
+
 pub enum Output<'a> {
     NoCommandsFound,
     UpdateCommandSectionTitle,
@@ -88,32 +93,32 @@ pub enum Output<'a> {
 impl fmt::Display for Output<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let message = match self {
-            Output::NoCommandsFound => "<bold>No commands found</bold>".to_string(),
+            Output::NoCommandsFound => "<bold>No commands found</bold>\n".to_string(),
             Output::UpdateCommandSectionTitle => "<section>Update Command:</section>".to_string(),
             Output::UpdateCommandSuccess => {
-                "<success>Command updated successfully</success>".to_string()
+                "<success>Command updated successfully</success>\n".to_string()
             }
             Output::AddCommandSuccess => {
-                "<success>Command added successfully</success>".to_string()
+                "<success>Command added successfully</success>\n".to_string()
             }
             Output::DeleteCommandSuccess => {
-                "<success>Command deleted successfully</success>".to_string()
+                "<success>Command deleted successfully</success>\n".to_string()
             }
             Output::ExportCommandsSuccess(file) => {
                 format!(
-                    "<success>Commands exported successfully to {:?}</success>",
+                    "<success>Commands exported successfully to {:?}</success>\n",
                     file
                 )
             }
             Output::ImportCommandsSuccess(num_cmds, file) => {
                 format!(
-                    "<success>{} commands imported successfully from {:?}</success>",
+                    "<success>{} commands imported successfully from {:?}</success>\n",
                     num_cmds, file
                 )
             }
             Output::CommandCopiedToClipboard(cmd) => {
                 format!(
-                    "<success><bold>Command copied to clipboard:</bold></success> {}",
+                    "<success><bold>Command copied to clipboard:</bold></success> {}\n",
                     cmd
                 )
             }
@@ -125,7 +130,7 @@ impl fmt::Display for Output<'_> {
 
 impl Output<'_> {
     pub fn print(&self) {
-        println!(); // Spacing
+        spacing();
         println!("{}", self);
     }
 }
@@ -168,7 +173,8 @@ impl fmt::Display for ErrorOutput {
 
 impl ErrorOutput {
     pub fn print(&self) {
-        println!(); // Spacing
+        spacing();
         println!("{}", self);
+        spacing();
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     args::AddArgs,
-    outputs::{format_output, print_internal_command, ErrorOutput, Output},
+    outputs::{format_output, print_internal_command, spacing, ErrorOutput, Output},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -17,6 +17,8 @@ struct AddCommandProperties {
 
 /// Generates a wizard to set the properties of a command
 fn set_command_properties_wizard(command: &str) -> Result<AddCommandProperties, InquireError> {
+    spacing();
+
     let alias = Text::new(&format_output(
         "<bold>Alias</bold> <italics>(Equal to the command by default)</italics><bold>:</bold>",
     ))
