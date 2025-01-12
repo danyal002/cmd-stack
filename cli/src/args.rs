@@ -46,7 +46,7 @@ pub struct AddArgs {
     #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
-    /// If used, favourites the command
+    /// If set, favourites the command
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
 }
@@ -79,13 +79,17 @@ pub struct SearchAndPrintArgs {
     #[clap(long = "tag", short = 't')]
     pub tag: Option<String>,
 
-    /// If used, displays commands in order of most recent use
+    /// If set, displays commands in order of most recent use
     #[clap(long = "recent", short = 'r', action)]
     pub recent: bool,
 
-    /// If used, only displays favourited commands
+    /// If set, only displays favourited commands
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
+
+    /// If set, no prompts will be shown to get search strings
+    #[clap(long = "skip-prompts", short = 's', action)]
+    pub skip_prompts: bool,
 
     /// Configure how commands are displayed
     #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]

@@ -16,11 +16,12 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) {
     let mut tag = args.tag;
     let order_by_use = args.recent;
     let favourites_only = args.favourite;
+    let skip_prompts = args.skip_prompts;
     let print_style = args.print_style;
     let print_limit = args.display_limit;
 
     // If no search arguments are provided, generate a wizard to get them
-    if display_search_args_wizard(&alias, &command, &tag) {
+    if display_search_args_wizard(&alias, &command, &tag, skip_prompts) {
         let command_properties = match search_args_wizard() {
             Ok(properties) => properties,
             Err(e) => {

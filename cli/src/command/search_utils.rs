@@ -22,8 +22,9 @@ pub fn display_search_args_wizard(
     alias: &Option<String>,
     command: &Option<String>,
     tag: &Option<String>,
+    skip_prompts: bool,
 ) -> bool {
-    alias.is_none() && command.is_none() && tag.is_none()
+    alias.is_none() && command.is_none() && tag.is_none() && !skip_prompts
 }
 
 /// Generates a wizard to set the properties for command searching
