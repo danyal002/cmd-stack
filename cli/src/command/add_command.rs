@@ -1,7 +1,7 @@
 use crate::{
     args::AddArgs,
     command::print_internal_command,
-    outputs::{format_output, ErrorOutput},
+    outputs::{format_output, ErrorOutput, Output},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -96,7 +96,7 @@ pub fn handle_add_command(args: AddArgs) {
     let logic = Logic::try_default();
     if logic.is_err() {
         error!(target: "Add Cmd", "Failed to initialize logic: {:?}", logic.err());
-        ErrorOutput::AddCmd.print();
+        ErrorOutput::AddCommand.print();
         return;
     }
 
@@ -106,18 +106,16 @@ pub fn handle_add_command(args: AddArgs) {
         .handle_add_command(internal_command.clone())
     {
         Ok(_) => {
+            Output::AddCommandSuccess.print();
             if !generate_command_with_wizard {
                 // If the user added the command via CLI arguments, we need to
                 // display the information so they can confirm the validity
-                println!("\nCommand added successfully:");
                 print_internal_command(&internal_command);
-            } else {
-                println!("\nCommand added successfully");
             }
         }
         Err(e) => {
             error!(target: "Add Cmd", "Error adding command: {:?}", e);
-            ErrorOutput::AddCmd.print();
+            ErrorOutput::AddCommand.print();
         }
     }
 }

@@ -4,7 +4,7 @@ use crate::{
         display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
-    outputs::ErrorOutput,
+    outputs::{ErrorOutput, Output},
 };
 use log::error;
 use logic::{command::SearchCommandArgs, Logic};
@@ -51,7 +51,7 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
         Ok(c) => c,
         Err(e) => match e {
             GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("\nNo commands found");
+                Output::NoCommandsFound.print();
                 return;
             }
             _ => {
@@ -83,5 +83,5 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) {
         }
     };
 
-    println!("\nCommand deleted successfully");
+    Output::DeleteCommandSuccess.print();
 }

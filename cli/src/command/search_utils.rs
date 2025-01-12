@@ -1,6 +1,6 @@
 use crate::{
     args::PrintStyle,
-    outputs::{format_output, ErrorOutput},
+    outputs::{format_output, ErrorOutput, Output},
     utils::truncate_string,
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
@@ -220,7 +220,7 @@ pub fn copy_text(cmd: &str, text_to_copy: String) {
         }
     };
     match clipboard.set_contents(text_to_copy.clone()) {
-        Ok(()) => println!("\nCommand copied to clipboard: {}", text_to_copy),
+        Ok(()) => Output::CommandCopiedToClipboard(text_to_copy).print(),
         Err(e) => {
             error!(target: cmd, "Failed copy command to clipboard: {:?}", e);
             ErrorOutput::FailedToCopy(text_to_copy).print();

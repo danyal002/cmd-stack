@@ -1,4 +1,7 @@
-use crate::{args::ImportExportArgs, outputs::ErrorOutput};
+use crate::{
+    args::ImportExportArgs,
+    outputs::{ErrorOutput, Output},
+};
 use log::error;
 use logic::{import_export::ImportExportError, Logic};
 use std::path::Path;
@@ -15,7 +18,7 @@ pub fn handle_export_command(args: ImportExportArgs) {
     }
 
     match logic.as_ref().unwrap().create_export_json(file_path) {
-        Ok(_) => println!("\nCommands exported to {:?}", file_path),
+        Ok(_) => Output::ExportCommandsSuccess(file_path).print(),
         Err(e) => {
             error!(target: "Export Cmd", "Failed to export command: {:?}", e);
             match e {
@@ -38,7 +41,7 @@ pub fn handle_import_command(args: ImportExportArgs) {
     }
 
     match logic.as_ref().unwrap().import_data(file_path) {
-        Ok(num) => println!("\n{} commands imported from {:?}", num, file_path),
+        Ok(num) => Output::ImportCommandsSuccess(num, file_path).print(),
         Err(e) => {
             error!(target: "Import Cmd", "Failed to import command: {:?}", e);
             ErrorOutput::Import.print();

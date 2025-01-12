@@ -4,7 +4,7 @@ use crate::{
         display_search_args_wizard, get_searched_commands, search_args_wizard,
         GetSelectedItemFromUserError,
     },
-    outputs::{format_output, ErrorOutput},
+    outputs::{format_output, ErrorOutput, Output},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -102,7 +102,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         Ok(c) => c,
         Err(e) => match e {
             GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("\nNo commands found");
+                Output::NoCommandsFound.print();
                 return;
             }
             _ => {
@@ -114,7 +114,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
     };
 
     // Get the new command properties from the user
-    println!("\nUpdate Command:");
+    Output::UpdateCommandSectionTitle.print();
     let new_command_properties = match set_command_properties_wizard(
         selected_command.internal_command.command,
         selected_command.internal_command.alias,
@@ -156,5 +156,5 @@ pub fn handle_update_command(args: SearchAndPrintArgs) {
         }
     };
 
-    println!("\nCommand updated successfully");
+    Output::UpdateCommandSuccess.print();
 }
