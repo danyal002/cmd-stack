@@ -1,7 +1,6 @@
 use crate::{
     args::AddArgs,
-    command::print_internal_command,
-    outputs::{format_output, ErrorOutput, Output},
+    outputs::{format_output, print_internal_command, ErrorOutput, Output},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -106,12 +105,12 @@ pub fn handle_add_command(args: AddArgs) {
         .handle_add_command(internal_command.clone())
     {
         Ok(_) => {
-            Output::AddCommandSuccess.print();
             if !generate_command_with_wizard {
                 // If the user added the command via CLI arguments, we need to
                 // display the information so they can confirm the validity
                 print_internal_command(&internal_command);
             }
+            Output::AddCommandSuccess.print();
         }
         Err(e) => {
             error!(target: "Add Cmd", "Error adding command: {:?}", e);

@@ -1,4 +1,6 @@
+use data::models::InternalCommand;
 use lazy_static::lazy_static;
+use prettytable::{format, Attr, Cell, Row, Table};
 use std::collections::HashMap;
 use std::fmt;
 use std::path::Path;
@@ -15,8 +17,8 @@ lazy_static! {
             ("</italics>", "\x1b[23m"),           // Un-italicize
             ("<section>", "\x1b[1m\x1b[4m"),      // Bold + Underline
             ("</section>", "\x1b[22m\x1b[24m"),   // Unbold + remove underline
-            ("<success>", "\x1b[32m"),            // Green
-            ("</success>", "\x1b[39m"),           // Remove color
+            ("<success>", "\x1b[32m\x1b[1m"),     // Green + Bold
+            ("</success>", "\x1b[39m\x1b[22m"),   // Remove bold + color
             ("<error>", "\x1b[31m\x1b[1m"),       // Red + Bold
             ("</error>", "\x1b[39m\x1b[22m"),     // Remove bold + color
         ])
@@ -30,6 +32,46 @@ pub fn format_output(text: &str) -> String {
     MACRO_REPLACEMENTS
         .iter()
         .fold(text.to_string(), |acc, (key, val)| acc.replace(key, val))
+}
+
+/// Prints an command using the `prettytable` crate
+pub fn print_internal_command(internal_command: &InternalCommand) {
+    println!(); // Spacing
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_CLEAN);
+
+    table.add_row(Row::new(vec![
+        Cell::new("Command:").with_style(Attr::Bold),
+        Cell::new(&internal_command.command),
+    ]));
+    table.add_row(Row::new(vec![
+        Cell::new("Alias:").with_style(Attr::Bold),
+        Cell::new(&internal_command.alias),
+    ]));
+    if let Some(tag) = &internal_command.tag {
+        table.add_row(Row::new(vec![
+            Cell::new("Tag:").with_style(Attr::Bold),
+            Cell::new(tag),
+        ]));
+    }
+    if let Some(note) = &internal_command.note {
+        table.add_row(Row::new(vec![
+            Cell::new("Note:").with_style(Attr::Bold),
+            Cell::new(note),
+        ]));
+    }
+    let favourite_status = if internal_command.favourite {
+        "Yes"
+    } else {
+        "No"
+    };
+    table.add_row(Row::new(vec![
+        Cell::new("Favourite:").with_style(Attr::Bold),
+        Cell::new(favourite_status),
+    ]));
+
+    table.printstd();
 }
 
 pub enum Output<'a> {
@@ -46,7 +88,7 @@ pub enum Output<'a> {
 impl fmt::Display for Output<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let message = match self {
-            Output::NoCommandsFound => "No commands found".to_string(),
+            Output::NoCommandsFound => "<bold>No commands found</bold>".to_string(),
             Output::UpdateCommandSectionTitle => "<section>Update Command:</section>".to_string(),
             Output::UpdateCommandSuccess => {
                 "<success>Command updated successfully</success>".to_string()
