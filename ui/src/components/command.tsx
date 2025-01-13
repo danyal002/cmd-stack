@@ -82,7 +82,7 @@ export function MainCommandPage({
             >
               {cmdStackIcon}
               {!isCollapsed && (
-                <h1 className="text-base font-normal">CMDStack</h1>
+                <h1 className="text-base font-normal">CmdStack</h1>
               )}
             </div>
           </div>
@@ -121,7 +121,11 @@ export function MainCommandPage({
           <AddDialog />
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
+        <ResizablePanel
+          defaultSize={defaultLayout[1]}
+          minSize={30}
+          className="min-w-[290px]"
+        >
           <Tabs defaultValue="all">
             <div className="flex items-center px-4 py-2">
               <h1 className="text-xl font-bold">Commands</h1>
