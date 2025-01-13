@@ -1,28 +1,28 @@
-import { ComponentProps } from "react"
-import formatDistanceToNow from "date-fns/formatDistanceToNow"
+import { ComponentProps } from 'react';
+import formatDistanceToNow from 'date-fns/formatDistanceToNow';
 
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useCommand } from "@/use-command"
-import { Command } from "@/types/command"
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useCommand } from '@/use-command';
+import { Command } from '@/types/command';
 
 interface CommandListProps {
-  items: Command[]
+  items: Command[];
 }
 
 export function CommandList({ items }: CommandListProps) {
-  const [command, setCommand] = useCommand()
+  const [command, setCommand] = useCommand();
 
   return (
-    <ScrollArea className="h-screen">
+    <ScrollArea className="h-[calc(100vh-121px)]">
       <div className="flex flex-col gap-2 p-4 pt-0">
         {items.map((item) => (
           <button
             key={item.id}
             className={cn(
-              "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
-              command.selected === item.id && "bg-muted"
+              'flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent',
+              command.selected === item.id && 'bg-muted',
             )}
             onClick={() =>
               setCommand({
@@ -38,10 +38,10 @@ export function CommandList({ items }: CommandListProps) {
                 </div>
                 <div
                   className={cn(
-                    "ml-auto text-xs",
+                    'ml-auto text-xs',
                     command.selected === item.id
-                      ? "text-foreground"
-                      : "text-muted-foreground"
+                      ? 'text-foreground'
+                      : 'text-muted-foreground',
                   )}
                 >
                   {formatDistanceToNow(new Date(item.last_used * 1000), {
@@ -58,34 +58,35 @@ export function CommandList({ items }: CommandListProps) {
             )}
             {item.tag ? (
               <div className="flex items-center gap-2">
-                <Badge key={item.tag} variant={getBadgeVariantFromLabel(item.tag)}>
+                <Badge
+                  key={item.tag}
+                  variant={getBadgeVariantFromLabel(item.tag)}
+                >
                   {item.tag}
                 </Badge>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Badge variant={"secondary"}>
-                  {"Untagged"}
-                </Badge>
+                <Badge variant={'secondary'}>{'Untagged'}</Badge>
               </div>
             )}
           </button>
         ))}
       </div>
     </ScrollArea>
-  )
+  );
 }
 
 function getBadgeVariantFromLabel(
-  label: string
-): ComponentProps<typeof Badge>["variant"] {
-  if (["work"].includes(label.toLowerCase())) {
-    return "default"
+  label: string,
+): ComponentProps<typeof Badge>['variant'] {
+  if (['work'].includes(label.toLowerCase())) {
+    return 'default';
   }
 
-  if (["personal"].includes(label.toLowerCase())) {
-    return "outline"
+  if (['personal'].includes(label.toLowerCase())) {
+    return 'outline';
   }
 
-  return "secondary"
+  return 'secondary';
 }
