@@ -105,7 +105,7 @@ impl Logic {
         for command in import_data.commands {
             let db_id = match self
                 .db_connection
-                .add_command(command.internal_command, Some(&mut tx))
+                .insert_command(command.internal_command, Some(&mut tx))
                 .await
             {
                 Ok(id) => id,

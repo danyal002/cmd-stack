@@ -45,7 +45,7 @@ impl Logic {
         ParameterHandler::default().validate_parameters(command.command.clone())?;
 
         // Add the command to the database
-        match self.db_connection.add_command(command, None).await {
+        match self.db_connection.insert_command(command, None).await {
             Ok(_) => {}
             Err(e) => return Err(CommandLogicError::Query(e)),
         };
@@ -226,7 +226,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -258,7 +258,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -306,7 +306,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -357,7 +357,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -472,7 +472,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -516,7 +516,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
@@ -564,7 +564,7 @@ mod tests {
             .path()
             .to_string_lossy()
             .into_owned();
-        let dal = SqliteDal::new_with_directory(path);
+        let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap());
 
