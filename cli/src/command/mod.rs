@@ -1,6 +1,5 @@
 pub mod add_command;
 pub mod delete_command;
-pub mod list_commands;
 pub mod search_command;
 pub mod search_utils;
 pub mod update_command;
@@ -32,11 +31,7 @@ pub fn print_internal_command(internal_command: &InternalCommand) {
             Cell::new(note),
         ]));
     }
-    let favourite_status = if internal_command.favourite {
-        "YES"
-    } else {
-        "NO"
-    };
+    let favourite_status = if internal_command.favourite { "*" } else { "" };
     table.add_row(Row::new(vec![
         Cell::new("Favourite:").with_style(Attr::Italic(true)),
         Cell::new(favourite_status),

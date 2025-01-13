@@ -8,6 +8,12 @@ use prettytable::{format, Cell, Row, Table};
 use termion::terminal_size;
 use thiserror::Error;
 
+pub struct SearchArgsWizardInput {
+    pub alias: Option<String>,
+    pub command: Option<String>,
+    pub tag: Option<String>,
+}
+
 pub fn display_search_args_wizard(
     alias: &Option<String>,
     command: &Option<String>,
@@ -17,14 +23,14 @@ pub fn display_search_args_wizard(
 }
 
 /// Generates a wizard to set the properties for command searching
-pub fn search_args_wizard() -> Result<SearchCommandArgs, InquireError> {
+pub fn search_args_wizard() -> Result<SearchArgsWizardInput, InquireError> {
     let command = Text::new("Command (Leave blank for no filter):").prompt()?;
 
     let alias = Text::new("Alias (Leave blank for no filter):").prompt()?;
 
     let tag = Text::new("Tag (Leave blank for no filter):").prompt()?;
 
-    Ok(SearchCommandArgs {
+    Ok(SearchArgsWizardInput {
         alias: if !alias.is_empty() { Some(alias) } else { None },
         command: if !command.is_empty() {
             Some(command)
@@ -64,38 +70,6 @@ pub fn get_searched_commands(
         Ok(c) => c,
         Err(e) => {
             error!(target: "Search Utils", "Failed to get commands from DB: {:?}", e);
-            return Err(GetSelectedItemFromUserError::GetCommands(e));
-        }
-    };
-
-    let selected_command =
-        match get_selected_item_from_user(commands.clone(), print_style, display_limit) {
-            Ok(i) => i,
-            Err(e) => {
-                return Err(e);
-            }
-        };
-    Ok(selected_command)
-}
-
-/// Gets all commands from the database in the user's preferred format
-/// and prompts the user to select one
-pub fn get_listed_commands(
-    order_by_use: bool,
-    favourite: bool,
-    print_style: PrintStyle,
-    display_limit: u32,
-) -> Result<Command, GetSelectedItemFromUserError> {
-    let logic = match Logic::try_default() {
-        Ok(l) => l,
-        Err(e) => {
-            return Err(GetSelectedItemFromUserError::GetCommands(e));
-        }
-    };
-
-    let commands = match logic.handle_list_commands(order_by_use, favourite) {
-        Ok(c) => c,
-        Err(e) => {
             return Err(GetSelectedItemFromUserError::GetCommands(e));
         }
     };
