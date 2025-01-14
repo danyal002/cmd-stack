@@ -128,14 +128,12 @@ impl Output<'_> {
 
 pub enum ErrorOutput {
     UserInput,
-    SelectCmd,
-    FailedToCommand(String),
-    FailedToCopy(String),
-    Export,
-    NotJson,
-    Import,
     AddCommand,
-    GenerateParam,
+    UpdateCommand,
+    DeleteCommand,
+    SearchCommand,
+    Export,
+    Import,
     Logger,
 }
 
@@ -143,15 +141,13 @@ impl fmt::Display for ErrorOutput {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let message = match self {
             ErrorOutput::UserInput => "Failed to get input",
-            ErrorOutput::SelectCmd => "Failed to select command",
-            ErrorOutput::FailedToCommand(op) => &format!("Failed to {} selected command", op),
-            ErrorOutput::FailedToCopy(cmd) => &format!("Failed to add the selected command to clipboard. Please copy the following text:\n\n{}\n", cmd),
-            ErrorOutput::Export => "Failed to export commands",
-            ErrorOutput::NotJson => "Failed to export because provided file is not a JSON",
-            ErrorOutput::Import => "Failed to import commands",
             ErrorOutput::AddCommand => "Failed to add command",
-            ErrorOutput::GenerateParam => "Failed to generate parameter",
-            ErrorOutput::Logger => "Failed to initialize logger",
+            ErrorOutput::UpdateCommand => "Failed to update command",
+            ErrorOutput::DeleteCommand => "Failed to delete command",
+            ErrorOutput::SearchCommand => "Failed to search command",
+            ErrorOutput::Export => "Failed to export stack",
+            ErrorOutput::Import => "Failed to import stack",
+            ErrorOutput::Logger => "Failed to initialize the logger",
         };
 
         write!(

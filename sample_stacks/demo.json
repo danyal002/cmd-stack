@@ -1,103 +1,67 @@
 {
     "commands": [
         {
-            "id": 1,
-            "last_used": 1721504046,
-            "internal_command": {
-                "alias": "student_linux",
-                "command": "ssh abc@linux.student.cs.uwaterloo.ca",
-                "tag": "SSH",
-                "note": "SSH to Linux CS machines",
-                "favourite": false
-            }
+            "alias": "student_linux",
+            "command": "ssh abc@linux.student.cs.uwaterloo.ca",
+            "tag": "SSH",
+            "note": "SSH to Linux CS machines",
+            "favourite": false
         },
         {
-            "id": 2,
-            "last_used": 1721503564,
-            "internal_command": {
-                "alias": "a3_network_emulator",
-                "command": "python network_emulator.py 10962 ubuntu2204-010 10726 10623",
-                "tag": "CS456",
-                "note": "Start network emulator",
-                "favourite": true
-            }
+            "alias": "a3_network_emulator",
+            "command": "python network_emulator.py 10962 ubuntu2204-010 10726 10623",
+            "tag": "CS456",
+            "note": "Start network emulator",
+            "favourite": true
         },
         {
-            "id": 3,
-            "last_used": 1721503295,
-            "internal_command": {
-                "alias": "a2_receiver",
-                "command": "python receiver.py ubuntu2204-012 10623 10726 1 file_output.txt",
-                "tag": "CS456",
-                "note": "Start receiver",
-                "favourite": true
-            }
+            "alias": "a2_receiver",
+            "command": "python receiver.py ubuntu2204-012 10623 10726 1 file_output.txt",
+            "tag": "CS456",
+            "note": "Start receiver",
+            "favourite": true
         },
         {
-            "id": 4,
-            "last_used": 1721503785,
-            "internal_command": {
-                "alias": "a2_sender",
-                "command": "python sender.py ubuntu2204-012 10962 10727 100 2 file_in.txt",
-                "tag": "CS456",
-                "note": "Start sender",
-                "favourite": false
-            }
+            "alias": "a2_sender",
+            "command": "python sender.py ubuntu2204-012 10962 10727 100 2 file_in.txt",
+            "tag": "CS456",
+            "note": "Start sender",
+            "favourite": false
         },
         {
-            "id": 5,
-            "last_used": 1721502681,
-            "internal_command": {
-                "alias": "a3_start_sdn",
-                "command": "./pox.py --verbose py openflow.of_01 --port=6633 openflow.discovery",
-                "tag": "CS456",
-                "note": "Start SDN",
-                "favourite": false
-            }
+            "alias": "a3_start_sdn",
+            "command": "./pox.py --verbose py openflow.of_01 --port=6633 openflow.discovery",
+            "tag": "CS456",
+            "note": "Start SDN",
+            "favourite": false
         },
         {
-            "id": 6,
-            "last_used": 1721502789,
-            "internal_command": {
-                "alias": "a3_make_tree",
-                "command": "sudo mn --mac --custom /home/mininet/cs456-utils/cs456_tree_topology.py",
-                "tag": "CS456",
-                "note": "Make tree for SDN testing",
-                "favourite": true
-            }
+            "alias": "a3_make_tree",
+            "command": "sudo mn --mac --custom /home/mininet/cs456-utils/cs456_tree_topology.py",
+            "tag": "CS456",
+            "note": "Make tree for SDN testing",
+            "favourite": true
         },
         {
-            "id": 7,
-            "last_used": 1721503897,
-            "internal_command": {
-                "alias": "eceterm",
-                "command": "ssh abc@eceterm.uwaterloo.ca",
-                "tag": "SSH",
-                "note": null,
-                "favourite": false
-            }
+            "alias": "eceterm",
+            "command": "ssh abc@eceterm.uwaterloo.ca",
+            "tag": "SSH",
+            "note": null,
+            "favourite": false
         },
         {
-            "id": 8,
-            "last_used": 1721503907,
-            "internal_command": {
-                "alias": "ecetesla",
-                "command": "ssh abc@ecetesla.uwaterloo.ca",
-                "tag": "SSH",
-                "note": null,
-                "favourite": false
-            }
+            "alias": "ecetesla",
+            "command": "ssh abc@ecetesla.uwaterloo.ca",
+            "tag": "SSH",
+            "note": null,
+            "favourite": false
         },
         {
-            "id": 9,
-            "last_used": 1721503914,
-            "internal_command": {
-                "alias": "eceubuntu",
-                "command": "ssh abc@eceubuntu.uwaterloo.ca",
-                "tag": "SSH",
-                "note": null,
-                "favourite": false
-            }
+            "alias": "eceubuntu",
+            "command": "ssh abc@eceubuntu.uwaterloo.ca",
+            "tag": "SSH",
+            "note": null,
+            "favourite": false
         }
     ]
 }
