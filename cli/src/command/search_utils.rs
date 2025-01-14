@@ -224,15 +224,11 @@ pub enum CopyTextError {
 }
 
 pub fn copy_text(cmd: &str, text_to_copy: String) -> Result<(), CopyTextError> {
-    let mut clipboard = ClipboardContext::new().map_err(|e| {
-        error!(target: cmd, "Failed to initialize the clipboard: {:?}", e);
-        CopyTextError::ClipboardInit
-    })?;
+    let mut clipboard = ClipboardContext::new().map_err(|_| CopyTextError::ClipboardInit)?;
 
-    clipboard.set_contents(text_to_copy.clone()).map_err(|e| {
-        error!(target: cmd, "Failed copy command to clipboard: {:?}", e);
-        CopyTextError::Copy
-    })?;
+    clipboard
+        .set_contents(text_to_copy.clone())
+        .map_err(|_| CopyTextError::Copy)?;
 
     println!("\nCommand copied to clipboard: {}", text_to_copy);
     Ok(())

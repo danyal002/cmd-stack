@@ -54,23 +54,13 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<(), HandleSear
     let logic = Logic::try_default()?;
 
     // Generate parameters for the command
-    let copied_text = logic
-        .generate_parameters(selected_command.clone())
-        .map_err(HandleSearchError::LogicParam)?;
+    let copied_text = logic.generate_parameters(selected_command.clone())?;
 
     // Copy the selected command to the clipboard
     copy_text("Search Cmd", copied_text)?;
 
     // Update the last used timestamp for the command
-    logic
-        .update_command_last_used_prop(selected_command.id)
-        .map_err(|e| {
-            error!(
-                target: "Search Cmd", "Failed to update command last used prop: {:?}",
-                e
-            );
-            HandleSearchError::LogicUpdate(e)
-        })?;
+    logic.update_command_last_used_prop(selected_command.id)?;
 
     Ok(())
 }

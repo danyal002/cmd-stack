@@ -62,12 +62,10 @@ pub fn handle_add_command(args: AddArgs) -> Result<(), HandleAddError> {
         InternalCommand::from(args)
     };
 
-    let logic = Logic::try_default().map_err(HandleAddError::LogicInit)?;
+    let logic = Logic::try_default()?;
 
     // Write the command to the db
-    logic
-        .add_command(internal_command.clone())
-        .map_err(HandleAddError::LogicAdd)?;
+    logic.add_command(internal_command.clone())?;
 
     if add_args_exist {
         // If the user added the command via CLI arguments, we need to

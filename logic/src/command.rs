@@ -68,14 +68,9 @@ impl Logic {
             return Err(AddCommandError::InvalidInput);
         }
 
-        ParameterHandler::default()
-            .validate_parameters(command.command.clone())
-            .map_err(AddCommandError::Parameter)?;
+        ParameterHandler::default().validate_parameters(command.command.clone())?;
 
-        self.dal
-            .insert_command(command, None)
-            .await
-            .map_err(AddCommandError::Database)?;
+        self.dal.insert_command(command, None).await?;
 
         Ok(())
     }
@@ -90,8 +85,7 @@ impl Logic {
         let commands = self
             .dal
             .get_all_commands(params.order_by_use, params.favourites_only, None)
-            .await
-            .map_err(SearchCommandError::Database)?;
+            .await?;
 
         // Filter the commands based on the search parameters using fuzzy matching
         let matcher = SkimMatcherV2::default();
@@ -164,8 +158,7 @@ impl Logic {
     ) -> Result<(), UpdateCommandError> {
         self.dal
             .update_command_last_used_property(command_id, None)
-            .await
-            .map_err(UpdateCommandError::Database)?;
+            .await?;
         Ok(())
     }
 
@@ -181,14 +174,11 @@ impl Logic {
             return Err(UpdateCommandError::InvalidInput);
         }
 
-        ParameterHandler::default()
-            .validate_parameters(new_command_props.command.clone())
-            .map_err(UpdateCommandError::Parameter)?;
+        ParameterHandler::default().validate_parameters(new_command_props.command.clone())?;
 
         self.dal
             .update_command(command_id, new_command_props, None)
-            .await
-            .map_err(UpdateCommandError::Database)?;
+            .await?;
 
         Ok(())
     }
@@ -196,10 +186,7 @@ impl Logic {
     #[tokio::main]
     /// Handles deleting a command
     pub async fn delete_command(&self, command_id: i64) -> Result<(), DeleteCommandError> {
-        self.dal
-            .delete_command(command_id, None)
-            .await
-            .map_err(DeleteCommandError::Database)?;
+        self.dal.delete_command(command_id, None).await?;
 
         Ok(())
     }

@@ -52,7 +52,7 @@ impl Logic {
                 .map(|command| command.internal_command)
                 .collect(),
         };
-        let json_string = serde_json::to_string(&export_data).map_err(ExportError::Deserialize)?;
+        let json_string = serde_json::to_string(&export_data)?;
         fs::write(export_file_path, json_string).map_err(|e| ExportError::Write(e.to_string()))?;
 
         Ok(())
@@ -63,14 +63,12 @@ impl Logic {
     pub async fn import_data(&self, import_file_path: &Path) -> Result<i64, ImportError> {
         let json_string =
             fs::read_to_string(import_file_path).map_err(|e| ImportError::Read(e.to_string()))?;
-        let import_data: ImportExportFormat =
-            serde_json::from_str(&json_string).map_err(ImportError::Serialize)?;
+        let import_data: ImportExportFormat = serde_json::from_str(&json_string)?;
 
         let num_commands = self
             .dal
             .insert_mulitple_commands(import_data.commands, None)
-            .await
-            .map_err(ImportError::Database)?;
+            .await?;
 
         Ok(num_commands)
     }
