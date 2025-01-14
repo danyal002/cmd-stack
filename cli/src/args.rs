@@ -64,7 +64,7 @@ pub enum PrintStyle {
     Alias,
 }
 
-#[derive(Debug, Args)]
+#[derive(Debug, Args, Clone)]
 /// Arguments for searching and printing commands
 pub struct SearchAndPrintArgs {
     /// The command to add

@@ -92,17 +92,39 @@ fn main() {
     let args = CmdStackArgs::parse();
 
     match args.command {
-        Command::Add(add_args) => command::add_command::handle_add_command(add_args),
-        Command::Update(update_args) => command::update_command::handle_update_command(update_args),
-        Command::Delete(delete_args) => command::delete_command::handle_delete_command(delete_args),
+        Command::Add(add_args) => match command::add_command::handle_add_command(add_args) {
+            Ok(_) => (),
+            Err(_) => (),
+        },
+        Command::Update(update_args) => {
+            match command::update_command::handle_update_command(update_args) {
+                Ok(_) => (),
+                Err(_) => (),
+            }
+        }
+        Command::Delete(delete_args) => {
+            match command::delete_command::handle_delete_command(delete_args) {
+                Ok(_) => (),
+                Err(_) => (),
+            }
+        }
         Command::Search(search_args) => {
-            command::search_command::handle_search_commands(search_args)
+            match command::search_command::handle_search_commands(search_args) {
+                Ok(_) => (),
+                Err(_) => (),
+            }
         }
         Command::Export(import_export_args) => {
-            import_export::handle_export_command(import_export_args)
+            match import_export::handle_export_command(import_export_args) {
+                Ok(_) => (),
+                Err(_) => (),
+            }
         }
         Command::Import(import_export_args) => {
-            import_export::handle_import_command(import_export_args)
+            match import_export::handle_import_command(import_export_args) {
+                Ok(_) => (),
+                Err(_) => (),
+            }
         }
     }
 }

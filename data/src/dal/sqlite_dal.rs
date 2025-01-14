@@ -183,6 +183,66 @@ impl SqliteDal {
         Ok(result.last_insert_rowid())
     }
 
+    pub async fn insert_mulitple_commands(
+        &self,
+        commands: Vec<InternalCommand>,
+        tx: Option<&mut Transaction<'_, Sqlite>>,
+    ) -> Result<i64, InsertCommandError> {
+        //         let builder = Query::insert()
+        //     .into_table(DbAppointmentService::Table)
+        //     .columns([
+        //         DbAppointmentService::Id,
+        //         DbAppointmentService::AppointmentId,
+        //         DbAppointmentService::Name,
+        //         DbAppointmentService::Price,
+        //         DbAppointmentService::Duration,
+        //     ]).to_owned();
+
+        // // Step 2: Execute `values_panic` on each loop step
+        // for item of items.into_iter() { // where items is a vec of row's values
+        //     builder.values_panic(vec![
+        //         item.first.into(),
+        //         item.second.into(),
+        //         item.third.into()
+        //     ]);
+        // }
+
+        // let current_time = self.get_unix_timestamp()?;
+
+        // let query = Query::insert()
+        //     .into_table(sqlite::Command::Table)
+        //     .columns([
+        //         sqlite::Command::Alias,
+        //         sqlite::Command::Command,
+        //         sqlite::Command::Tag,
+        //         sqlite::Command::Note,
+        //         sqlite::Command::Favourite,
+        //         sqlite::Command::LastUsed,
+        //     ])
+        //     .values_panic([
+        //         command.alias.into(),
+        //         command.command.into(),
+        //         command.tag.into(),
+        //         command.note.into(),
+        //         command.favourite.into(),
+        //         current_time.into(),
+        //     ])
+        //     .to_string(SqliteQueryBuilder);
+
+        // let result = self
+        //     .execute_query(&query, tx)
+        //     .await
+        //     .map_err(InsertCommandError::Query)?;
+
+        // if result.rows_affected() == 0 {
+        //     return Err(InsertCommandError::NoRowsAffected);
+        // }
+
+        // Ok(result.last_insert_rowid())
+
+        Ok(2343)
+    }
+
     pub async fn update_command_last_used_property(
         &self,
         command_id: i64,

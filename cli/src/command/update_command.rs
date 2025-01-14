@@ -1,15 +1,33 @@
 use crate::{
     args::SearchAndPrintArgs,
     command::search_utils::{
-        display_search_args_wizard, get_searched_commands, search_args_wizard,
-        GetSelectedItemFromUserError,
+        check_search_args_exist, fetch_search_candidates, get_search_args_from_user,
+        prompt_user_for_command_selection, SearchArgsUserInput,
     },
-    outputs::ErrorOutput,
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::{command::SearchCommandArgs, Logic};
+use logic::Logic;
+use thiserror::Error;
+
+use super::search_utils::{FetchSearchCandidatesError, PromptUserForCommandSelectionError};
+
+#[derive(Error, Debug)]
+pub enum HandleUpdateError {
+    #[error("Failed to get user input")]
+    Inquire(#[from] InquireError),
+    #[error("No command found")]
+    NoCommandFound,
+    #[error("Failed to get search candidates")]
+    SearchCandidates(#[from] FetchSearchCandidatesError),
+    #[error("Failed to select a command")]
+    SelectCommand(#[from] PromptUserForCommandSelectionError),
+    #[error("Failed to initialize logic")]
+    LogicInit(#[from] logic::LogicInitError),
+    #[error("Failed to delete command")]
+    LogicUpdate(#[from] logic::command::UpdateCommandError),
+}
 
 /// Generates a wizard to set the properties of a command
 ///
@@ -20,30 +38,26 @@ use logic::{command::SearchCommandArgs, Logic};
 /// - cur_tag: Option<String> - The current tag of the command
 /// - cur_favourite: bool - The current favourite status of the command
 pub fn set_command_properties_wizard(
-    cur_command: String,
-    cur_alias: String,
-    cur_tag: Option<String>,
-    cur_note: Option<String>,
-    cur_favourite: bool,
+    cur_command: InternalCommand,
 ) -> Result<InternalCommand, InquireError> {
     let command = Text::new("Command:")
-        .with_initial_value(&cur_command)
+        .with_initial_value(&cur_command.command)
         .prompt()?;
 
     let alias = Text::new("Alias:")
-        .with_initial_value(&cur_alias)
+        .with_initial_value(&cur_command.alias)
         .prompt()?;
 
     let tag = Text::new("Tag:")
-        .with_initial_value(&cur_tag.unwrap_or(String::from("")))
+        .with_initial_value(&cur_command.tag.unwrap_or(String::from("")))
         .prompt()?;
 
     let note = Text::new("Note:")
-        .with_initial_value(&cur_note.unwrap_or(String::from("")))
+        .with_initial_value(&cur_command.note.unwrap_or(String::from("")))
         .prompt()?;
 
     let favourite = Select::new("Favourite:", vec!["Yes", "No"])
-        .with_starting_cursor(if cur_favourite { 0 } else { 1 })
+        .with_starting_cursor(if cur_command.favourite { 0 } else { 1 })
         .prompt()?
         == "Yes";
 
@@ -57,99 +71,37 @@ pub fn set_command_properties_wizard(
 }
 
 /// UI handler for the update command
-pub fn handle_update_command(args: SearchAndPrintArgs) {
-    let mut command = args.command;
-    let mut alias = args.alias;
-    let mut tag = args.tag;
-    let order_by_use = args.recent;
-    let favourites_only = args.favourite;
-    let print_style = args.print_style;
-    let print_limit = args.display_limit;
-
-    // If no search arguments are provided, generate a wizard to get them
-    if display_search_args_wizard(&alias, &command, &tag) {
-        let command_properties = match search_args_wizard() {
-            Ok(properties) => properties,
-            Err(e) => {
-                error!(target: "Update Cmd", "Error setting command properties: {:?}", e);
-                ErrorOutput::UserInput.print();
-                return;
-            }
-        };
-
-        alias = command_properties.alias;
-        tag = command_properties.tag;
-        command = command_properties.command;
-    }
-
-    // Get the selected command
-    let selected_command = match get_searched_commands(
-        SearchCommandArgs {
-            alias,
-            command,
-            tag,
-            order_by_use,
-            favourites_only,
-        },
-        print_style,
-        print_limit,
-    ) {
-        Ok(c) => c,
-        Err(e) => match e {
-            GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("\nNo commands found");
-                return;
-            }
-            _ => {
-                error!(target: "Update Cmd", "Failed to get selected command: {:?}", e);
-                ErrorOutput::SelectCmd.print();
-                return;
-            }
-        },
+pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdateError> {
+    // Get the arguments used for search
+    let search_user_input = if !check_search_args_exist(&args.alias, &args.command, &args.tag) {
+        get_search_args_from_user()?
+    } else {
+        SearchArgsUserInput::from(args.clone())
     };
+
+    // Get the search candidates
+    let search_candidates = fetch_search_candidates(search_user_input, args.recent, args.favourite)
+        .map_err(|e| match e {
+            FetchSearchCandidatesError::NoCommandsFound => HandleUpdateError::NoCommandFound,
+            _ => HandleUpdateError::SearchCandidates(e),
+        })?;
+
+    // Prompt the user to select a command
+    let selected_command =
+        prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
 
     // Get the new command properties from the user
     println!("\nUpdate Command:");
-    let new_command_properties = match set_command_properties_wizard(
-        selected_command.internal_command.command,
-        selected_command.internal_command.alias,
-        selected_command.internal_command.tag,
-        selected_command.internal_command.note,
-        selected_command.internal_command.favourite,
-    ) {
-        Ok(properties) => properties,
-        Err(e) => {
-            error!(target: "Update Cmd", "Error setting command properties: {:?}", e);
-            ErrorOutput::UserInput.print();
-            return;
-        }
-    };
+    let new_internal_command = set_command_properties_wizard(selected_command.internal_command)
+        .map_err(HandleUpdateError::Inquire)?;
 
-    let logic = Logic::try_default();
-    if logic.is_err() {
-        error!(target: "Update Cmd", "Failed to initialize logic: {:?}", logic.err());
-        ErrorOutput::FailedToCommand("update".to_string()).print();
-        return;
-    }
+    let logic = Logic::try_default()?;
 
     // Update the selected command
-    match logic.as_ref().unwrap().handle_update_command(
-        selected_command.id,
-        InternalCommand {
-            alias: new_command_properties.alias,
-            command: new_command_properties.command,
-            tag: new_command_properties.tag,
-            note: new_command_properties.note,
-            favourite: new_command_properties.favourite,
-        },
-    ) {
-        Ok(_) => {}
-        Err(e) => {
-            error!(target: "Update Cmd", "Failed to update command: {:?}", e);
-            ErrorOutput::FailedToCommand("update".to_string()).print();
-            return;
-        }
-    };
+    logic
+        .update_command(selected_command.id, new_internal_command)
+        .map_err(HandleUpdateError::LogicUpdate)?;
 
-    println!("\nCommand updated successfully");
+    println!("\nCommand updated!");
+    Ok(())
 }

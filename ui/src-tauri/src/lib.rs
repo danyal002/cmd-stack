@@ -32,7 +32,7 @@ fn list_commands() -> Result<Vec<DisplayCommand>, String> {
     let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
 
     let commands = logic
-        .handle_list_commands(false, false)
+        .list_commands(false, false)
         .map_err(|e| format!("Error listing commands: {:?}", e))?;
 
     let commands: Vec<DisplayCommand> = commands.iter().map(DisplayCommand::from).collect();
@@ -67,7 +67,7 @@ fn add_command(command: AddCommand) -> Result<(), String> {
     let internal_command = InternalCommand::from(&command);
 
     logic
-        .handle_add_command(internal_command)
+        .add_command(internal_command)
         .map_err(|e| format!("Error adding command: {:?}", e))
 }
 
@@ -81,7 +81,7 @@ fn delete_command(command: DeleteCommand) -> Result<(), String> {
     let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
 
     logic
-        .handle_delete_command(command.id)
+        .delete_command(command.id)
         .map_err(|e| format!("Error deleting command: {:?}", e))
 }
 
