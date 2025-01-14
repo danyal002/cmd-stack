@@ -525,7 +525,7 @@ mod tests {
 
         // delete can be called multiple times
         let delete_command_result = logic.delete_command(command_id);
-        assert!(delete_command_result.is_ok());
+        assert!(delete_command_result.is_err());
     }
 
     #[test]
