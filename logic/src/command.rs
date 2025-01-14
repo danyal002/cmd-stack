@@ -21,7 +21,7 @@ pub enum AddCommandError {
 pub enum UpdateCommandError {
     #[error("Invalid user input")]
     InvalidInput,
-    #[error("Failed to add command")]
+    #[error("Failed to update command")]
     Database(#[from] data::dal::UpdateCommandError),
     #[error("Failed validate parameters")]
     Parameter(#[from] ParameterError),
@@ -31,7 +31,7 @@ pub enum UpdateCommandError {
 pub enum SearchCommandError {
     #[error("Invalid user input")]
     InvalidInput,
-    #[error("Failed to add command")]
+    #[error("Failed to select commands")]
     Database(#[from] SelectAllCommandsError),
 }
 
@@ -39,7 +39,7 @@ pub enum SearchCommandError {
 pub enum ListCommandError {
     #[error("Invalid user input")]
     InvalidInput,
-    #[error("Failed to list command")]
+    #[error("Failed to list commands")]
     Database(#[from] SelectAllCommandsError),
 }
 
@@ -47,7 +47,7 @@ pub enum ListCommandError {
 pub enum DeleteCommandError {
     #[error("Invalid user input")]
     InvalidInput,
-    #[error("Failed to add command")]
+    #[error("Failed to delete command")]
     Database(#[from] data::dal::DeleteCommandError),
 }
 
