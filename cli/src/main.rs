@@ -108,8 +108,9 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => {
                     match e {
-                        HandleUpdateError::Inquire(_) => ErrorOutput::UserInput.print(),
                         HandleUpdateError::NoCommandFound => Output::NoCommandsFound.print(),
+                        HandleUpdateError::Inquire(_) => ErrorOutput::UserInput.print(),
+                        HandleUpdateError::SelectCommand(_) => ErrorOutput::UserInput.print(),
                         _ => ErrorOutput::UpdateCommand.print(),
                     };
                     error!("Error occurred while updating command: {:?}", e);
@@ -121,8 +122,9 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => {
                     match e {
-                        HandleDeleteError::Inquire(_) => ErrorOutput::UserInput.print(),
                         HandleDeleteError::NoCommandFound => Output::NoCommandsFound.print(),
+                        HandleDeleteError::Inquire(_) => ErrorOutput::UserInput.print(),
+                        HandleDeleteError::SelectCommand(_) => ErrorOutput::UserInput.print(),
                         _ => ErrorOutput::DeleteCommand.print(),
                     };
                     error!("Error occurred while deleting command: {:?}", e);
@@ -134,8 +136,9 @@ fn main() {
                 Ok(_) => (),
                 Err(e) => {
                     match e {
-                        HandleSearchError::Inquire(_) => ErrorOutput::UserInput.print(),
                         HandleSearchError::NoCommandFound => Output::NoCommandsFound.print(),
+                        HandleSearchError::Inquire(_) => ErrorOutput::UserInput.print(),
+                        HandleSearchError::SelectCommand(_) => ErrorOutput::UserInput.print(),
                         _ => ErrorOutput::SearchCommand.print(),
                     };
                     error!("Error occurred while searching commands: {:?}", e);
