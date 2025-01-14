@@ -1,9 +1,9 @@
-import './index.css'
+import './index.css';
 import CommandPage from './page';
 
 function App() {
   return (
-    <main className="container">
+    <main>
       <CommandPage />
     </main>
   );

@@ -1,53 +1,41 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import {
-  File,
-  Search,
-  Settings,
-} from "lucide-react"
+import * as React from 'react';
+import { File, Search, Settings, Star } from 'lucide-react';
 
-import { cn } from "@/lib/utils"
-import { Input } from "./ui/input"
+import { cn } from '@/lib/utils';
+import { Input } from './ui/input';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "./ui/resizable"
-import { Separator } from "./ui/separator"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "./ui/tabs"
-import { TooltipProvider } from "./ui/tooltip"
-import { AccountSwitcher } from "@/components/account-switcher"
-import { CommandDisplay } from "@/components/command-display"
-import { CommandList } from "@/components/command-list"
-import { Nav } from "@/components/nav"
-import { Account } from "@/data"
-import { useCommand } from "@/use-command"
-import { Command } from "@/types/command"
-import { AddDialog } from "./add-dialog"
+} from './ui/resizable';
+import { Separator } from './ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { TooltipProvider } from './ui/tooltip';
+import { CommandDisplay } from '@/components/command-display';
+import { CommandList } from '@/components/command-list';
+import { Nav } from '@/components/nav';
+import { useCommand } from '@/use-command';
+import { Command } from '@/types/command';
+import { cmdStackIcon } from '@/components/cmdStackIcon';
+import { AddDialog } from './add-dialog';
 
 interface MainCommandPageProps {
-  accounts: Account[]
-  commands: Command[]
-  defaultLayout: number[] | undefined
-  defaultCollapsed?: boolean
-  navCollapsedSize: number
+  commands: Command[];
+  defaultLayout: number[] | undefined;
+  defaultCollapsed?: boolean;
+  navCollapsedSize: number;
 }
 
 export function MainCommandPage({
-  accounts,
   commands,
   defaultLayout = [20, 32, 48],
   defaultCollapsed = false,
   navCollapsedSize,
 }: MainCommandPageProps) {
-  const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
-  const [command] = useCommand()
+  const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
+  const [command] = useCommand();
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -55,10 +43,10 @@ export function MainCommandPage({
         direction="horizontal"
         onLayout={(sizes: number[]) => {
           document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(
-            sizes
-          )}`
+            sizes,
+          )}`;
         }}
-        className="h-full max-h-[800px] items-stretch"
+        className="h-full items-stretch"
       >
         <ResizablePanel
           defaultSize={defaultLayout[0]}
@@ -67,39 +55,54 @@ export function MainCommandPage({
           minSize={15}
           maxSize={20}
           onCollapse={() => {
-            setIsCollapsed(true)
+            setIsCollapsed(true);
             document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-              true
-            )}`
+              true,
+            )}`;
           }}
           onResize={() => {
-            setIsCollapsed(false)
+            setIsCollapsed(false);
             document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-              false
-            )}`
+              false,
+            )}`;
           }}
           className={cn(
             isCollapsed &&
-              "min-w-[50px] transition-all duration-300 ease-in-out"
+              'min-w-[50px] transition-all duration-300 ease-in-out',
           )}
         >
           <div
             className={cn(
-              "flex h-[52px] items-center justify-center",
-              isCollapsed ? "h-[52px]" : "px-2"
+              'flex h-[52px] items-center justify-center',
+              isCollapsed ? 'h-[52px]' : 'px-2',
             )}
           >
-            <AccountSwitcher isCollapsed={isCollapsed} accounts={accounts} />
+            <div
+              className={cn('flex items-center gap-2 [&_svg]:h-6 [&_svg]:w-6')}
+            >
+              {cmdStackIcon}
+              {!isCollapsed && (
+                <h1 className="text-base font-normal">CmdStack</h1>
+              )}
+            </div>
           </div>
           <Separator />
           <Nav
             isCollapsed={isCollapsed}
             links={[
               {
-                title: "Commands",
+                title: 'Commands',
                 label: commands.length.toString(),
                 icon: File,
-                variant: "default",
+                variant: 'default',
+              },
+              {
+                title: 'Favorites',
+                label: commands
+                  .filter((item) => item.favourite)
+                  .length.toString(),
+                icon: Star,
+                variant: 'ghost',
               },
             ]}
           />
@@ -108,9 +111,9 @@ export function MainCommandPage({
             isCollapsed={isCollapsed}
             links={[
               {
-                title: "Settings",
+                title: 'Settings',
                 icon: Settings,
-                variant: "ghost",
+                variant: 'ghost',
               },
             ]}
           />
@@ -118,7 +121,11 @@ export function MainCommandPage({
           <AddDialog />
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
+        <ResizablePanel
+          defaultSize={defaultLayout[1]}
+          minSize={30}
+          className="min-w-[290px]"
+        >
           <Tabs defaultValue="all">
             <div className="flex items-center px-4 py-2">
               <h1 className="text-xl font-bold">Commands</h1>
@@ -130,7 +137,7 @@ export function MainCommandPage({
                   All
                 </TabsTrigger>
                 <TabsTrigger
-                  value="unread"
+                  value="favourites"
                   className="text-zinc-600 dark:text-zinc-200"
                 >
                   Favourites
@@ -149,7 +156,7 @@ export function MainCommandPage({
             <TabsContent value="all" className="m-0">
               <CommandList items={commands} />
             </TabsContent>
-            <TabsContent value="favourite" className="m-0">
+            <TabsContent value="favourites" className="m-0">
               <CommandList items={commands.filter((item) => item.favourite)} />
             </TabsContent>
           </Tabs>
@@ -157,10 +164,12 @@ export function MainCommandPage({
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
           <CommandDisplay
-            command={commands.find((item) => item.id === command.selected) || null}
+            command={
+              commands.find((item) => item.id === command.selected) || null
+            }
           />
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
-  )
+  );
 }

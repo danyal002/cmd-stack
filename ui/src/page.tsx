@@ -1,5 +1,4 @@
 import { MainCommandPage } from '@/components/command';
-import { accounts } from '@/data';
 import { useEffect } from 'react';
 import { Toaster } from './components/ui/toaster';
 import { useCommands, useRefresh } from './use-command';
@@ -19,7 +18,6 @@ export default function CommandPage() {
     <>
       <div className="hidden flex-col md:flex">
         <MainCommandPage
-          accounts={accounts}
           commands={commands.state == 'hasData' ? commands.data : []}
           defaultLayout={defaultLayout}
           defaultCollapsed={defaultCollapsed}

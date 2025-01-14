@@ -24,7 +24,7 @@ pub enum SqliteDbConnectionError {
 }
 
 pub(crate) struct SqliteConnectionPool {
-    pub(crate) pool: sqlx::SqlitePool,
+    pub(crate) pool: SqlitePool,
 }
 
 impl SqliteConnectionPool {
