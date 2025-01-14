@@ -1,4 +1,4 @@
-use crate::args::ImportExportArgs;
+use crate::{args::ImportExportArgs, outputs::Output};
 use log::error;
 use logic::Logic;
 use std::path::Path;
@@ -28,7 +28,7 @@ pub fn handle_export_command(args: ImportExportArgs) -> Result<(), HandleExportE
 
     logic.create_export_json(file_path)?;
 
-    println!("\nCommands exported to {:?}", file_path);
+    Output::ExportCommandsSuccess(file_path).print();
     Ok(())
 }
 
@@ -40,6 +40,6 @@ pub fn handle_import_command(args: ImportExportArgs) -> Result<(), HandleImportE
 
     let num = logic.import_data(file_path)?;
 
-    println!("\n{} commands imported from {:?}", num, file_path);
+    Output::ImportCommandsSuccess(num, file_path).print();
     Ok(())
 }

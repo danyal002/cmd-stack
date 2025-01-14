@@ -5,6 +5,7 @@ use crate::{
         prompt_user_for_command_selection, FetchSearchCandidatesError,
         PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
+    outputs::Output,
 };
 use inquire::InquireError;
 use log::error;
@@ -55,6 +56,6 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) -> Result<(), HandleDelet
     // Delete the selected command
     logic.delete_command(selected_command.id)?;
 
-    println!("\nCommand deleted!");
+    Output::DeleteCommandSuccess.print();
     Ok(())
 }
