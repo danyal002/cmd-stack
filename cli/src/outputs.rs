@@ -95,30 +95,21 @@ impl fmt::Display for Output<'_> {
         let message = match self {
             Output::NoCommandsFound => "<bold>No commands found</bold>\n".to_string(),
             Output::UpdateCommandSectionTitle => "<section>Update Command:</section>".to_string(),
-            Output::UpdateCommandSuccess => {
-                "<success>Command updated successfully</success>\n".to_string()
-            }
-            Output::AddCommandSuccess => {
-                "<success>Command added successfully</success>\n".to_string()
-            }
-            Output::DeleteCommandSuccess => {
-                "<success>Command deleted successfully</success>\n".to_string()
-            }
+            Output::UpdateCommandSuccess => "<success>Command updated!</success>\n".to_string(),
+            Output::AddCommandSuccess => "<success>Command added!</success>\n".to_string(),
+            Output::DeleteCommandSuccess => "<success>Command deleted!</success>\n".to_string(),
             Output::ExportCommandsSuccess(file) => {
-                format!(
-                    "<success>Commands exported successfully to {:?}</success>\n",
-                    file
-                )
+                format!("<success>Commands exported to {:?}</success>\n", file)
             }
             Output::ImportCommandsSuccess(num_cmds, file) => {
                 format!(
-                    "<success>{} commands imported successfully from {:?}</success>\n",
+                    "<success>{} commands imported from {:?}</success>\n",
                     num_cmds, file
                 )
             }
             Output::CommandCopiedToClipboard(cmd) => {
                 format!(
-                    "<success><bold>Command copied to clipboard:</bold></success> {}\n",
+                    "<success><bold>Command copied to clipboard!</bold></success> {}\n",
                     cmd
                 )
             }
