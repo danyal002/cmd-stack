@@ -75,36 +75,3 @@ impl Logic {
         Ok(num_commands)
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use tempfile::tempdir;
-
-//     #[test]
-//     fn is_file_json_valid() {
-//         let dir = tempdir().unwrap();
-//         let file_path = dir.path().join("test.json");
-
-//         let result = is_file_json(&file_path);
-//         assert!(result.is_ok());
-//     }
-
-//     #[test]
-//     fn is_file_json_wrong_extension() {
-//         let dir = tempdir().unwrap();
-//         let file_path = dir.path().join("test.txt");
-
-//         let result = is_file_json(&file_path);
-//         assert!(matches!(result, Err(ImportExportError::NotJson)));
-//     }
-
-//     #[test]
-//     fn is_file_json_no_extension() {
-//         let dir = tempdir().unwrap();
-//         let file_path = dir.path().join("test");
-
-//         let result = is_file_json(&file_path);
-//         assert!(matches!(result, Err(ImportExportError::InvalidFilePath)));
-//     }
-// }
