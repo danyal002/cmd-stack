@@ -1,27 +1,39 @@
 pub mod sqlite;
 pub mod sqlite_dal;
-
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum SqlQueryError {
-    #[error("Failed to select commands")]
-    SelectCommand(#[source] sqlx::Error),
-
-    #[error("Failed to insert a command")]
-    InsertCommand(#[source] sqlx::Error),
-
-    #[error("Failed to delete a command")]
-    DeleteCommand(#[source] sqlx::Error),
-
-    #[error("Failed to update a command")]
-    UpdateCommand(#[source] sqlx::Error),
-
+pub enum InsertCommandError {
     #[error("Failed to get the unix timestamp")]
     UnixTimestamp(#[from] std::time::SystemTimeError),
-
     #[error("Expected rows to be affected by the operation but none were affected")]
     NoRowsAffected,
+    #[error("Failed to execute SQL query")]
+    Query(#[from] sqlx::Error),
+}
+
+#[derive(Error, Debug)]
+pub enum UpdateCommandError {
+    #[error("Failed to get the unix timestamp")]
+    UnixTimestamp(#[from] std::time::SystemTimeError),
+    #[error("Expected rows to be affected by the operation but none were affected")]
+    NoRowsAffected,
+    #[error("Failed to execute SQL query")]
+    Query(#[from] sqlx::Error),
+}
+
+#[derive(Error, Debug)]
+pub enum DeleteCommandError {
+    #[error("Expected rows to be affected by the operation but none were affected")]
+    NoRowsAffected,
+    #[error("Failed to execute SQL query")]
+    Query(#[from] sqlx::Error),
+}
+
+#[derive(Error, Debug)]
+pub enum SelectAllCommandsError {
+    #[error("Failed to execute SQL query")]
+    Query(#[from] sqlx::Error),
 }
 
 #[derive(Error, Debug)]
