@@ -1,111 +1,90 @@
-use crate::{args::AddArgs, command::print_internal_command, outputs::ErrorOutput};
+use crate::{
+    args::AddArgs,
+    outputs::{format_output, print_internal_command_table, spacing},
+};
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
 use logic::Logic;
+use thiserror::Error;
 
-#[derive(Debug)]
-struct AddCommandProperties {
-    alias: String,
-    tag: Option<String>,
-    note: Option<String>,
-    favourite: bool,
+#[derive(Error, Debug)]
+pub enum HandleAddError {
+    #[error("Failed to get user input")]
+    Inquire(#[from] InquireError),
+    #[error("Failed to initialize logic")]
+    LogicInit(#[from] logic::LogicInitError),
+    #[error("Failed to add command")]
+    LogicAdd(#[from] logic::command::AddCommandError),
+}
+
+impl From<AddArgs> for InternalCommand {
+    fn from(args: AddArgs) -> Self {
+        InternalCommand {
+            alias: args.alias.unwrap_or(String::from("")),
+            command: args.command,
+            tag: args.tag,
+            note: args.note,
+            favourite: args.favourite,
+        }
+    }
 }
 
 /// Generates a wizard to set the properties of a command
-fn set_command_properties_wizard(command: &str) -> Result<AddCommandProperties, InquireError> {
-    let alias = Text::new("Alias (Default is the command text):")
-        .with_default(command)
-        .prompt()?;
+fn get_add_args_from_user(command: &str) -> Result<InternalCommand, InquireError> {
+    spacing();
 
-    let tag = Text::new("Tag:").prompt()?;
+    let alias = Text::new(&format_output(
+        "<bold>Alias</bold> <italics>(Equal to the command by default)</italics><bold>:</bold>",
+    ))
+    .with_default(command)
+    .prompt()?;
 
-    let note = Text::new("Note:").prompt()?;
+    let tag = Text::new(&format_output(
+        "<bold>Tag</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
 
-    let favourite = Select::new("Favourite:", vec!["Yes", "No"])
+    let note = Text::new(&format_output(
+        "<bold>Note</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
+
+    let favourite = Select::new(&format_output("<bold>Favourite:</bold>"), vec!["Yes", "No"])
         .with_starting_cursor(1)
         .prompt()?
         == "Yes";
 
-    Ok(AddCommandProperties {
+    Ok(InternalCommand {
         alias,
+        command: String::from(command),
         tag: if !tag.is_empty() { Some(tag) } else { None },
         note: if !note.is_empty() { Some(note) } else { None },
         favourite,
     })
 }
 
-/// UI handler for the add command
-pub fn handle_add_command(args: AddArgs) {
-    let command = args.command;
-    let mut alias = args.alias;
-    let mut tag = args.tag;
-    let mut note = args.note;
-    let mut favourite = args.favourite;
+/// CLI handler for the add command
+pub fn handle_add_command(args: AddArgs) -> Result<(), HandleAddError> {
+    let add_args_exist = args.alias.is_some() || args.tag.is_some() || args.note.is_some();
 
-    // If no alias, tag, or note is provided, generate a wizard to get them
-    let generate_command_with_wizard = alias.is_none() && tag.is_none() && note.is_none();
-    if generate_command_with_wizard {
-        let command_properties = match set_command_properties_wizard(&command) {
-            Ok(properties) => properties,
-            Err(e) => {
-                error!(target: "Add Cmd", "Error setting command properties: {:?}", e);
-                ErrorOutput::UserInput.print();
-                return;
-            }
-        };
-
-        alias = Some(command_properties.alias);
-        tag = command_properties.tag;
-        note = command_properties.note;
-        favourite = command_properties.favourite;
-    } else if alias.is_none() {
-        // If the alias is not provided, set it equal to the command
-        alias = Some(command.clone());
-    }
-
-    let alias = match alias {
-        Some(a) => a,
-        None => {
-            error!(target: "Add Cmd", "Could not set alias");
-            ErrorOutput::UserInput.print();
-            return;
-        }
+    // Get the command to add either from CLI args or user input
+    let internal_command = if !add_args_exist {
+        get_add_args_from_user(&args.command)?
+    } else {
+        InternalCommand::from(args)
     };
 
-    let internal_command = InternalCommand {
-        command,
-        alias,
-        tag,
-        note,
-        favourite,
-    };
+    let logic = Logic::try_default()?;
 
-    let logic = Logic::try_default();
-    if logic.is_err() {
-        error!(target: "Add Cmd", "Failed to initialize logic: {:?}", logic.err());
-        ErrorOutput::AddCmd.print();
-        return;
+    // Write the command to the db
+    logic.add_command(internal_command.clone())?;
+
+    if add_args_exist {
+        // If the user added the command via CLI arguments, we need to
+        // display the information so they can confirm the validity
+        print_internal_command_table(&internal_command);
     }
 
-    match logic
-        .as_ref()
-        .unwrap()
-        .handle_add_command(internal_command.clone())
-    {
-        Ok(_) => {
-            if !generate_command_with_wizard {
-                // If the user added the command via CLI arguments, we need to
-                // display the information so they can confirm the validity
-                println!("\nCommand added successfully:");
-                print_internal_command(&internal_command);
-            } else {
-                println!("\nCommand added successfully");
-            }
-        }
-        Err(e) => {
-            error!(target: "Add Cmd", "Error adding command: {:?}", e);
-            ErrorOutput::AddCmd.print();
-        }
-    }
+    Ok(())
 }

@@ -1,156 +1,75 @@
 use data::{
-    dal::{SqlQueryError, SqlTxError},
-    models::Command,
+    dal::{InsertCommandError, SelectAllCommandsError},
+    models::InternalCommand,
 };
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{collections::HashMap, fs, path::Path};
+use std::{
+    fs::{self},
+    path::Path,
+};
 use thiserror::Error;
 
-use crate::{DatabaseConnectionError, Logic};
+use crate::Logic;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ExportFormat {
-    commands: Vec<Command>,
+struct ImportExportFormat {
+    commands: Vec<InternalCommand>,
 }
 
 #[derive(Error, Debug)]
-pub enum ImportExportError {
-    #[error("database connection error")]
-    DbConnection(#[from] DatabaseConnectionError),
-
-    #[error("error executing database query")]
-    DbQuery(#[from] SqlQueryError),
-
-    #[error("could not serialize data")]
-    SerdeError(#[from] serde_json::Error),
-
-    #[error("could not read or write to file")]
-    RwFile(#[from] std::io::Error),
-
-    #[error("provided file is not a JSON file")]
-    NotJson,
-
-    #[error("provided file does not exist")]
-    DoesNotExist,
-
-    #[error("provided file path is invalid")]
-    InvalidFilePath,
-
-    #[error("import data is invalid")]
-    InvalidData,
-
-    #[error("transaction error")]
-    Transaction(#[from] SqlTxError),
+pub enum ExportError {
+    #[error("Failed to serialize commands")]
+    Deserialize(#[from] serde_json::Error),
+    #[error("Failed to write commands to file")]
+    Write(String),
+    #[error("Failed to fetch commands from the database")]
+    Database(#[from] SelectAllCommandsError),
 }
 
-/// Check if the file is a json file
-fn is_file_json(file_path: &Path) -> Result<(), ImportExportError> {
-    if let Some(extension) = file_path.extension() {
-        if extension != "json" {
-            return Err(ImportExportError::NotJson);
-        }
-    } else {
-        return Err(ImportExportError::InvalidFilePath);
-    }
-    Ok(())
+#[derive(Error, Debug)]
+pub enum ImportError {
+    #[error("Failed to deserialize commands: {0}")]
+    Serialize(#[from] serde_json::Error),
+    #[error("Failed to read commands from file")]
+    Read(String),
+    #[error("Failed to insert commands to the database")]
+    Database(#[from] InsertCommandError),
+    #[error("File not found at specified path")]
+    InvalidFilePath,
+    #[error("Specified file does not have the correct extension")]
+    IncorrectFileExtension,
 }
 
 impl Logic {
     #[tokio::main]
     /// Handle the export request by writing all data in the database to the requested JSON file
-    pub async fn create_export_json(
-        &self,
-        export_file_path: &Path,
-    ) -> Result<(), ImportExportError> {
-        is_file_json(export_file_path)?;
-
-        // Get all commands and parameters
-        let export_data = ExportFormat {
-            commands: self
-                .db_connection
-                .get_all_commands(false, false, None)
-                .await?,
+    pub async fn create_export_json(&self, export_file_path: &Path) -> Result<(), ExportError> {
+        let commands = self.dal.get_all_commands(false, false).await?;
+        let export_data = ImportExportFormat {
+            commands: commands
+                .into_iter()
+                .map(|command| command.internal_command)
+                .collect(),
         };
-
         let json_string = serde_json::to_string(&export_data)?;
-        fs::write(export_file_path, json_string)?;
+        fs::write(export_file_path, json_string).map_err(|e| ExportError::Write(e.to_string()))?;
 
         Ok(())
     }
 
     #[tokio::main]
     /// Handle the import request by importing all data in the given JSON file
-    pub async fn import_data(&self, import_file_path: &Path) -> Result<u32, ImportExportError> {
-        // Check if the file exists
-        if !import_file_path.is_file() {
-            return Err(ImportExportError::InvalidFilePath);
-        }
+    pub async fn import_data(&self, import_file_path: &Path) -> Result<u64, ImportError> {
+        let json_string =
+            fs::read_to_string(import_file_path).map_err(|e| ImportError::Read(e.to_string()))?;
+        let import_data: ImportExportFormat = serde_json::from_str(&json_string)?;
 
-        is_file_json(import_file_path)?;
+        let num_commands = self
+            .dal
+            .insert_mulitple_commands(import_data.commands)
+            .await?;
 
-        // Deserialize the file
-        let data = fs::read_to_string(import_file_path)?;
-        let import_data: ExportFormat = serde_json::from_str(&data)?;
-
-        let mut tx = self.db_connection.begin().await?;
-
-        // Insert all records into the database
-        //
-        // We keep a map linking command IDs in the json to their respective
-        // ids in the database. This is required when inserting the parameters
-        // to ensure the foreign key references are correct
-        let num_commands = import_data.commands.len() as u32;
-        let mut import_cmd_id_to_db_id: HashMap<i64, i64> = HashMap::new();
-        for command in import_data.commands {
-            let db_id = match self
-                .db_connection
-                .insert_command(command.internal_command, Some(&mut tx))
-                .await
-            {
-                Ok(id) => id,
-                Err(e) => {
-                    self.db_connection.rollback(tx).await?;
-                    return Err(ImportExportError::DbQuery(e));
-                }
-            };
-            import_cmd_id_to_db_id.insert(command.id, db_id);
-        }
-
-        self.db_connection.commit(tx).await?;
         Ok(num_commands)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::tempdir;
-
-    #[test]
-    fn is_file_json_valid() {
-        let dir = tempdir().unwrap();
-        let file_path = dir.path().join("test.json");
-
-        let result = is_file_json(&file_path);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn is_file_json_wrong_extension() {
-        let dir = tempdir().unwrap();
-        let file_path = dir.path().join("test.txt");
-
-        let result = is_file_json(&file_path);
-        assert!(matches!(result, Err(ImportExportError::NotJson)));
-    }
-
-    #[test]
-    fn is_file_json_no_extension() {
-        let dir = tempdir().unwrap();
-        let file_path = dir.path().join("test");
-
-        let result = is_file_json(&file_path);
-        assert!(matches!(result, Err(ImportExportError::InvalidFilePath)));
     }
 }

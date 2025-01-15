@@ -1,86 +1,56 @@
 use crate::{
     args::SearchAndPrintArgs,
     command::search_utils::{
-        display_search_args_wizard, get_searched_commands, search_args_wizard,
-        GetSelectedItemFromUserError,
+        check_search_args_exist, fetch_search_candidates, get_search_args_from_user,
+        prompt_user_for_command_selection, FetchSearchCandidatesError,
+        PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
-    outputs::ErrorOutput,
 };
+use inquire::InquireError;
 use log::error;
-use logic::{command::SearchCommandArgs, Logic};
+use logic::Logic;
+use thiserror::Error;
 
-/// UI handler for the delete command
-pub fn handle_delete_command(args: SearchAndPrintArgs) {
-    let mut command = args.command;
-    let mut alias = args.alias;
-    let mut tag = args.tag;
-    let order_by_use = args.recent;
-    let favourites_only = args.favourite;
-    let print_style = args.print_style;
-    let print_limit = args.display_limit;
+#[derive(Error, Debug)]
+pub enum HandleDeleteError {
+    #[error("Failed to get user input")]
+    Inquire(#[from] InquireError),
+    #[error("No command found")]
+    NoCommandFound,
+    #[error("Failed to get search candidates")]
+    SearchCandidates(#[from] FetchSearchCandidatesError),
+    #[error("Failed to select a command")]
+    SelectCommand(#[from] PromptUserForCommandSelectionError),
+    #[error("Failed to initialize logic")]
+    LogicInit(#[from] logic::LogicInitError),
+    #[error("Failed to delete command")]
+    LogicDelete(#[from] logic::command::DeleteCommandError),
+}
 
-    // If no search arguments are provided, generate a wizard to get them
-    if display_search_args_wizard(&alias, &command, &tag) {
-        let command_properties = match search_args_wizard() {
-            Ok(properties) => properties,
-            Err(e) => {
-                error!(target: "Delete Cmd", "Error setting command properties: {:?}", e);
-                ErrorOutput::UserInput.print();
-                return;
-            }
-        };
-
-        alias = command_properties.alias;
-        tag = command_properties.tag;
-        command = command_properties.command;
-    }
-
-    // Get the selected command
-    let selected_command = match get_searched_commands(
-        SearchCommandArgs {
-            alias,
-            command,
-            tag,
-            order_by_use,
-            favourites_only,
-        },
-        print_style,
-        print_limit,
-    ) {
-        Ok(c) => c,
-        Err(e) => match e {
-            GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("\nNo commands found");
-                return;
-            }
-            _ => {
-                error!(target: "Delete Cmd", "Failed to get selected command: {:?}", e);
-                ErrorOutput::SelectCmd.print();
-                return;
-            }
-        },
+/// CLI handler for the delete command
+pub fn handle_delete_command(args: SearchAndPrintArgs) -> Result<(), HandleDeleteError> {
+    // Get the arguments used for search
+    let search_user_input = if !check_search_args_exist(&args.alias, &args.command, &args.tag) {
+        get_search_args_from_user()?
+    } else {
+        SearchArgsUserInput::from(args.clone())
     };
 
-    let logic = Logic::try_default();
-    if logic.is_err() {
-        error!(target: "Delete Cmd", "Failed to initialize logic: {:?}", logic.err());
-        ErrorOutput::FailedToCommand("delete".to_string()).print();
-        return;
-    }
+    // Get the search candidates
+    let search_candidates = fetch_search_candidates(search_user_input, args.recent, args.favourite)
+        .map_err(|e| match e {
+            FetchSearchCandidatesError::NoCommandsFound => HandleDeleteError::NoCommandFound,
+            _ => HandleDeleteError::SearchCandidates(e),
+        })?;
+
+    // Prompt the user to select a command
+    let selected_command =
+        prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
+
+    let logic = Logic::try_default()?;
 
     // Delete the selected command
-    match logic
-        .as_ref()
-        .unwrap()
-        .handle_delete_command(selected_command.id)
-    {
-        Ok(_) => {}
-        Err(e) => {
-            error!(target: "Delete Cmd", "Failed to delete command: {:?}", e);
-            ErrorOutput::FailedToCommand("delete".to_string()).print();
-            return;
-        }
-    };
+    logic.delete_command(selected_command.id)?;
 
-    println!("\nCommand deleted successfully");
+    Ok(())
 }

@@ -1,4 +1,8 @@
-use crate::{args::PrintStyle, outputs::ErrorOutput, utils::truncate_string};
+use crate::{
+    args::{PrintStyle, SearchAndPrintArgs},
+    outputs::{format_output, spacing},
+    utils::truncate_string,
+};
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
@@ -8,97 +12,133 @@ use prettytable::{format, Cell, Row, Table};
 use termion::terminal_size;
 use thiserror::Error;
 
-pub struct SearchArgsWizardInput {
+pub struct SearchArgsUserInput {
     pub alias: Option<String>,
     pub command: Option<String>,
     pub tag: Option<String>,
 }
+impl From<SearchAndPrintArgs> for SearchArgsUserInput {
+    fn from(args: SearchAndPrintArgs) -> Self {
+        SearchArgsUserInput {
+            alias: args.alias,
+            command: args.command,
+            tag: args.tag,
+        }
+    }
+}
 
-pub fn display_search_args_wizard(
+/// Given the user input for `alias`, `command` and `tag`, determine
+/// if the user provided search arguments
+///
+/// Returns a boolean
+pub fn check_search_args_exist(
     alias: &Option<String>,
     command: &Option<String>,
     tag: &Option<String>,
 ) -> bool {
-    alias.is_none() && command.is_none() && tag.is_none()
+    alias.is_some() || command.is_some() || tag.is_some()
 }
 
 /// Generates a wizard to set the properties for command searching
-pub fn search_args_wizard() -> Result<SearchArgsWizardInput, InquireError> {
-    let command = Text::new("Command (Leave blank for no filter):").prompt()?;
+pub fn get_search_args_from_user() -> Result<SearchArgsUserInput, InquireError> {
+    spacing();
 
-    let alias = Text::new("Alias (Leave blank for no filter):").prompt()?;
+    let command = Text::new(&format_output(
+        "<bold>Command</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
 
-    let tag = Text::new("Tag (Leave blank for no filter):").prompt()?;
+    let alias = Text::new(&format_output(
+        "<bold>Alias</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
 
-    Ok(SearchArgsWizardInput {
-        alias: if !alias.is_empty() { Some(alias) } else { None },
-        command: if !command.is_empty() {
-            Some(command)
-        } else {
-            None
-        },
-        tag: if !tag.is_empty() { Some(tag) } else { None },
+    let tag = Text::new(&format_output(
+        "<bold>Tag</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
+
+    Ok(SearchArgsUserInput {
+        alias: Some(alias),
+        command: Some(command),
+        tag: Some(tag),
     })
 }
 
 #[derive(Error, Debug)]
-pub enum GetSelectedItemFromUserError {
-    #[error("failed to get commands")]
-    GetCommands(#[from] logic::DefaultLogicError),
-
-    #[error("no commands found")]
+pub enum FetchSearchCandidatesError {
+    #[error("No commands found")]
     NoCommandsFound,
+    #[error("failed to initialize logic")]
+    LogicInit(#[source] logic::LogicInitError),
+    #[error("failed to search for commands")]
+    SearchCommands(#[source] logic::command::SearchCommandError),
+}
 
+/// Gets search candidates from the database
+pub fn fetch_search_candidates(
+    search_args: SearchArgsUserInput,
+    order_by_use: bool,
+    favourites_only: bool,
+) -> Result<Vec<Command>, FetchSearchCandidatesError> {
+    let logic = match Logic::try_default() {
+        Ok(l) => l,
+        Err(e) => {
+            error!(target: "Search Utils", "Failed to initialize logic: {:?}", e);
+            return Err(FetchSearchCandidatesError::LogicInit(e));
+        }
+    };
+
+    let commands = match logic.search_command(SearchCommandArgs {
+        alias: search_args.alias,
+        command: search_args.command,
+        tag: search_args.tag,
+        order_by_use,
+        favourites_only,
+    }) {
+        Ok(c) => c,
+        Err(e) => {
+            error!(target: "Search Utils", "Failed to search for commands: {:?}", e);
+            return Err(FetchSearchCandidatesError::SearchCommands(e));
+        }
+    };
+
+    if commands.is_empty() {
+        return Err(FetchSearchCandidatesError::NoCommandsFound);
+    }
+
+    Ok(commands)
+}
+
+#[derive(Error, Debug)]
+pub enum PromptUserForCommandSelectionError {
+    #[error("No commands found")]
+    NoCommandsFound,
     #[error("failed to get selected item")]
     InquireError(#[from] InquireError),
 }
 
-/// Gets search candidates from the database and prompts the user to select one
-pub fn get_searched_commands(
-    search_args: SearchCommandArgs,
-    print_style: PrintStyle,
-    display_limit: u32,
-) -> Result<Command, GetSelectedItemFromUserError> {
-    let logic = match Logic::try_default() {
-        Ok(l) => l,
-        Err(e) => {
-            return Err(GetSelectedItemFromUserError::GetCommands(e));
-        }
-    };
-
-    let commands = match logic.handle_search_command(search_args) {
-        Ok(c) => c,
-        Err(e) => {
-            error!(target: "Search Utils", "Failed to get commands from DB: {:?}", e);
-            return Err(GetSelectedItemFromUserError::GetCommands(e));
-        }
-    };
-
-    let selected_command =
-        match get_selected_item_from_user(commands.clone(), print_style, display_limit) {
-            Ok(i) => i,
-            Err(e) => {
-                return Err(e);
-            }
-        };
-    Ok(selected_command)
-}
-
-/// Generates a wizard to prompt the user to select a command from a list of commands
-fn get_selected_item_from_user(
+/// Handles the UI interaction to prompt the user for selection
+///
+/// `commands` must be non-empty
+pub fn prompt_user_for_command_selection(
     commands: Vec<Command>,
     print_style: PrintStyle,
     display_limit: u32,
-) -> Result<Command, GetSelectedItemFromUserError> {
+) -> Result<Command, PromptUserForCommandSelectionError> {
     if commands.is_empty() {
-        return Err(GetSelectedItemFromUserError::NoCommandsFound);
+        return Err(PromptUserForCommandSelectionError::NoCommandsFound);
     }
 
     let (formatted_commands, columns) = format_commands_for_printing(&commands, print_style);
 
-    println!(); // Spacing
+    spacing();
     let selected_command = match Select::new(
-        &("Select a command ".to_owned() + columns + ":"),
+        &format_output(
+            &("<bold>Select a command</bold> <italics>".to_owned()
+                + columns
+                + "</italics><bold>:</bold>"),
+        ),
         formatted_commands,
     )
     // Only display the command once the user makes a selection
@@ -108,7 +148,7 @@ fn get_selected_item_from_user(
     {
         Ok(c) => c,
         Err(e) => {
-            return Err(GetSelectedItemFromUserError::InquireError(e));
+            return Err(PromptUserForCommandSelectionError::InquireError(e));
         }
     };
 
@@ -124,7 +164,7 @@ fn format_commands_for_printing(
     match print_style {
         PrintStyle::All => (
             format_internal_commands(commands),
-            "(Alias | Command | Tag | Note | Favourite [YES/NO])",
+            "(Alias | Command | Tag | Note | Favourite [*])",
         ),
         PrintStyle::Alias => (
             commands
@@ -181,9 +221,9 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
             Cell::new(&truncated_tag),
             Cell::new(&truncated_note),
             Cell::new(if command.internal_command.favourite {
-                "YES"
+                "*"
             } else {
-                "NO"
+                ""
             }),
         ]));
     }
@@ -192,20 +232,20 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
     table_str.lines().map(|s| s.to_string()).collect()
 }
 
-pub fn copy_text(cmd: &str, text_to_copy: String) {
-    let mut clipboard = match ClipboardContext::new() {
-        Ok(ctx) => ctx,
-        Err(e) => {
-            error!(target: cmd, "Failed to initialize the clipboard: {:?}", e);
-            ErrorOutput::FailedToCopy(text_to_copy).print();
-            return;
-        }
-    };
-    match clipboard.set_contents(text_to_copy.clone()) {
-        Ok(()) => println!("\nCommand copied to clipboard: {}", text_to_copy),
-        Err(e) => {
-            error!(target: cmd, "Failed copy command to clipboard: {:?}", e);
-            ErrorOutput::FailedToCopy(text_to_copy).print();
-        }
-    }
+#[derive(Error, Debug)]
+pub enum CopyTextError {
+    #[error("Failed to initialize the clipboard")]
+    ClipboardInit,
+    #[error("Failed to copy text to clipboard")]
+    Copy,
+}
+
+pub fn copy_to_clipboard(text_to_copy: String) -> Result<String, CopyTextError> {
+    let mut clipboard = ClipboardContext::new().map_err(|_| CopyTextError::ClipboardInit)?;
+
+    clipboard
+        .set_contents(text_to_copy.clone())
+        .map_err(|_| CopyTextError::Copy)?;
+
+    Ok(text_to_copy)
 }

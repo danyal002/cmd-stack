@@ -1,106 +1,66 @@
 use crate::{
     args::SearchAndPrintArgs,
     command::search_utils::{
-        copy_text, display_search_args_wizard, get_searched_commands, search_args_wizard,
-        GetSelectedItemFromUserError,
+        check_search_args_exist, copy_to_clipboard, fetch_search_candidates,
+        get_search_args_from_user, prompt_user_for_command_selection, CopyTextError,
+        FetchSearchCandidatesError, PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
-    outputs::ErrorOutput,
 };
+use inquire::InquireError;
 use log::error;
-use logic::{command::SearchCommandArgs, Logic};
+use logic::Logic;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum HandleSearchError {
+    #[error("Failed to get user input")]
+    Inquire(#[from] InquireError),
+    #[error("No command found")]
+    NoCommandFound,
+    #[error("Failed to get search candidates")]
+    SearchCandidates(#[from] FetchSearchCandidatesError),
+    #[error("Failed to select a command")]
+    SelectCommand(#[from] PromptUserForCommandSelectionError),
+    #[error("Failed to copy command")]
+    Copy(#[from] CopyTextError),
+    #[error("Failed to initialize logic")]
+    LogicInit(#[from] logic::LogicInitError),
+    #[error("Failed to generate parameters")]
+    LogicParam(#[from] logic::param::ParameterError),
+    #[error("Failed to update command")]
+    LogicUpdate(#[from] logic::command::UpdateCommandError),
+}
 
 /// UI handler for the search command
-pub fn handle_search_commands(args: SearchAndPrintArgs) {
-    let mut command = args.command;
-    let mut alias = args.alias;
-    let mut tag = args.tag;
-    let order_by_use = args.recent;
-    let favourites_only = args.favourite;
-    let print_style = args.print_style;
-    let print_limit = args.display_limit;
-
-    // If no search arguments are provided, generate a wizard to get them
-    if display_search_args_wizard(&alias, &command, &tag) {
-        let command_properties = match search_args_wizard() {
-            Ok(properties) => properties,
-            Err(e) => {
-                error!(target: "Search Cmd", "Error setting command properties: {:?}", e);
-                ErrorOutput::UserInput.print();
-                return;
-            }
-        };
-
-        alias = command_properties.alias;
-        tag = command_properties.tag;
-        command = command_properties.command;
-    }
-
-    // Get the selected command
-    let selected_command = match get_searched_commands(
-        SearchCommandArgs {
-            alias,
-            command,
-            tag,
-            order_by_use,
-            favourites_only,
-        },
-        print_style,
-        print_limit,
-    ) {
-        Ok(c) => c,
-        Err(e) => match e {
-            GetSelectedItemFromUserError::NoCommandsFound => {
-                println!("\nNo commands found");
-                return;
-            }
-            _ => {
-                error!(target: "Search Cmd", "Failed to get selected command: {:?}", e);
-                ErrorOutput::SelectCmd.print();
-                return;
-            }
-        },
+pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<String, HandleSearchError> {
+    // Get the arguments used for search
+    let search_user_input = if !check_search_args_exist(&args.alias, &args.command, &args.tag) {
+        get_search_args_from_user()?
+    } else {
+        SearchArgsUserInput::from(args.clone())
     };
 
-    let logic = Logic::try_default();
-    if logic.is_err() {
-        error!(
-            target: "Search Cmd", "Failed to initialize logic: {:?}",
-            logic.err()
-        );
-        ErrorOutput::GenerateParam.print();
-        return;
-    }
+    // Get the search candidates
+    let search_candidates = fetch_search_candidates(search_user_input, args.recent, args.favourite)
+        .map_err(|e| match e {
+            FetchSearchCandidatesError::NoCommandsFound => HandleSearchError::NoCommandFound,
+            _ => HandleSearchError::SearchCandidates(e),
+        })?;
 
-    let copied_text = match logic
-        .as_ref()
-        .unwrap()
-        .handle_generate_param(selected_command.clone())
-    {
-        Ok(c) => c,
-        Err(e) => {
-            error!(target: "Search Cmd",
-                "Search Cmd: Failed to generate parameters for selected command: {:?}",
-                e
-            );
-            ErrorOutput::GenerateParam.print();
-            return;
-        }
-    };
+    // Prompt the user to select a command
+    let selected_command =
+        prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
+
+    let logic = Logic::try_default()?;
+
+    // Generate parameters for the command
+    let text_to_copy = logic.generate_parameters(selected_command.clone())?;
 
     // Copy the selected command to the clipboard
-    copy_text("Search Cmd", copied_text);
+    let copied_text = copy_to_clipboard(text_to_copy)?;
 
-    match logic
-        .unwrap()
-        .handle_update_command_last_used_prop(selected_command.id)
-    {
-        Ok(_) => {}
-        Err(e) => {
-            // Does not matter to the user if this does not work
-            error!(
-                target: "Search Cmd", "Failed to update command last used prop: {:?}",
-                e
-            );
-        }
-    };
+    // Update the last used timestamp for the command
+    logic.update_command_last_used_prop(selected_command.id)?;
+
+    Ok(copied_text)
 }

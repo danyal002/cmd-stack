@@ -1,10 +1,10 @@
 use super::sqlite::{SqliteConnectionPool, SqliteDbConnectionError};
-use super::SqlQueryError;
-use super::{sqlite, SqlTxError};
+use super::{sqlite, DeleteCommandError, UpdateCommandError};
+use super::{InsertCommandError, SelectAllCommandsError};
 use sea_query::{Expr, Query, SqliteQueryBuilder};
 use sqlx::sqlite::{SqliteQueryResult, SqliteRow};
-use sqlx::{Row, Sqlite, Transaction};
-use std::time::{SystemTime, UNIX_EPOCH};
+use sqlx::Row;
+use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
 
 use crate::models::*;
 
@@ -36,62 +36,27 @@ impl SqliteDal {
         })
     }
 
-    pub async fn begin(&self) -> Result<Transaction<'_, Sqlite>, SqlTxError> {
-        self.sqlite_conn
-            .pool
-            .begin()
-            .await
-            .map_err(SqlTxError::TxBegin)
-    }
-
-    /// Takes ownership of the given transaction object
-    pub async fn rollback(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
-        tx.rollback().await.map_err(SqlTxError::TxRollback)
-    }
-
-    /// Takes ownership of the given transaction object
-    pub async fn commit(&self, tx: Transaction<'_, Sqlite>) -> Result<(), SqlTxError> {
-        tx.commit().await.map_err(SqlTxError::TxCommit)
-    }
-
     /// Returns the current unix timestamp in seconds
-    fn get_unix_timestamp(&self) -> Result<i64, SqlQueryError> {
+    fn get_unix_timestamp(&self) -> Result<i64, SystemTimeError> {
         let duration_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH)?;
         Ok(duration_since_epoch.as_secs() as i64)
     }
 
-    async fn execute_query(
-        &self,
-        query: &str,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<SqliteQueryResult, sqlx::Error> {
-        let result = if let Some(transaction) = tx {
-            sqlx::query(query).execute(&mut **transaction).await?
-        } else {
-            sqlx::query(query).execute(&self.sqlite_conn.pool).await?
-        };
-        Ok(result)
+    /// Executes a query as a prepared statement on the database
+    async fn execute_query(&self, query: &str) -> Result<SqliteQueryResult, sqlx::Error> {
+        sqlx::query(query).execute(&self.sqlite_conn.pool).await
     }
 
-    async fn read_rows(
-        &self,
-        query: &str,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<Vec<SqliteRow>, sqlx::Error> {
-        let rows = if let Some(transaction) = tx {
-            sqlx::query(query).fetch_all(&mut **transaction).await?
-        } else {
-            sqlx::query(query).fetch_all(&self.sqlite_conn.pool).await?
-        };
-        Ok(rows)
+    /// Reads rows based on the query as a prepared statement from the database
+    async fn read_rows(&self, query: &str) -> Result<Vec<SqliteRow>, sqlx::Error> {
+        sqlx::query(query).fetch_all(&self.sqlite_conn.pool).await
     }
 
     pub async fn get_all_commands(
         &self,
         order_by_use: bool,
         favourites_only: bool,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<Vec<Command>, SqlQueryError> {
+    ) -> Result<Vec<Command>, SelectAllCommandsError> {
         let query = Query::select()
             .columns([
                 sqlite::Command::Alias,
@@ -121,9 +86,9 @@ impl SqliteDal {
             .to_string(SqliteQueryBuilder);
 
         let rows = self
-            .read_rows(&query, tx)
+            .read_rows(&query)
             .await
-            .map_err(SqlQueryError::SelectCommand)?;
+            .map_err(SelectAllCommandsError::Query)?;
 
         let commands: Vec<Command> = rows
             .into_iter()
@@ -147,8 +112,7 @@ impl SqliteDal {
     pub async fn insert_command(
         &self,
         command: InternalCommand,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<i64, SqlQueryError> {
+    ) -> Result<i64, InsertCommandError> {
         let current_time = self.get_unix_timestamp()?;
 
         let query = Query::insert()
@@ -172,18 +136,68 @@ impl SqliteDal {
             .to_string(SqliteQueryBuilder);
 
         let result = self
-            .execute_query(&query, tx)
+            .execute_query(&query)
             .await
-            .map_err(SqlQueryError::InsertCommand)?;
+            .map_err(InsertCommandError::Query)?;
+
+        if result.rows_affected() == 0 {
+            return Err(InsertCommandError::NoRowsAffected);
+        }
 
         Ok(result.last_insert_rowid())
     }
 
-    pub async fn update_command_last_used_prop(
+    pub async fn insert_mulitple_commands(
+        &self,
+        commands: Vec<InternalCommand>,
+    ) -> Result<u64, InsertCommandError> {
+        if commands.is_empty() {
+            return Err(InsertCommandError::NoRowsAffected);
+        }
+        let current_time = self.get_unix_timestamp()?;
+
+        let mut builder = Query::insert()
+            .into_table(sqlite::Command::Table)
+            .columns([
+                sqlite::Command::Alias,
+                sqlite::Command::Command,
+                sqlite::Command::Tag,
+                sqlite::Command::Note,
+                sqlite::Command::Favourite,
+                sqlite::Command::LastUsed,
+            ])
+            .to_owned();
+
+        for command in commands {
+            builder
+                .values([
+                    command.alias.into(),
+                    command.command.into(),
+                    command.tag.into(),
+                    command.note.into(),
+                    command.favourite.into(),
+                    current_time.into(),
+                ])
+                .map_err(InsertCommandError::QueryBuilder)?;
+        }
+
+        let query = builder.to_string(SqliteQueryBuilder);
+        let result = self
+            .execute_query(&query)
+            .await
+            .map_err(InsertCommandError::Query)?;
+
+        if result.rows_affected() == 0 {
+            return Err(InsertCommandError::NoRowsAffected);
+        }
+
+        Ok(result.rows_affected())
+    }
+
+    pub async fn update_command_last_used_property(
         &self,
         command_id: i64,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<(), SqlQueryError> {
+    ) -> Result<(), UpdateCommandError> {
         let current_time = self.get_unix_timestamp()?;
 
         let query = Query::update()
@@ -193,30 +207,31 @@ impl SqliteDal {
             .to_string(SqliteQueryBuilder);
 
         let result = self
-            .execute_query(&query, tx)
+            .execute_query(&query)
             .await
-            .map_err(SqlQueryError::UpdateCommand)?;
+            .map_err(UpdateCommandError::Query)?;
 
         if result.rows_affected() == 0 {
-            return Err(SqlQueryError::NoRowsAffected);
+            return Err(UpdateCommandError::NoRowsAffected);
         }
 
         Ok(())
     }
 
-    pub async fn delete_command(
-        &self,
-        command_id: i64,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<(), SqlQueryError> {
+    pub async fn delete_command(&self, command_id: i64) -> Result<(), DeleteCommandError> {
         let query = Query::delete()
             .from_table(sqlite::Command::Table)
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 
-        self.execute_query(&query, tx)
+        let result = self
+            .execute_query(&query)
             .await
-            .map_err(SqlQueryError::DeleteCommand)?;
+            .map_err(DeleteCommandError::Query)?;
+
+        if result.rows_affected() == 0 {
+            return Err(DeleteCommandError::NoRowsAffected);
+        }
 
         Ok(())
     }
@@ -225,8 +240,7 @@ impl SqliteDal {
         &self,
         command_id: i64,
         new_command_props: InternalCommand,
-        tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<(), SqlQueryError> {
+    ) -> Result<(), UpdateCommandError> {
         let query = Query::update()
             .table(sqlite::Command::Table)
             .values([
@@ -243,12 +257,12 @@ impl SqliteDal {
             .to_string(SqliteQueryBuilder);
 
         let result = self
-            .execute_query(&query, tx)
+            .execute_query(&query)
             .await
-            .map_err(SqlQueryError::UpdateCommand)?;
+            .map_err(UpdateCommandError::Query)?;
 
         if result.rows_affected() == 0 {
-            return Err(SqlQueryError::NoRowsAffected);
+            return Err(UpdateCommandError::NoRowsAffected);
         }
 
         Ok(())
