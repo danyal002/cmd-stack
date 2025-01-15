@@ -14,7 +14,7 @@ pub struct CommandInputValidator;
 
 impl StringValidator for CommandInputValidator {
     fn validate(&self, input: &str) -> Result<Validation, CustomUserError> {
-        if input.trim().len() > 0 {
+        if !input.trim().is_empty() {
             Ok(Validation::Valid)
         } else {
             Ok(Validation::Invalid("Command must not be empty".into()))
