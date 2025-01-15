@@ -7,7 +7,7 @@ use crate::{
     outputs::{format_output, Output},
 };
 use data::models::InternalCommand;
-use inquire::{InquireError, Select, Text};
+use inquire::{min_length, InquireError, Select, Text};
 use log::error;
 use logic::Logic;
 use thiserror::Error;
@@ -42,6 +42,7 @@ pub fn set_command_properties_wizard(
 ) -> Result<InternalCommand, InquireError> {
     let command = Text::new(&format_output("<bold>Command</bold>:"))
         .with_initial_value(&cur_command.command)
+        .with_validator(min_length!(1, "Command must not be empty"))
         .prompt()?;
 
     let tag = Text::new(&format_output(

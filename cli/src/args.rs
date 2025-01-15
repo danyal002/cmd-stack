@@ -32,7 +32,7 @@ pub enum Command {
 #[derive(Debug, Args)]
 pub struct AddArgs {
     /// The command to add to your stack
-    pub command: String,
+    pub command: Option<String>,
 
     /// Notes relating to the command
     #[clap(long = "note", short = 'n')]
