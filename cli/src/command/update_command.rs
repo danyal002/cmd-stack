@@ -2,8 +2,10 @@ use crate::{
     args::SearchAndPrintArgs,
     command::search_utils::{
         check_search_args_exist, fetch_search_candidates, get_search_args_from_user,
-        prompt_user_for_command_selection, SearchArgsUserInput,
+        prompt_user_for_command_selection, FetchSearchCandidatesError,
+        PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
+    command::CommandInputValidator,
     outputs::{format_output, Output},
     utils::none_if_empty,
 };
@@ -12,11 +14,6 @@ use inquire::{InquireError, Select, Text};
 use log::error;
 use logic::Logic;
 use thiserror::Error;
-
-use super::{
-    search_utils::{FetchSearchCandidatesError, PromptUserForCommandSelectionError},
-    CommandInputValidator,
-};
 
 #[derive(Error, Debug)]
 pub enum HandleUpdateError {

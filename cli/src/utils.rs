@@ -10,8 +10,8 @@ pub fn truncate_string(s: &str, width: usize) -> String {
     }
 }
 
-/// Returns None if the provided string is empty. 
-/// If a string only contains whitespace, None is returned. 
+/// Returns None if the provided string is empty.
+/// If a string only contains whitespace, None is returned.
 pub fn none_if_empty(s: String) -> Option<String> {
     if !s.trim().is_empty() {
         Some(s)

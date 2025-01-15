@@ -1,8 +1,8 @@
 use crate::{
     args::AddArgs,
+    command::CommandInputValidator,
     outputs::{format_output, print_internal_command_table, spacing},
     utils::none_if_empty,
-    
 };
 use data::models::InternalCommand;
 use inquire::error::InquireError;
@@ -10,8 +10,6 @@ use inquire::{Select, Text};
 use log::error;
 use logic::Logic;
 use thiserror::Error;
-
-use super::CommandInputValidator;
 
 #[derive(Error, Debug)]
 pub enum HandleAddError {
