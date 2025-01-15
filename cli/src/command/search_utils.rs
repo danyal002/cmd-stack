@@ -240,12 +240,12 @@ pub enum CopyTextError {
     Copy,
 }
 
-pub fn copy_to_clipboard(text_to_copy: String) -> Result<String, CopyTextError> {
+pub fn copy_to_clipboard(text_to_copy: String) -> Result<(), CopyTextError> {
     let mut clipboard = ClipboardContext::new().map_err(|_| CopyTextError::ClipboardInit)?;
 
     clipboard
         .set_contents(text_to_copy.clone())
         .map_err(|_| CopyTextError::Copy)?;
 
-    Ok(text_to_copy)
+    Ok(())
 }

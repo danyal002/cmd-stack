@@ -68,7 +68,6 @@ pub enum PrintStyle {
 #[derive(Debug, Args, Clone)]
 pub struct SearchAndPrintArgs {
     /// The text used to filter by command when searching
-    #[clap(long = "command", short = 'c')]
     pub command: Option<String>,
 
     /// The text used to filter by alias when searching
