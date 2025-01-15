@@ -187,60 +187,48 @@ impl SqliteDal {
         &self,
         commands: Vec<InternalCommand>,
         tx: Option<&mut Transaction<'_, Sqlite>>,
-    ) -> Result<i64, InsertCommandError> {
-        //         let builder = Query::insert()
-        //     .into_table(DbAppointmentService::Table)
-        //     .columns([
-        //         DbAppointmentService::Id,
-        //         DbAppointmentService::AppointmentId,
-        //         DbAppointmentService::Name,
-        //         DbAppointmentService::Price,
-        //         DbAppointmentService::Duration,
-        //     ]).to_owned();
+    ) -> Result<u64, InsertCommandError> {
+        if commands.is_empty() {
+            return Err(InsertCommandError::NoRowsAffected);
+        }
+        let current_time = self.get_unix_timestamp()?;
 
-        // // Step 2: Execute `values_panic` on each loop step
-        // for item of items.into_iter() { // where items is a vec of row's values
-        //     builder.values_panic(vec![
-        //         item.first.into(),
-        //         item.second.into(),
-        //         item.third.into()
-        //     ]);
-        // }
+        let mut builder = Query::insert()
+            .into_table(sqlite::Command::Table)
+            .columns([
+                sqlite::Command::Alias,
+                sqlite::Command::Command,
+                sqlite::Command::Tag,
+                sqlite::Command::Note,
+                sqlite::Command::Favourite,
+                sqlite::Command::LastUsed,
+            ])
+            .to_owned();
 
-        // let current_time = self.get_unix_timestamp()?;
+        for command in commands {
+            builder
+                .values([
+                    command.alias.into(),
+                    command.command.into(),
+                    command.tag.into(),
+                    command.note.into(),
+                    command.favourite.into(),
+                    current_time.into(),
+                ])
+                .map_err(InsertCommandError::QueryBuilder)?;
+        }
 
-        // let query = Query::insert()
-        //     .into_table(sqlite::Command::Table)
-        //     .columns([
-        //         sqlite::Command::Alias,
-        //         sqlite::Command::Command,
-        //         sqlite::Command::Tag,
-        //         sqlite::Command::Note,
-        //         sqlite::Command::Favourite,
-        //         sqlite::Command::LastUsed,
-        //     ])
-        //     .values_panic([
-        //         command.alias.into(),
-        //         command.command.into(),
-        //         command.tag.into(),
-        //         command.note.into(),
-        //         command.favourite.into(),
-        //         current_time.into(),
-        //     ])
-        //     .to_string(SqliteQueryBuilder);
+        let query = builder.to_string(SqliteQueryBuilder);
+        let result = self
+            .execute_query(&query, tx)
+            .await
+            .map_err(InsertCommandError::Query)?;
 
-        // let result = self
-        //     .execute_query(&query, tx)
-        //     .await
-        //     .map_err(InsertCommandError::Query)?;
+        if result.rows_affected() == 0 {
+            return Err(InsertCommandError::NoRowsAffected);
+        }
 
-        // if result.rows_affected() == 0 {
-        //     return Err(InsertCommandError::NoRowsAffected);
-        // }
-
-        // Ok(result.last_insert_rowid())
-
-        Ok(2343)
+        Ok(result.rows_affected())
     }
 
     pub async fn update_command_last_used_property(

@@ -218,12 +218,11 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
 pub enum CopyTextError {
     #[error("Failed to initialize the clipboard")]
     ClipboardInit,
-
     #[error("Failed to copy text to clipboard")]
     Copy,
 }
 
-pub fn copy_text(cmd: &str, text_to_copy: String) -> Result<(), CopyTextError> {
+pub fn copy_to_clipboard(cmd: &str, text_to_copy: String) -> Result<(), CopyTextError> {
     let mut clipboard = ClipboardContext::new().map_err(|_| CopyTextError::ClipboardInit)?;
 
     clipboard

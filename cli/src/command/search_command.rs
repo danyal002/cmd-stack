@@ -1,9 +1,9 @@
 use crate::{
     args::SearchAndPrintArgs,
     command::search_utils::{
-        check_search_args_exist, copy_text, fetch_search_candidates, get_search_args_from_user,
-        prompt_user_for_command_selection, CopyTextError, FetchSearchCandidatesError,
-        PromptUserForCommandSelectionError, SearchArgsUserInput,
+        check_search_args_exist, copy_to_clipboard, fetch_search_candidates,
+        get_search_args_from_user, prompt_user_for_command_selection, CopyTextError,
+        FetchSearchCandidatesError, PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
 };
 use inquire::InquireError;
@@ -57,7 +57,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<(), HandleSear
     let copied_text = logic.generate_parameters(selected_command.clone())?;
 
     // Copy the selected command to the clipboard
-    copy_text("Search Cmd", copied_text)?;
+    copy_to_clipboard("Search Cmd", copied_text)?;
 
     // Update the last used timestamp for the command
     logic.update_command_last_used_prop(selected_command.id)?;

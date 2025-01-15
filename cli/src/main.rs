@@ -123,7 +123,7 @@ fn main() {
         Command::Import(import_export_args) => {
             match import_export::handle_import_command(import_export_args) {
                 Ok(_) => (),
-                Err(_) => (),
+                Err(e) => eprintln!("{}", e),
             }
         }
     }

@@ -29,7 +29,7 @@ pub enum ExportError {
 
 #[derive(Error, Debug)]
 pub enum ImportError {
-    #[error("Failed to deserialize commands")]
+    #[error("Failed to deserialize commands: {0}")]
     Serialize(#[from] serde_json::Error),
     #[error("Failed to read commands from file")]
     Read(String),
@@ -60,7 +60,7 @@ impl Logic {
 
     #[tokio::main]
     /// Handle the import request by importing all data in the given JSON file
-    pub async fn import_data(&self, import_file_path: &Path) -> Result<i64, ImportError> {
+    pub async fn import_data(&self, import_file_path: &Path) -> Result<u64, ImportError> {
         let json_string =
             fs::read_to_string(import_file_path).map_err(|e| ImportError::Read(e.to_string()))?;
         let import_data: ImportExportFormat = serde_json::from_str(&json_string)?;

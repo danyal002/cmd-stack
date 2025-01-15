@@ -16,7 +16,7 @@ pub enum HandleExportError {
 pub enum HandleImportError {
     #[error("Failed to initialize logic")]
     LogicInit(#[from] logic::LogicInitError),
-    #[error("Failed to export commands")]
+    #[error("Failed to import commands: {0}")]
     LogicImport(#[from] logic::import_export::ImportError),
 }
 

@@ -10,6 +10,8 @@ pub enum InsertCommandError {
     NoRowsAffected,
     #[error("Failed to execute SQL query")]
     Query(#[from] sqlx::Error),
+    #[error("Failed to build SQL query to insert")]
+    QueryBuilder(#[from] sea_query::error::Error),
 }
 
 #[derive(Error, Debug)]
