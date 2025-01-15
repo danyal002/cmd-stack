@@ -17,10 +17,6 @@ lazy_static! {
             ("</italics>", "\x1b[23m"),           // Un-italicize
             ("<section>", "\x1b[1m\x1b[4m"),      // Bold + Underline
             ("</section>", "\x1b[22m\x1b[24m"),   // Unbold + remove underline
-            ("<success>", "\x1b[32m\x1b[1m"),     // Green + Bold
-            ("</success>", "\x1b[39m\x1b[22m"),   // Remove bold + color
-            ("<error>", "\x1b[31m\x1b[1m"),       // Red + Bold
-            ("</error>", "\x1b[39m\x1b[22m"),     // Remove bold + color
         ])
     };
 }
@@ -91,20 +87,20 @@ impl fmt::Display for Output<'_> {
         let message = match self {
             Output::NoCommandsFound => "<bold>No commands found</bold>\n".to_string(),
             Output::UpdateCommandSectionTitle => "<section>Update Command:</section>".to_string(),
-            Output::UpdateCommandSuccess => "✅ <success>Command updated</success>\n".to_string(),
-            Output::AddCommandSuccess => "✅ <success>Command added</success>\n".to_string(),
-            Output::DeleteCommandSuccess => "✅ <success>Command deleted</success>\n".to_string(),
+            Output::UpdateCommandSuccess => "✅ <bold>Command updated</bold>\n".to_string(),
+            Output::AddCommandSuccess => "✅ <bold>Command added</bold>\n".to_string(),
+            Output::DeleteCommandSuccess => "✅ <bold>Command deleted</bold>\n".to_string(),
             Output::ExportCommandsSuccess(file) => {
-                format!("✅ <success>Commands exported to {:?}</success>\n", file)
+                format!("✅ <bold>Commands exported to {:?}</bold>\n", file)
             }
             Output::ImportCommandsSuccess(num_cmds, file) => {
                 format!(
-                    "✅ <success>{} commands imported from {:?}</success>\n",
+                    "✅ <bold>{} commands imported from {:?}</bold>\n",
                     num_cmds, file
                 )
             }
             Output::CommandCopiedToClipboard => {
-                "✅ <success><bold>Command copied to clipboard</bold></success>\n".to_string()
+                "✅ <bold>Command copied to clipboard</bold>\n".to_string()
             }
         };
 
@@ -146,7 +142,7 @@ impl fmt::Display for ErrorOutput {
         write!(
             f,
             "{}",
-            format_output(&format!("❌ <error>{}</error>", message))
+            format_output(&format!("❌ <bold>{}</bold>", message))
         )
     }
 }
