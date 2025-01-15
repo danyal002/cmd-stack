@@ -63,7 +63,7 @@ fn get_add_args_from_user(args: AddArgs) -> Result<InternalCommand, InquireError
         == "Yes";
 
     Ok(InternalCommand {
-        command: command,
+        command,
         tag: if !tag.is_empty() { Some(tag) } else { None },
         note: if !note.is_empty() { Some(note) } else { None },
         favourite,
@@ -75,7 +75,7 @@ pub fn handle_add_command(args: AddArgs) -> Result<(), HandleAddError> {
     let add_args_exist = args.command.is_some();
 
     // Get the command to add either from CLI args or user input
-    let internal_command = if !args.command.is_some() {
+    let internal_command = if !add_args_exist {
         get_add_args_from_user(args)?
     } else {
         InternalCommand::try_from(args)?
