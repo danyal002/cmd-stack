@@ -86,7 +86,7 @@ pub enum Output<'a> {
     AddCommandSuccess,
     DeleteCommandSuccess,
     ExportCommandsSuccess(&'a Path),
-    ImportCommandsSuccess(i64, &'a Path),
+    ImportCommandsSuccess(u64, &'a Path),
     CommandCopiedToClipboard(String),
 }
 
