@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use rand::{rngs::ThreadRng, Rng};
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -44,10 +45,11 @@ impl RandomNumberGenerator for MockRng {
     }
 }
 
-pub trait Parameter {
+pub trait RandomStringGenerator {
     fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String;
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct StringParameter {
     min: u32,
     max: u32,
@@ -65,7 +67,7 @@ impl Default for StringParameter {
     }
 }
 
-impl Parameter for StringParameter {
+impl RandomStringGenerator for StringParameter {
     fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
         let charset: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -110,6 +112,7 @@ impl FromStr for StringParameter {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct IntParameter {
     min: i32,
     max: i32,
@@ -138,13 +141,14 @@ impl FromStr for IntParameter {
     }
 }
 
-impl Parameter for IntParameter {
+impl RandomStringGenerator for IntParameter {
     fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
         let random_int = rng.generate_range(self.min, self.max);
         random_int.to_string()
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct BooleanParameter {
     min: i32,
     max: i32,
@@ -167,13 +171,31 @@ impl FromStr for BooleanParameter {
     }
 }
 
-impl Parameter for BooleanParameter {
+impl RandomStringGenerator for BooleanParameter {
     fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
         let random_int = rng.generate_range(self.min, self.max);
         if random_int == 0 {
             "false".to_string()
         } else {
             "true".to_string()
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type", content = "data")]
+pub enum SerializableParameter {
+    Int(IntParameter),
+    String(StringParameter),
+    Boolean(BooleanParameter)
+}
+
+impl RandomStringGenerator for SerializableParameter {
+    fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
+        match self {
+            SerializableParameter::Int(param) => param.generate_random(rng),
+            SerializableParameter::String(param) => param.generate_random(rng),
+            SerializableParameter::Boolean(param) => param.generate_random(rng),
         }
     }
 }
@@ -187,20 +209,20 @@ impl ParameterHandler {
         Self { rng }
     }
 
-    fn parse_parameter(&self, s: String) -> Result<Box<dyn Parameter>, ParameterError> {
+    fn parse_parameter(&self, s: String) -> Result<SerializableParameter, ParameterError> {
         let ret = StringParameter::from_str(&s);
         if let Ok(ph) = ret {
-            return Ok(Box::new(ph));
+            return Ok(SerializableParameter::String(ph));
         }
 
         let ret = IntParameter::from_str(&s);
         if let Ok(ph) = ret {
-            return Ok(Box::new(ph));
+            return Ok(SerializableParameter::Int(ph));
         }
 
         let ret: Result<BooleanParameter, ParameterError> = BooleanParameter::from_str(&s);
         if let Ok(ph) = ret {
-            return Ok(Box::new(ph));
+            return Ok(SerializableParameter::Boolean(ph));
         }
 
         Err(ParameterError::InvalidParameter)
@@ -212,14 +234,27 @@ impl ParameterHandler {
     }
 
     pub fn replace_parameters(&mut self, s: String) -> Result<String, ParameterError> {
+        let (s, _, _) = self.replace_and_get_parameters(s)?;
+        Ok(s)
+    }
+
+    pub fn replace_and_get_parameters(&mut self, s: String) -> Result<(String, Vec<SerializableParameter>, Vec<String>), ParameterError> {
         let re = Regex::new(r"\@\{([^}]*)\}").map_err(|_| ParameterError::Parsing)?;
 
         let mut err: Option<ParameterError> = None;
 
+        let mut parameters = Vec::new();
+        let mut generated_parameters = Vec::new();
+
         let result = re.replace_all(&s, |caps: &regex::Captures| {
             let param_str = &caps[1];
             match self.parse_parameter(param_str.to_owned()) {
-                Ok(param) => param.generate_random(self.rng.as_mut()),
+                Ok(param) => {
+                    let s = param.generate_random(self.rng.as_mut());
+                    parameters.push(param);
+                    generated_parameters.push(s.clone());
+                    s
+                },
                 Err(e) => {
                     err = Some(e);
                     "".to_string()
@@ -231,7 +266,7 @@ impl ParameterHandler {
             return Err(e);
         }
 
-        Ok(result.to_string())
+        Ok((result.to_string(), parameters, generated_parameters))
     }
 }
 

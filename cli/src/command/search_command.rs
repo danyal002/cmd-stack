@@ -54,7 +54,7 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<(), HandleSear
     let logic = Logic::try_default()?;
 
     // Generate parameters for the command
-    let text_to_copy = logic.generate_parameters(selected_command.clone())?;
+    let (text_to_copy, _, _) = logic.generate_parameters(selected_command.internal_command.command)?;
 
     // Copy the selected command to the clipboard
     copy_to_clipboard(text_to_copy)?;

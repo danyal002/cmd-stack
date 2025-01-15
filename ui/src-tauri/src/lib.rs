@@ -1,5 +1,5 @@
 use data::models::{Command, InternalCommand};
-use logic::Logic;
+use logic::{param::SerializableParameter, Logic};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -81,6 +81,17 @@ fn delete_command(command: DeleteCommand) -> Result<(), String> {
         .map_err(|e| format!("Error deleting command: {:?}", e))
 }
 
+#[tauri::command]
+fn get_and_replace_parameters(
+    command: String,
+) -> Result<(String, Vec<SerializableParameter>, Vec<String>), String> {
+    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
+
+    logic
+        .generate_parameters(command)
+        .map_err(|e| format!("Error generating parameters: {:?}", e))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -88,7 +99,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             list_commands,
             add_command,
-            delete_command
+            delete_command,
+            get_and_replace_parameters
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
