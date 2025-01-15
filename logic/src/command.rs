@@ -70,7 +70,7 @@ impl Logic {
 
         ParameterHandler::default().validate_parameters(command.command.clone())?;
 
-        self.dal.insert_command(command, None).await?;
+        self.dal.insert_command(command).await?;
 
         Ok(())
     }
@@ -84,7 +84,7 @@ impl Logic {
         // Get all commands from the database
         let commands = self
             .dal
-            .get_all_commands(params.order_by_use, params.favourites_only, None)
+            .get_all_commands(params.order_by_use, params.favourites_only)
             .await?;
 
         // Filter the commands based on the search parameters using fuzzy matching
@@ -142,10 +142,7 @@ impl Logic {
         favourite: bool,
     ) -> Result<Vec<Command>, ListCommandError> {
         // Get all commands from the database
-        let commands = self
-            .dal
-            .get_all_commands(order_by_use, favourite, None)
-            .await?;
+        let commands = self.dal.get_all_commands(order_by_use, favourite).await?;
 
         Ok(commands)
     }
@@ -157,7 +154,7 @@ impl Logic {
         command_id: i64,
     ) -> Result<(), UpdateCommandError> {
         self.dal
-            .update_command_last_used_property(command_id, None)
+            .update_command_last_used_property(command_id)
             .await?;
         Ok(())
     }
@@ -177,7 +174,7 @@ impl Logic {
         ParameterHandler::default().validate_parameters(new_command_props.command.clone())?;
 
         self.dal
-            .update_command(command_id, new_command_props, None)
+            .update_command(command_id, new_command_props)
             .await?;
 
         Ok(())
@@ -186,7 +183,7 @@ impl Logic {
     #[tokio::main]
     /// Handles deleting a command
     pub async fn delete_command(&self, command_id: i64) -> Result<(), DeleteCommandError> {
-        self.dal.delete_command(command_id, None).await?;
+        self.dal.delete_command(command_id).await?;
 
         Ok(())
     }

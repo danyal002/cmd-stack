@@ -45,7 +45,7 @@ impl Logic {
     #[tokio::main]
     /// Handle the export request by writing all data in the database to the requested JSON file
     pub async fn create_export_json(&self, export_file_path: &Path) -> Result<(), ExportError> {
-        let commands = self.dal.get_all_commands(false, false, None).await?;
+        let commands = self.dal.get_all_commands(false, false).await?;
         let export_data = ImportExportFormat {
             commands: commands
                 .into_iter()
@@ -67,7 +67,7 @@ impl Logic {
 
         let num_commands = self
             .dal
-            .insert_mulitple_commands(import_data.commands, None)
+            .insert_mulitple_commands(import_data.commands)
             .await?;
 
         Ok(num_commands)
