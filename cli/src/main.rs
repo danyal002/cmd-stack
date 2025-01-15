@@ -10,11 +10,15 @@ pub mod utils;
 
 use args::{CmdStackArgs, Command};
 use clap::Parser;
-use log::{LevelFilter, SetLoggerError};
+use command::{
+    add_command::HandleAddError, delete_command::HandleDeleteError,
+    search_command::HandleSearchError, update_command::HandleUpdateError,
+};
+use log::{error, LevelFilter, SetLoggerError};
 use log4rs::append::file::FileAppender;
 use log4rs::config::runtime::ConfigErrors;
 use log4rs::config::{Appender, Config, Root};
-use outputs::ErrorOutput;
+use outputs::{ErrorOutput, Output};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -74,13 +78,10 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
 }
 
 fn main() {
-    match initialize_logger() {
-        Ok(_) => {}
-        Err(_) => {
-            ErrorOutput::Logger.print();
-            std::process::exit(1);
-        }
-    }
+    let _ = initialize_logger().map_err(|_| {
+        ErrorOutput::Logger.print();
+        std::process::exit(1);
+    });
 
     // Configure inquire
     inquire::set_global_render_config(inquire::ui::RenderConfig {
@@ -93,38 +94,70 @@ fn main() {
 
     match args.command {
         Command::Add(add_args) => match command::add_command::handle_add_command(add_args) {
-            Ok(_) => (),
-            Err(_) => (),
+            Ok(_) => Output::AddCommandSuccess.print(),
+            Err(e) => {
+                match e {
+                    HandleAddError::Inquire(_) => ErrorOutput::UserInput.print(),
+                    _ => ErrorOutput::AddCommand.print(),
+                };
+                error!("Error occurred while adding command: {:?}", e);
+            }
         },
         Command::Update(update_args) => {
             match command::update_command::handle_update_command(update_args) {
-                Ok(_) => (),
-                Err(_) => (),
+                Ok(_) => Output::UpdateCommandSuccess.print(),
+                Err(e) => {
+                    match e {
+                        HandleUpdateError::NoCommandFound => Output::NoCommandsFound.print(),
+                        HandleUpdateError::Inquire(_) => ErrorOutput::UserInput.print(),
+                        HandleUpdateError::SelectCommand(_) => ErrorOutput::UserInput.print(),
+                        _ => ErrorOutput::UpdateCommand.print(),
+                    };
+                    error!("Error occurred while updating command: {:?}", e);
+                }
             }
         }
         Command::Delete(delete_args) => {
             match command::delete_command::handle_delete_command(delete_args) {
-                Ok(_) => (),
-                Err(_) => (),
+                Ok(_) => Output::DeleteCommandSuccess.print(),
+                Err(e) => {
+                    match e {
+                        HandleDeleteError::NoCommandFound => Output::NoCommandsFound.print(),
+                        HandleDeleteError::Inquire(_) => ErrorOutput::UserInput.print(),
+                        HandleDeleteError::SelectCommand(_) => ErrorOutput::UserInput.print(),
+                        _ => ErrorOutput::DeleteCommand.print(),
+                    };
+                    error!("Error occurred while deleting command: {:?}", e);
+                }
             }
         }
         Command::Search(search_args) => {
             match command::search_command::handle_search_commands(search_args) {
-                Ok(_) => (),
-                Err(_) => (),
+                Ok(copied_text) => Output::CommandCopiedToClipboard(copied_text).print(),
+                Err(e) => {
+                    match e {
+                        HandleSearchError::NoCommandFound => Output::NoCommandsFound.print(),
+                        HandleSearchError::Inquire(_) => ErrorOutput::UserInput.print(),
+                        HandleSearchError::SelectCommand(_) => ErrorOutput::UserInput.print(),
+                        _ => ErrorOutput::SearchCommand.print(),
+                    };
+                    error!("Error occurred while searching commands: {:?}", e);
+                }
             }
         }
-        Command::Export(import_export_args) => {
-            match import_export::handle_export_command(import_export_args) {
-                Ok(_) => (),
-                Err(_) => (),
+        Command::Export(export_args) => match import_export::handle_export_command(export_args) {
+            Ok(file_path) => Output::ExportCommandsSuccess(&file_path).print(),
+            Err(e) => {
+                ErrorOutput::Export.print();
+                error!("Error occurred while exporting commands: {:?}", e);
             }
-        }
-        Command::Import(import_export_args) => {
-            match import_export::handle_import_command(import_export_args) {
-                Ok(_) => (),
-                Err(e) => eprintln!("{}", e),
+        },
+        Command::Import(import_args) => match import_export::handle_import_command(import_args) {
+            Ok((num, file_path)) => Output::ImportCommandsSuccess(num, &file_path).print(),
+            Err(e) => {
+                ErrorOutput::Import.print();
+                error!("Error occurred while importing commands: {:?}", e);
             }
-        }
+        },
     }
 }

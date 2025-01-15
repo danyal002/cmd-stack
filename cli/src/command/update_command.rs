@@ -4,6 +4,7 @@ use crate::{
         check_search_args_exist, fetch_search_candidates, get_search_args_from_user,
         prompt_user_for_command_selection, SearchArgsUserInput,
     },
+    outputs::{format_output, Output},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -40,23 +41,27 @@ pub enum HandleUpdateError {
 pub fn set_command_properties_wizard(
     cur_command: InternalCommand,
 ) -> Result<InternalCommand, InquireError> {
-    let command = Text::new("Command:")
+    let command = Text::new(&format_output("<bold>Command</bold>:"))
         .with_initial_value(&cur_command.command)
         .prompt()?;
 
-    let alias = Text::new("Alias:")
+    let alias = Text::new(&format_output("<bold>Alias</bold>:"))
         .with_initial_value(&cur_command.alias)
         .prompt()?;
 
-    let tag = Text::new("Tag:")
-        .with_initial_value(&cur_command.tag.unwrap_or(String::from("")))
-        .prompt()?;
+    let tag = Text::new(&format_output(
+        "<bold>Tag</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
+    ))
+    .with_initial_value(&cur_command.tag.unwrap_or(String::from("")))
+    .prompt()?;
 
-    let note = Text::new("Note:")
-        .with_initial_value(&cur_command.note.unwrap_or(String::from("")))
-        .prompt()?;
+    let note = Text::new(&format_output(
+        "<bold>Note</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
+    ))
+    .with_initial_value(&cur_command.note.unwrap_or(String::from("")))
+    .prompt()?;
 
-    let favourite = Select::new("Favourite:", vec!["Yes", "No"])
+    let favourite = Select::new(&format_output("<bold>Favourite:</bold>"), vec!["Yes", "No"])
         .with_starting_cursor(if cur_command.favourite { 0 } else { 1 })
         .prompt()?
         == "Yes";
@@ -91,7 +96,7 @@ pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdat
         prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
 
     // Get the new command properties from the user
-    println!("\nUpdate Command:");
+    Output::UpdateCommandSectionTitle.print();
     let new_internal_command = set_command_properties_wizard(selected_command.internal_command)?;
 
     let logic = Logic::try_default()?;
@@ -99,6 +104,5 @@ pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdat
     // Update the selected command
     logic.update_command(selected_command.id, new_internal_command)?;
 
-    println!("\nCommand updated!");
     Ok(())
 }

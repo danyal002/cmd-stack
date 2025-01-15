@@ -55,6 +55,5 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) -> Result<(), HandleDelet
     // Delete the selected command
     logic.delete_command(selected_command.id)?;
 
-    println!("\nCommand deleted!");
     Ok(())
 }

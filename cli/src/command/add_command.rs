@@ -1,4 +1,7 @@
-use crate::{args::AddArgs, command::print_internal_command};
+use crate::{
+    args::AddArgs,
+    outputs::{format_output, print_internal_command_table, spacing},
+};
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
@@ -29,15 +32,25 @@ impl From<AddArgs> for InternalCommand {
 
 /// Generates a wizard to set the properties of a command
 fn get_add_args_from_user(command: &str) -> Result<InternalCommand, InquireError> {
-    let alias = Text::new("Alias (Default is the command text):")
-        .with_default(command)
-        .prompt()?;
+    spacing();
 
-    let tag = Text::new("Tag:").prompt()?;
+    let alias = Text::new(&format_output(
+        "<bold>Alias</bold> <italics>(Equal to the command by default)</italics><bold>:</bold>",
+    ))
+    .with_default(command)
+    .prompt()?;
 
-    let note = Text::new("Note:").prompt()?;
+    let tag = Text::new(&format_output(
+        "<bold>Tag</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
 
-    let favourite = Select::new("Favourite:", vec!["Yes", "No"])
+    let note = Text::new(&format_output(
+        "<bold>Note</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
+
+    let favourite = Select::new(&format_output("<bold>Favourite:</bold>"), vec!["Yes", "No"])
         .with_starting_cursor(1)
         .prompt()?
         == "Yes";
@@ -70,8 +83,8 @@ pub fn handle_add_command(args: AddArgs) -> Result<(), HandleAddError> {
     if add_args_exist {
         // If the user added the command via CLI arguments, we need to
         // display the information so they can confirm the validity
-        print_internal_command(&internal_command);
+        print_internal_command_table(&internal_command);
     }
-    println!("\nCommand added!");
+
     Ok(())
 }

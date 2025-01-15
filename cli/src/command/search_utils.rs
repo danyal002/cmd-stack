@@ -1,5 +1,6 @@
 use crate::{
     args::{PrintStyle, SearchAndPrintArgs},
+    outputs::{format_output, spacing},
     utils::truncate_string,
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
@@ -40,9 +41,22 @@ pub fn check_search_args_exist(
 
 /// Generates a wizard to set the properties for command searching
 pub fn get_search_args_from_user() -> Result<SearchArgsUserInput, InquireError> {
-    let command = Text::new("Command (Leave blank for no filter):").prompt()?;
-    let alias = Text::new("Alias (Leave blank for no filter):").prompt()?;
-    let tag = Text::new("Tag (Leave blank for no filter):").prompt()?;
+    spacing();
+
+    let command = Text::new(&format_output(
+        "<bold>Command</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
+
+    let alias = Text::new(&format_output(
+        "<bold>Alias</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
+
+    let tag = Text::new(&format_output(
+        "<bold>Tag</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+    ))
+    .prompt()?;
 
     Ok(SearchArgsUserInput {
         alias: Some(alias),
@@ -118,9 +132,13 @@ pub fn prompt_user_for_command_selection(
 
     let (formatted_commands, columns) = format_commands_for_printing(&commands, print_style);
 
-    println!(); // Spacing
+    spacing();
     let selected_command = match Select::new(
-        &("Select a command ".to_owned() + columns + ":"),
+        &format_output(
+            &("<bold>Select a command</bold> <italics>".to_owned()
+                + columns
+                + "</italics><bold>:</bold>"),
+        ),
         formatted_commands,
     )
     // Only display the command once the user makes a selection
@@ -146,7 +164,7 @@ fn format_commands_for_printing(
     match print_style {
         PrintStyle::All => (
             format_internal_commands(commands),
-            "(Alias | Command | Tag | Note | Favourite [YES/NO])",
+            "(Alias | Command | Tag | Note | Favourite [*])",
         ),
         PrintStyle::Alias => (
             commands
@@ -203,9 +221,9 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
             Cell::new(&truncated_tag),
             Cell::new(&truncated_note),
             Cell::new(if command.internal_command.favourite {
-                "YES"
+                "*"
             } else {
-                "NO"
+                ""
             }),
         ]));
     }
@@ -222,13 +240,12 @@ pub enum CopyTextError {
     Copy,
 }
 
-pub fn copy_to_clipboard(text_to_copy: String) -> Result<(), CopyTextError> {
+pub fn copy_to_clipboard(text_to_copy: String) -> Result<String, CopyTextError> {
     let mut clipboard = ClipboardContext::new().map_err(|_| CopyTextError::ClipboardInit)?;
 
     clipboard
         .set_contents(text_to_copy.clone())
         .map_err(|_| CopyTextError::Copy)?;
 
-    println!("\nCommand copied to clipboard: {}", text_to_copy);
-    Ok(())
+    Ok(text_to_copy)
 }

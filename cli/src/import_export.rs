@@ -1,7 +1,7 @@
 use crate::args::ImportExportArgs;
 use log::error;
 use logic::Logic;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -21,25 +21,23 @@ pub enum HandleImportError {
 }
 
 /// UI handler for export command
-pub fn handle_export_command(args: ImportExportArgs) -> Result<(), HandleExportError> {
-    let file_path = Path::new(&args.file);
+pub fn handle_export_command(args: ImportExportArgs) -> Result<PathBuf, HandleExportError> {
+    let file_path = Path::new(&args.file).to_path_buf();
 
     let logic = Logic::try_default()?;
 
-    logic.create_export_json(file_path)?;
+    logic.create_export_json(&file_path)?;
 
-    println!("\nCommands exported to {:?}", file_path);
-    Ok(())
+    Ok(file_path)
 }
 
 /// UI handler for import command
-pub fn handle_import_command(args: ImportExportArgs) -> Result<(), HandleImportError> {
-    let file_path = Path::new(&args.file);
+pub fn handle_import_command(args: ImportExportArgs) -> Result<(u64, PathBuf), HandleImportError> {
+    let file_path = Path::new(&args.file).to_path_buf();
 
     let logic = Logic::try_default()?;
 
-    let num = logic.import_data(file_path)?;
+    let num = logic.import_data(&file_path)?;
 
-    println!("\n{} commands imported from {:?}", num, file_path);
-    Ok(())
+    Ok((num, file_path))
 }
