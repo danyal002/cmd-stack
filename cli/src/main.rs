@@ -14,8 +14,9 @@ use command::{
     add_command::HandleAddError, delete_command::HandleDeleteError,
     search_command::HandleSearchError, update_command::HandleUpdateError,
 };
-use log::{error, LevelFilter};
+use log::{error, LevelFilter, SetLoggerError};
 use log4rs::append::file::FileAppender;
+use log4rs::config::runtime::ConfigErrors;
 use log4rs::config::{Appender, Config, Root};
 use outputs::{ErrorOutput, Output};
 use thiserror::Error;
@@ -29,10 +30,10 @@ enum LoggerInitializationError {
     CreatingLogFile(#[from] std::io::Error),
 
     #[error("Could not create config")]
-    CreatingLogConfig,
+    CreatingLogConfig(#[from] ConfigErrors),
 
     #[error("Could not initialize logger")]
-    InitializingLogger,
+    InitializingLogger(#[from] SetLoggerError),
 }
 
 /// Set up logging for CLI
@@ -68,10 +69,9 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
 
         let config = Config::builder()
             .appender(Appender::builder().build("logfile", Box::new(logfile)))
-            .build(Root::builder().appender("logfile").build(LevelFilter::Info))
-            .map_err(|_| LoggerInitializationError::CreatingLogConfig)?;
+            .build(Root::builder().appender("logfile").build(LevelFilter::Info))?;
 
-        log4rs::init_config(config).map_err(|_| LoggerInitializationError::InitializingLogger)?;
+        log4rs::init_config(config)?;
     }
 
     Ok(())

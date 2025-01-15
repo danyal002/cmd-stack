@@ -25,7 +25,7 @@ impl Logic {
     }
 
     pub fn try_default() -> Result<Logic, LogicInitError> {
-        let dal = SqliteDal::new().map_err(LogicInitError::Database)?;
+        let dal = SqliteDal::new()?;
         Ok(Logic::new(dal))
     }
 }

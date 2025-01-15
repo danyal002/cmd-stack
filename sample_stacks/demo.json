@@ -1,67 +1,144 @@
 {
     "commands": [
         {
-            "alias": "student_linux",
-            "command": "ssh abc@linux.student.cs.uwaterloo.ca",
-            "tag": "SSH",
-            "note": "SSH to Linux CS machines",
-            "favourite": false
-        },
-        {
-            "alias": "a3_network_emulator",
-            "command": "python network_emulator.py 10962 ubuntu2204-010 10726 10623",
-            "tag": "CS456",
-            "note": "Start network emulator",
+            "alias": "git_clone_repo",
+            "command": "git clone https://github.com/user/repo.git",
+            "tag": "git/clone",
+            "note": "Clones a repository from GitHub to the local machine. Use this to quickly pull down a project.",
             "favourite": true
         },
         {
-            "alias": "a2_receiver",
-            "command": "python receiver.py ubuntu2204-012 10623 10726 1 file_output.txt",
-            "tag": "CS456",
-            "note": "Start receiver",
+            "alias": "docker_start_postgres",
+            "command": "docker run --name postgres -e POSTGRES_PASSWORD=pass -d postgres",
+            "tag": "docker/databases/postgres",
+            "note": "Starts a PostgreSQL database instance in Docker. Useful for local development.",
             "favourite": true
         },
         {
-            "alias": "a2_sender",
-            "command": "python sender.py ubuntu2204-012 10962 10727 100 2 file_in.txt",
-            "tag": "CS456",
-            "note": "Start sender",
+            "alias": "aws_s3_ls",
+            "command": "aws s3 ls s3://my-bucket/",
+            "tag": "aws/s3",
+            "note": "Lists the contents of an S3 bucket. Modify the bucket name as needed.",
             "favourite": false
         },
         {
-            "alias": "a3_start_sdn",
-            "command": "./pox.py --verbose py openflow.of_01 --port=6633 openflow.discovery",
-            "tag": "CS456",
-            "note": "Start SDN",
-            "favourite": false
-        },
-        {
-            "alias": "a3_make_tree",
-            "command": "sudo mn --mac --custom /home/mininet/cs456-utils/cs456_tree_topology.py",
-            "tag": "CS456",
-            "note": "Make tree for SDN testing",
+            "alias": "k8s_get_pods",
+            "command": "kubectl get pods --namespace=my-namespace",
+            "tag": "kubernetes/pods",
+            "note": "Retrieves a list of all pods in a specific Kubernetes namespace. Replace 'my-namespace' with the actual namespace.",
             "favourite": true
         },
         {
-            "alias": "eceterm",
-            "command": "ssh abc@eceterm.uwaterloo.ca",
-            "tag": "SSH",
-            "note": null,
+            "alias": "gcloud_auth_login",
+            "command": "gcloud auth login",
+            "tag": "gcloud/auth",
+            "note": "Authenticates the Google Cloud CLI with your Google account. Needed for other gcloud operations.",
             "favourite": false
         },
         {
-            "alias": "ecetesla",
-            "command": "ssh abc@ecetesla.uwaterloo.ca",
-            "tag": "SSH",
-            "note": null,
+            "alias": "ssh_to_prod_server",
+            "command": "ssh user@production-server.com",
+            "tag": "ssh/production",
+            "note": "Connects to the production server. Ensure you have proper permissions and a secure key configured.",
+            "favourite": true
+        },
+        {
+            "alias": "npm_start_project",
+            "command": "npm start",
+            "tag": "npm/project/start",
+            "note": "Starts the development server for a Node.js project. Run this in the project root.",
             "favourite": false
         },
         {
-            "alias": "eceubuntu",
-            "command": "ssh abc@eceubuntu.uwaterloo.ca",
-            "tag": "SSH",
-            "note": null,
+            "alias": "pip_install_requests",
+            "command": "pip install requests",
+            "tag": "python/pip",
+            "note": "Installs the popular Python requests library for HTTP operations. Useful for API development.",
             "favourite": false
+        },
+        {
+            "alias": "terraform_apply",
+            "command": "terraform apply",
+            "tag": "terraform/deploy",
+            "note": "Applies Terraform configurations to provision infrastructure. Review the plan before applying.",
+            "favourite": false
+        },
+        {
+            "alias": "ansible_ping",
+            "command": "ansible all -m ping",
+            "tag": "ansible/testing",
+            "note": "Tests the connectivity to all hosts defined in the Ansible inventory file. Ensure the inventory file is correct.",
+            "favourite": false
+        },
+        {
+            "alias": "curl_test_api",
+            "command": "curl -X GET https://api.example.com/endpoint",
+            "tag": "curl/api/testing",
+            "note": "Tests an API endpoint with a GET request. Replace the URL and endpoint as needed.",
+            "favourite": false
+        },
+        {
+            "alias": "vim_open_config",
+            "command": "vim ~/.config/some_config_file",
+            "tag": "vim/config",
+            "note": "Opens a configuration file in Vim for editing. Replace 'some_config_file' with the actual file name.",
+            "favourite": false
+        },
+        {
+            "alias": "htop_monitor_system",
+            "command": "htop",
+            "tag": "system/monitoring",
+            "note": "Launches htop, an interactive system-monitoring tool. Use this to monitor system processes and resource usage.",
+            "favourite": true
+        },
+        {
+            "alias": "tmux_new_session",
+            "command": "tmux new -s my_session",
+            "tag": "tmux/sessions",
+            "note": "Creates a new tmux session named 'my_session'. Replace with the desired session name.",
+            "favourite": false
+        },
+        {
+            "alias": "scp_transfer_file",
+            "command": "scp local_file user@remote:/path/to/destination",
+            "tag": "ssh/scp",
+            "note": "Transfers a file to a remote server using SCP. Replace 'local_file' and paths as needed.",
+            "favourite": false
+        },
+        {
+            "alias": "jupyter_start",
+            "command": "jupyter notebook",
+            "tag": "python/jupyter",
+            "note": "Starts a Jupyter Notebook server in the current directory. Use this for data analysis or prototyping.",
+            "favourite": true
+        },
+        {
+            "alias": "pytest_run_tests",
+            "command": "pytest tests/",
+            "tag": "python/testing/pytest",
+            "note": "Runs all tests in the 'tests' directory using pytest. Ensure tests are properly written.",
+            "favourite": false
+        },
+        {
+            "alias": "mysql_connect_local",
+            "command": "mysql -u root -p",
+            "tag": "databases/mysql",
+            "note": "Connects to a MySQL server on localhost with the root user. Enter the password when prompted.",
+            "favourite": false
+        },
+        {
+            "alias": "az_list_vms",
+            "command": "az vm list --output table",
+            "tag": "azure/vm",
+            "note": "Lists all virtual machines in your Azure subscription in a table format. Requires Azure CLI.",
+            "favourite": true
+        },
+        {
+            "alias": "rsync_backup_files",
+            "command": "rsync -avz /source/path/ /backup/path/",
+            "tag": "backup/rsync",
+            "note": "Synchronizes files from a source directory to a backup directory. Modify paths as needed.",
+            "favourite": true
         }
     ]
 }

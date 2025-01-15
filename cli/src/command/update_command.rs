@@ -97,15 +97,12 @@ pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdat
 
     // Get the new command properties from the user
     Output::UpdateCommandSectionTitle.print();
-    let new_internal_command = set_command_properties_wizard(selected_command.internal_command)
-        .map_err(HandleUpdateError::Inquire)?;
+    let new_internal_command = set_command_properties_wizard(selected_command.internal_command)?;
 
     let logic = Logic::try_default()?;
 
     // Update the selected command
-    logic
-        .update_command(selected_command.id, new_internal_command)
-        .map_err(HandleUpdateError::LogicUpdate)?;
+    logic.update_command(selected_command.id, new_internal_command)?;
 
     Output::UpdateCommandSuccess.print();
     Ok(())
