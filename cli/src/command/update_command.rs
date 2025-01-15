@@ -104,6 +104,5 @@ pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdat
     // Update the selected command
     logic.update_command(selected_command.id, new_internal_command)?;
 
-    Output::UpdateCommandSuccess.print();
     Ok(())
 }

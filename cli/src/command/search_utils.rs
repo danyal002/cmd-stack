@@ -1,6 +1,6 @@
 use crate::{
     args::{PrintStyle, SearchAndPrintArgs},
-    outputs::{format_output, spacing, Output},
+    outputs::{format_output, spacing},
     utils::truncate_string,
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
@@ -240,13 +240,12 @@ pub enum CopyTextError {
     Copy,
 }
 
-pub fn copy_to_clipboard(text_to_copy: String) -> Result<(), CopyTextError> {
+pub fn copy_to_clipboard(text_to_copy: String) -> Result<String, CopyTextError> {
     let mut clipboard = ClipboardContext::new().map_err(|_| CopyTextError::ClipboardInit)?;
 
     clipboard
         .set_contents(text_to_copy.clone())
         .map_err(|_| CopyTextError::Copy)?;
 
-    Output::CommandCopiedToClipboard(text_to_copy).print();
-    Ok(())
+    Ok(text_to_copy)
 }

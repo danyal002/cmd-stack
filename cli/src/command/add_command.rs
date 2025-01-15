@@ -1,6 +1,6 @@
 use crate::{
     args::AddArgs,
-    outputs::{format_output, print_internal_command_table, spacing, Output},
+    outputs::{format_output, print_internal_command_table, spacing},
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
@@ -85,6 +85,6 @@ pub fn handle_add_command(args: AddArgs) -> Result<(), HandleAddError> {
         // display the information so they can confirm the validity
         print_internal_command_table(&internal_command);
     }
-    Output::AddCommandSuccess.print();
+
     Ok(())
 }

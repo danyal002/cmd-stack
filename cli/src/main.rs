@@ -94,7 +94,7 @@ fn main() {
 
     match args.command {
         Command::Add(add_args) => match command::add_command::handle_add_command(add_args) {
-            Ok(_) => (),
+            Ok(_) => Output::AddCommandSuccess.print(),
             Err(e) => {
                 match e {
                     HandleAddError::Inquire(_) => ErrorOutput::UserInput.print(),
@@ -105,7 +105,7 @@ fn main() {
         },
         Command::Update(update_args) => {
             match command::update_command::handle_update_command(update_args) {
-                Ok(_) => (),
+                Ok(_) => Output::UpdateCommandSuccess.print(),
                 Err(e) => {
                     match e {
                         HandleUpdateError::NoCommandFound => Output::NoCommandsFound.print(),
@@ -119,7 +119,7 @@ fn main() {
         }
         Command::Delete(delete_args) => {
             match command::delete_command::handle_delete_command(delete_args) {
-                Ok(_) => (),
+                Ok(_) => Output::DeleteCommandSuccess.print(),
                 Err(e) => {
                     match e {
                         HandleDeleteError::NoCommandFound => Output::NoCommandsFound.print(),
@@ -133,7 +133,7 @@ fn main() {
         }
         Command::Search(search_args) => {
             match command::search_command::handle_search_commands(search_args) {
-                Ok(_) => (),
+                Ok(copied_text) => Output::CommandCopiedToClipboard(copied_text).print(),
                 Err(e) => {
                     match e {
                         HandleSearchError::NoCommandFound => Output::NoCommandsFound.print(),
@@ -146,14 +146,14 @@ fn main() {
             }
         }
         Command::Export(export_args) => match import_export::handle_export_command(export_args) {
-            Ok(_) => (),
+            Ok(file_path) => Output::ExportCommandsSuccess(&file_path).print(),
             Err(e) => {
                 ErrorOutput::Export.print();
                 error!("Error occurred while exporting commands: {:?}", e);
             }
         },
         Command::Import(import_args) => match import_export::handle_import_command(import_args) {
-            Ok(_) => (),
+            Ok((num, file_path)) => Output::ImportCommandsSuccess(num, &file_path).print(),
             Err(e) => {
                 ErrorOutput::Import.print();
                 error!("Error occurred while importing commands: {:?}", e);
