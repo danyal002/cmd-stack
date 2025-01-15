@@ -44,12 +44,12 @@ impl SqliteDal {
 
     /// Executes a query as a prepared statement on the database
     async fn execute_query(&self, query: &str) -> Result<SqliteQueryResult, sqlx::Error> {
-        Ok(sqlx::query(query).execute(&self.sqlite_conn.pool).await?)
+        sqlx::query(query).execute(&self.sqlite_conn.pool).await
     }
 
     /// Reads rows based on the query as a prepared statement from the database
     async fn read_rows(&self, query: &str) -> Result<Vec<SqliteRow>, sqlx::Error> {
-        Ok(sqlx::query(query).fetch_all(&self.sqlite_conn.pool).await?)
+        sqlx::query(query).fetch_all(&self.sqlite_conn.pool).await
     }
 
     pub async fn get_all_commands(

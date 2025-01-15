@@ -103,7 +103,7 @@ pub fn fetch_search_candidates(
         }
     };
 
-    if commands.len() == 0 {
+    if commands.is_empty() {
         return Err(FetchSearchCandidatesError::NoCommandsFound);
     }
 

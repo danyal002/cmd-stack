@@ -44,11 +44,8 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) -> Result<(), HandleDelet
         })?;
 
     // Prompt the user to select a command
-    let selected_command = prompt_user_for_command_selection(
-        search_candidates,
-        args.print_style,
-        args.display_limit.clone(),
-    )?;
+    let selected_command =
+        prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
 
     let logic = Logic::try_default()?;
 
