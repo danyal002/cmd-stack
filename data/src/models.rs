@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 /// Represents the properties of a command that the user will
 /// have knowledge about
 pub struct InternalCommand {
-    pub alias: String,
     pub command: String,
     pub tag: Option<String>,
     pub note: Option<String>,

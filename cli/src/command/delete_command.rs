@@ -30,7 +30,7 @@ pub enum HandleDeleteError {
 /// CLI handler for the delete command
 pub fn handle_delete_command(args: SearchAndPrintArgs) -> Result<(), HandleDeleteError> {
     // Get the arguments used for search
-    let search_user_input = if !check_search_args_exist(&args.alias, &args.command, &args.tag) {
+    let search_user_input = if !check_search_args_exist(&args.command, &args.tag) {
         get_search_args_from_user()?
     } else {
         SearchArgsUserInput::from(args.clone())

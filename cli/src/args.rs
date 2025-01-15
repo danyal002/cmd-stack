@@ -34,10 +34,6 @@ pub struct AddArgs {
     /// The command to add to your stack
     pub command: String,
 
-    /// The alias for the command
-    #[clap(long = "alias", short = 'a')]
-    pub alias: Option<String>,
-
     /// Notes relating to the command
     #[clap(long = "note", short = 'n')]
     pub note: Option<String>,
@@ -54,11 +50,8 @@ pub struct AddArgs {
 /// Different supported printing styles for commands
 #[derive(Debug, ValueEnum, Clone)]
 pub enum PrintStyle {
-    /// Display the alias, command, tag, and notes
+    /// Display the command, tag, and notes
     All,
-
-    /// Only display the alias
-    Alias,
 
     /// Only display the command
     Command,
@@ -69,10 +62,6 @@ pub enum PrintStyle {
 pub struct SearchAndPrintArgs {
     /// The text used to filter by command when searching
     pub command: Option<String>,
-
-    /// The text used to filter by alias when searching
-    #[clap(long = "alias", short = 'a')]
-    pub alias: Option<String>,
 
     /// The text used to filter by tag when searching
     #[clap(long = "tag", short = 't')]

@@ -21,7 +21,6 @@ pub enum HandleAddError {
 impl From<AddArgs> for InternalCommand {
     fn from(args: AddArgs) -> Self {
         InternalCommand {
-            alias: args.alias.unwrap_or(String::from("")),
             command: args.command,
             tag: args.tag,
             note: args.note,
@@ -33,12 +32,6 @@ impl From<AddArgs> for InternalCommand {
 /// Generates a wizard to set the properties of a command
 fn get_add_args_from_user(command: &str) -> Result<InternalCommand, InquireError> {
     spacing();
-
-    let alias = Text::new(&format_output(
-        "<bold>Alias</bold> <italics>(Equal to the command by default)</italics><bold>:</bold>",
-    ))
-    .with_default(command)
-    .prompt()?;
 
     let tag = Text::new(&format_output(
         "<bold>Tag</bold> <italics>(Leave blank to skip)</italics><bold>:</bold>",
@@ -56,7 +49,6 @@ fn get_add_args_from_user(command: &str) -> Result<InternalCommand, InquireError
         == "Yes";
 
     Ok(InternalCommand {
-        alias,
         command: String::from(command),
         tag: if !tag.is_empty() { Some(tag) } else { None },
         note: if !note.is_empty() { Some(note) } else { None },
@@ -66,7 +58,7 @@ fn get_add_args_from_user(command: &str) -> Result<InternalCommand, InquireError
 
 /// CLI handler for the add command
 pub fn handle_add_command(args: AddArgs) -> Result<(), HandleAddError> {
-    let add_args_exist = args.alias.is_some() || args.tag.is_some() || args.note.is_some();
+    let add_args_exist = args.tag.is_some() || args.note.is_some();
 
     // Get the command to add either from CLI args or user input
     let internal_command = if !add_args_exist {

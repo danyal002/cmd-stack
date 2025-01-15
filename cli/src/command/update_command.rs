@@ -34,7 +34,6 @@ pub enum HandleUpdateError {
 ///
 /// Arguments:
 /// - cur_command: String - The current command text
-/// - cur_alias: String - The current alias of the command
 /// - cur_note: Option<String> - The current note of the command
 /// - cur_tag: Option<String> - The current tag of the command
 /// - cur_favourite: bool - The current favourite status of the command
@@ -43,10 +42,6 @@ pub fn set_command_properties_wizard(
 ) -> Result<InternalCommand, InquireError> {
     let command = Text::new(&format_output("<bold>Command</bold>:"))
         .with_initial_value(&cur_command.command)
-        .prompt()?;
-
-    let alias = Text::new(&format_output("<bold>Alias</bold>:"))
-        .with_initial_value(&cur_command.alias)
         .prompt()?;
 
     let tag = Text::new(&format_output(
@@ -68,7 +63,6 @@ pub fn set_command_properties_wizard(
 
     Ok(InternalCommand {
         command,
-        alias,
         tag: if !tag.is_empty() { Some(tag) } else { None },
         note: if !note.is_empty() { Some(note) } else { None },
         favourite,
@@ -78,7 +72,7 @@ pub fn set_command_properties_wizard(
 /// UI handler for the update command
 pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdateError> {
     // Get the arguments used for search
-    let search_user_input = if !check_search_args_exist(&args.alias, &args.command, &args.tag) {
+    let search_user_input = if !check_search_args_exist(&args.command, &args.tag) {
         get_search_args_from_user()?
     } else {
         SearchArgsUserInput::from(args.clone())

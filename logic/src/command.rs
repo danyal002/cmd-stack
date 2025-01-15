@@ -53,7 +53,6 @@ pub enum DeleteCommandError {
 
 #[derive(Debug)]
 pub struct SearchCommandArgs {
-    pub alias: Option<String>,
     pub command: Option<String>,
     pub tag: Option<String>,
     pub order_by_use: bool,
@@ -64,7 +63,7 @@ impl Logic {
     #[tokio::main]
     /// Handles the addition of a command
     pub async fn add_command(&self, command: InternalCommand) -> Result<(), AddCommandError> {
-        if command.command.trim().is_empty() || command.alias.trim().is_empty() {
+        if command.command.trim().is_empty() {
             return Err(AddCommandError::InvalidInput);
         }
 
@@ -96,17 +95,9 @@ impl Logic {
                 let min_threshold = 50; // TODO: Adjust this threshold
 
                 // All commands if there is no filter
-                if params.alias.is_none() && params.command.is_none() && params.tag.is_none() {
+                if params.command.is_none() && params.tag.is_none() {
                     return true;
                 }
-
-                let alias_match = match &params.alias {
-                    Some(a) => match matcher.fuzzy_match(&command.internal_command.alias, a) {
-                        Some(r) => r > min_threshold,
-                        None => false,
-                    },
-                    None => false,
-                };
 
                 let command_match = match &params.command {
                     Some(c) => match matcher.fuzzy_match(&command.internal_command.command, c) {
@@ -127,7 +118,7 @@ impl Logic {
                     None => false,
                 };
 
-                alias_match || command_match || tag_match
+                command_match || tag_match
             })
             .collect();
 
@@ -166,8 +157,7 @@ impl Logic {
         command_id: i64,
         new_command_props: InternalCommand,
     ) -> Result<(), UpdateCommandError> {
-        if new_command_props.command.trim().is_empty() || new_command_props.alias.trim().is_empty()
-        {
+        if new_command_props.command.trim().is_empty() {
             return Err(UpdateCommandError::InvalidInput);
         }
 
@@ -222,7 +212,6 @@ mod tests {
 
         let command = InternalCommand {
             command: "test_command".to_string(),
-            alias: "test_alias".to_string(),
             tag: None,
             note: None,
             favourite: false,
@@ -254,7 +243,6 @@ mod tests {
 
         let mut invalid_command = InternalCommand {
             command: "@{bad}".to_string(),
-            alias: "asdf".to_string(),
             tag: None,
             note: None,
             favourite: false,
@@ -302,7 +290,6 @@ mod tests {
 
         let command = InternalCommand {
             command: "test_command".to_string(),
-            alias: "test_alias".to_string(),
             tag: None,
             note: None,
             favourite: false,
@@ -319,7 +306,6 @@ mod tests {
 
         let new_command = InternalCommand {
             command: "new_test_command".to_string(),
-            alias: "new_test_alias".to_string(),
             tag: Some("green".to_string()),
             note: Some("new note".to_string()),
             favourite: true,
@@ -353,7 +339,6 @@ mod tests {
 
         let command = InternalCommand {
             command: "abcd".to_string(),
-            alias: "abcd".to_string(),
             tag: Some("green".to_string()),
             note: None,
             favourite: false,
@@ -363,7 +348,6 @@ mod tests {
 
         let command = InternalCommand {
             command: "abce".to_string(),
-            alias: "abce".to_string(),
             tag: Some("greet".to_string()),
             note: None,
             favourite: false,
@@ -371,45 +355,8 @@ mod tests {
         let result = logic.add_command(command.clone());
         assert!(result.is_ok());
 
-        // search by alias starts with abc
-        let search_command_result = logic.search_command(SearchCommandArgs {
-            alias: Some("abc".to_string()),
-            command: None,
-            tag: None,
-            order_by_use: false,
-            favourites_only: false,
-        });
-        assert!(search_command_result.is_ok());
-        let commands = search_command_result.unwrap();
-        assert!(commands.len() == 2);
-
-        // search by alias starts with abcd
-        let search_command_result = logic.search_command(SearchCommandArgs {
-            alias: Some("abcd".to_string()),
-            command: None,
-            tag: None,
-            order_by_use: false,
-            favourites_only: false,
-        });
-        assert!(search_command_result.is_ok());
-        let commands = search_command_result.unwrap();
-        assert!(commands.len() == 1);
-
-        // search by alias starts with bc
-        let search_command_result = logic.search_command(SearchCommandArgs {
-            alias: Some("bc".to_string()),
-            command: None,
-            tag: None,
-            order_by_use: false,
-            favourites_only: false,
-        });
-        assert!(search_command_result.is_ok());
-        let commands = search_command_result.unwrap();
-        assert!(commands.len() == 0);
-
         // search by tag starts with gree
         let search_command_result = logic.search_command(SearchCommandArgs {
-            alias: None,
             command: None,
             tag: Some("gree".to_string()),
             order_by_use: false,
@@ -421,7 +368,6 @@ mod tests {
 
         // search by tag starts with green
         let search_command_result = logic.search_command(SearchCommandArgs {
-            alias: None,
             command: None,
             tag: Some("green".to_string()),
             order_by_use: false,
@@ -433,7 +379,6 @@ mod tests {
 
         // search by command starts with abc
         let search_command_result = logic.search_command(SearchCommandArgs {
-            alias: None,
             command: Some("abc".to_string()),
             tag: None,
             order_by_use: false,
@@ -445,7 +390,6 @@ mod tests {
 
         // search by command starts with abcd
         let search_command_result = logic.search_command(SearchCommandArgs {
-            alias: None,
             command: Some("abcd".to_string()),
             tag: None,
             order_by_use: false,
@@ -457,7 +401,6 @@ mod tests {
 
         // No filter should return all commands
         let search_command_result = logic.search_command(SearchCommandArgs {
-            alias: None,
             command: None,
             tag: None,
             order_by_use: false,
@@ -484,7 +427,6 @@ mod tests {
 
         let command = InternalCommand {
             command: "test_command".to_string(),
-            alias: "test_alias".to_string(),
             tag: None,
             note: None,
             favourite: false,
@@ -528,7 +470,6 @@ mod tests {
 
         let command = InternalCommand {
             command: "test_command".to_string(),
-            alias: "test_alias".to_string(),
             tag: None,
             note: None,
             favourite: false,
@@ -576,7 +517,6 @@ mod tests {
 
         let command = InternalCommand {
             command: "echo @{int}".to_string(),
-            alias: "test_alias".to_string(),
             tag: None,
             note: None,
             favourite: false,
