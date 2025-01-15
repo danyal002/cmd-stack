@@ -13,30 +13,24 @@ use termion::terminal_size;
 use thiserror::Error;
 
 pub struct SearchArgsUserInput {
-    pub alias: Option<String>,
     pub command: Option<String>,
     pub tag: Option<String>,
 }
 impl From<SearchAndPrintArgs> for SearchArgsUserInput {
     fn from(args: SearchAndPrintArgs) -> Self {
         SearchArgsUserInput {
-            alias: args.alias,
             command: args.command,
             tag: args.tag,
         }
     }
 }
 
-/// Given the user input for `alias`, `command` and `tag`, determine
+/// Given the user input for `command` and `tag`, determine
 /// if the user provided search arguments
 ///
 /// Returns a boolean
-pub fn check_search_args_exist(
-    alias: &Option<String>,
-    command: &Option<String>,
-    tag: &Option<String>,
-) -> bool {
-    alias.is_some() || command.is_some() || tag.is_some()
+pub fn check_search_args_exist(command: &Option<String>, tag: &Option<String>) -> bool {
+    command.is_some() || tag.is_some()
 }
 
 /// Generates a wizard to set the properties for command searching
@@ -48,18 +42,12 @@ pub fn get_search_args_from_user() -> Result<SearchArgsUserInput, InquireError> 
     ))
     .prompt()?;
 
-    let alias = Text::new(&format_output(
-        "<bold>Alias</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
-    ))
-    .prompt()?;
-
     let tag = Text::new(&format_output(
         "<bold>Tag</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
     ))
     .prompt()?;
 
     Ok(SearchArgsUserInput {
-        alias: Some(alias),
         command: Some(command),
         tag: Some(tag),
     })
@@ -90,7 +78,6 @@ pub fn fetch_search_candidates(
     };
 
     let commands = match logic.search_command(SearchCommandArgs {
-        alias: search_args.alias,
         command: search_args.command,
         tag: search_args.tag,
         order_by_use,
@@ -164,14 +151,7 @@ fn format_commands_for_printing(
     match print_style {
         PrintStyle::All => (
             format_internal_commands(commands),
-            "(Alias | Command | Tag | Note | Favourite [*])",
-        ),
-        PrintStyle::Alias => (
-            commands
-                .iter()
-                .map(|c| c.internal_command.alias.clone())
-                .collect(),
-            "(Alias)",
+            "(Command | Tag | Note | Favourite [*])",
         ),
         PrintStyle::Command => (
             commands
@@ -187,14 +167,10 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
     let (width, _) = terminal_size().unwrap_or((150, 0)); // Default to 150 if terminal size cannot be determined
 
     // Define maximum widths for each column
-    let alias_width = std::cmp::max(width * 15 / 100, 12) as i32; // Alias gets 15% of width or 12, whichever is more
     let tag_width = std::cmp::max(width * 5 / 100, 8) as i32; // Tag gets 5% of the width or 8, whichever is more
     let favourite_width = 5;
 
-    let remaining_width = std::cmp::max(
-        width as i32 - alias_width - tag_width - favourite_width - 12,
-        0,
-    );
+    let remaining_width = std::cmp::max(width as i32 - tag_width - favourite_width - 12, 0);
     let command_width = remaining_width * 75 / 100; // Commands get 75% of remaining width
     let note_width = remaining_width - command_width;
 
@@ -202,8 +178,6 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
 
     for command in commands {
-        let truncated_alias =
-            truncate_string(&command.internal_command.alias, alias_width as usize);
         let truncated_tag = truncate_string(
             command.internal_command.tag.as_deref().unwrap_or(""),
             tag_width as usize,
@@ -216,7 +190,6 @@ fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
         );
 
         table.add_row(Row::new(vec![
-            Cell::new(&truncated_alias),
             Cell::new(&truncated_command),
             Cell::new(&truncated_tag),
             Cell::new(&truncated_note),

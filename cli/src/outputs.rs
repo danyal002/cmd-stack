@@ -45,10 +45,6 @@ pub fn print_internal_command_table(internal_command: &InternalCommand) {
         Cell::new("Command:").with_style(Attr::Bold),
         Cell::new(&internal_command.command),
     ]));
-    table.add_row(Row::new(vec![
-        Cell::new("Alias:").with_style(Attr::Bold),
-        Cell::new(&internal_command.alias),
-    ]));
     if let Some(tag) = &internal_command.tag {
         table.add_row(Row::new(vec![
             Cell::new("Tag:").with_style(Attr::Bold),

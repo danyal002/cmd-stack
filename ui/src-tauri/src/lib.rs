@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 pub struct DisplayCommand {
     pub id: i64,
     pub last_used: i64,
-    pub alias: String,
     pub command: String,
     pub tag: Option<String>,
     pub note: Option<String>,
@@ -18,7 +17,6 @@ impl From<&Command> for DisplayCommand {
         DisplayCommand {
             id: c.id,
             last_used: c.last_used,
-            alias: c.internal_command.alias.clone(),
             command: c.internal_command.command.clone(),
             tag: c.internal_command.tag.clone(),
             note: c.internal_command.note.clone(),
@@ -41,7 +39,6 @@ fn list_commands() -> Result<Vec<DisplayCommand>, String> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddCommand {
-    pub alias: String,
     pub command: String,
     pub tag: Option<String>,
     pub note: Option<String>,
@@ -51,7 +48,6 @@ pub struct AddCommand {
 impl From<&AddCommand> for InternalCommand {
     fn from(c: &AddCommand) -> Self {
         InternalCommand {
-            alias: c.alias.clone(),
             command: c.command.clone(),
             tag: c.tag.clone(),
             note: c.note.clone(),

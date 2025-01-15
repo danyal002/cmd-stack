@@ -34,7 +34,7 @@ pub enum HandleSearchError {
 /// UI handler for the search command
 pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<(), HandleSearchError> {
     // Get the arguments used for search
-    let search_user_input = if !check_search_args_exist(&args.alias, &args.command, &args.tag) {
+    let search_user_input = if !check_search_args_exist(&args.command, &args.tag) {
         get_search_args_from_user()?
     } else {
         SearchArgsUserInput::from(args.clone())

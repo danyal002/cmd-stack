@@ -89,7 +89,6 @@ impl SqliteConnectionPool {
                     .primary_key()
                     .auto_increment(),
             )
-            .col(ColumnDef::new(Command::Alias).string().not_null())
             .col(ColumnDef::new(Command::Command).string().not_null())
             .col(ColumnDef::new(Command::Tag).string())
             .col(ColumnDef::new(Command::Note).string())
@@ -110,7 +109,6 @@ impl SqliteConnectionPool {
 pub enum Command {
     Table,
     Id,
-    Alias,
     Command,
     Tag,
     Note,

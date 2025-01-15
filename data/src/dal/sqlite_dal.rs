@@ -59,7 +59,6 @@ impl SqliteDal {
     ) -> Result<Vec<Command>, SelectAllCommandsError> {
         let query = Query::select()
             .columns([
-                sqlite::Command::Alias,
                 sqlite::Command::Command,
                 sqlite::Command::Tag,
                 sqlite::Command::Note,
@@ -94,7 +93,6 @@ impl SqliteDal {
             .into_iter()
             .map(|row| Command {
                 internal_command: InternalCommand {
-                    alias: row.get("alias"),
                     command: row.get("command"),
                     tag: row.get("tag"),
                     note: row.get("note"),
@@ -118,7 +116,6 @@ impl SqliteDal {
         let query = Query::insert()
             .into_table(sqlite::Command::Table)
             .columns([
-                sqlite::Command::Alias,
                 sqlite::Command::Command,
                 sqlite::Command::Tag,
                 sqlite::Command::Note,
@@ -126,7 +123,6 @@ impl SqliteDal {
                 sqlite::Command::LastUsed,
             ])
             .values_panic([
-                command.alias.into(),
                 command.command.into(),
                 command.tag.into(),
                 command.note.into(),
@@ -159,7 +155,6 @@ impl SqliteDal {
         let mut builder = Query::insert()
             .into_table(sqlite::Command::Table)
             .columns([
-                sqlite::Command::Alias,
                 sqlite::Command::Command,
                 sqlite::Command::Tag,
                 sqlite::Command::Note,
@@ -171,7 +166,6 @@ impl SqliteDal {
         for command in commands {
             builder
                 .values([
-                    command.alias.into(),
                     command.command.into(),
                     command.tag.into(),
                     command.note.into(),
@@ -244,7 +238,6 @@ impl SqliteDal {
         let query = Query::update()
             .table(sqlite::Command::Table)
             .values([
-                (sqlite::Command::Alias, new_command_props.alias.into()),
                 (sqlite::Command::Command, new_command_props.command.into()),
                 (sqlite::Command::Tag, new_command_props.tag.into()),
                 (sqlite::Command::Note, new_command_props.note.into()),
