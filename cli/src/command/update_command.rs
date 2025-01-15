@@ -5,14 +5,18 @@ use crate::{
         prompt_user_for_command_selection, SearchArgsUserInput,
     },
     outputs::{format_output, Output},
+    utils::none_if_empty,
 };
 use data::models::InternalCommand;
-use inquire::{min_length, InquireError, Select, Text};
+use inquire::{InquireError, Select, Text};
 use log::error;
 use logic::Logic;
 use thiserror::Error;
 
-use super::search_utils::{FetchSearchCandidatesError, PromptUserForCommandSelectionError};
+use super::{
+    search_utils::{FetchSearchCandidatesError, PromptUserForCommandSelectionError},
+    CommandInputValidator,
+};
 
 #[derive(Error, Debug)]
 pub enum HandleUpdateError {
@@ -42,7 +46,7 @@ pub fn set_command_properties_wizard(
 ) -> Result<InternalCommand, InquireError> {
     let command = Text::new(&format_output("<bold>Command</bold>:"))
         .with_initial_value(&cur_command.command)
-        .with_validator(min_length!(1, "Command must not be empty"))
+        .with_validator(CommandInputValidator)
         .prompt()?;
 
     let tag = Text::new(&format_output(
@@ -64,8 +68,8 @@ pub fn set_command_properties_wizard(
 
     Ok(InternalCommand {
         command,
-        tag: if !tag.is_empty() { Some(tag) } else { None },
-        note: if !note.is_empty() { Some(note) } else { None },
+        tag: none_if_empty(tag),
+        note: none_if_empty(note),
         favourite,
     })
 }

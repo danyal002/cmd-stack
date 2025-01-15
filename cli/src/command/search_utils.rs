@@ -1,7 +1,7 @@
 use crate::{
     args::{PrintStyle, SearchAndPrintArgs},
     outputs::{format_output, spacing},
-    utils::truncate_string,
+    utils::{none_if_empty, truncate_string},
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
@@ -48,8 +48,8 @@ pub fn get_search_args_from_user() -> Result<SearchArgsUserInput, InquireError> 
     .prompt()?;
 
     Ok(SearchArgsUserInput {
-        command: Some(command),
-        tag: Some(tag),
+        command: none_if_empty(command),
+        tag: none_if_empty(tag),
     })
 }
 
