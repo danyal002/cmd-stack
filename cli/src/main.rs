@@ -133,7 +133,7 @@ fn main() {
         }
         Command::Search(search_args) => {
             match command::search_command::handle_search_commands(search_args) {
-                Ok(copied_text) => Output::CommandCopiedToClipboard(copied_text).print(),
+                Ok(_) => Output::CommandCopiedToClipboard.print(),
                 Err(e) => {
                     match e {
                         HandleSearchError::NoCommandFound => Output::NoCommandsFound.print(),

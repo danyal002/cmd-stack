@@ -87,7 +87,7 @@ pub enum Output<'a> {
     DeleteCommandSuccess,
     ExportCommandsSuccess(&'a Path),
     ImportCommandsSuccess(u64, &'a Path),
-    CommandCopiedToClipboard(String),
+    CommandCopiedToClipboard,
 }
 
 impl fmt::Display for Output<'_> {
@@ -107,11 +107,8 @@ impl fmt::Display for Output<'_> {
                     num_cmds, file
                 )
             }
-            Output::CommandCopiedToClipboard(cmd) => {
-                format!(
-                    "✅ <success><bold>Command copied to clipboard</bold></success> {}\n",
-                    cmd
-                )
+            Output::CommandCopiedToClipboard => {
+                "✅ <success><bold>Command copied to clipboard</bold></success>\n".to_string()
             }
         };
 

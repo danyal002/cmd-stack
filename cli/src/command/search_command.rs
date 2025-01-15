@@ -32,7 +32,7 @@ pub enum HandleSearchError {
 }
 
 /// UI handler for the search command
-pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<String, HandleSearchError> {
+pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<(), HandleSearchError> {
     // Get the arguments used for search
     let search_user_input = if !check_search_args_exist(&args.alias, &args.command, &args.tag) {
         get_search_args_from_user()?
@@ -57,10 +57,10 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<String, Handle
     let text_to_copy = logic.generate_parameters(selected_command.clone())?;
 
     // Copy the selected command to the clipboard
-    let copied_text = copy_to_clipboard(text_to_copy)?;
+    copy_to_clipboard(text_to_copy)?;
 
     // Update the last used timestamp for the command
     logic.update_command_last_used_prop(selected_command.id)?;
 
-    Ok(copied_text)
+    Ok(())
 }
