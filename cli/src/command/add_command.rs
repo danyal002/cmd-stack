@@ -1,9 +1,12 @@
 use crate::{
     args::AddArgs,
+    command::CommandInputValidator,
     outputs::{format_output, print_internal_command_table, spacing},
+    utils::none_if_empty,
 };
 use data::models::InternalCommand;
-use inquire::{min_length, InquireError, Select, Text};
+use inquire::error::InquireError;
+use inquire::{Select, Text};
 use log::error;
 use logic::Logic;
 use thiserror::Error;
@@ -42,7 +45,7 @@ fn get_add_args_from_user(args: AddArgs) -> Result<InternalCommand, InquireError
     spacing();
     // No check needed since wizard is only displayed if the command field is not present
     let command = Text::new(&format_output("<bold>Command:</bold>"))
-        .with_validator(min_length!(1, "Command must not be empty"))
+        .with_validator(CommandInputValidator)
         .prompt()?;
 
     let tag = Text::new(&format_output(
@@ -64,8 +67,8 @@ fn get_add_args_from_user(args: AddArgs) -> Result<InternalCommand, InquireError
 
     Ok(InternalCommand {
         command,
-        tag: if !tag.is_empty() { Some(tag) } else { None },
-        note: if !note.is_empty() { Some(note) } else { None },
+        tag: none_if_empty(tag),
+        note: none_if_empty(note),
         favourite,
     })
 }
