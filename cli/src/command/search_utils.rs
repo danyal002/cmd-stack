@@ -222,7 +222,7 @@ pub enum CopyTextError {
     Copy,
 }
 
-pub fn copy_to_clipboard(cmd: &str, text_to_copy: String) -> Result<(), CopyTextError> {
+pub fn copy_to_clipboard(text_to_copy: String) -> Result<(), CopyTextError> {
     let mut clipboard = ClipboardContext::new().map_err(|_| CopyTextError::ClipboardInit)?;
 
     clipboard
