@@ -9,14 +9,20 @@ import { Command } from '@/types/command';
 
 interface CommandListProps {
   items: Command[];
+  selectedTag: string | undefined;
 }
 
-export function CommandList({ items }: CommandListProps) {
+export function CommandList({ items, selectedTag }: CommandListProps) {
   const [command, setCommand] = useCommand();
 
   return (
     <ScrollArea className="h-[calc(100vh-121px)]">
       <div className="flex flex-col gap-2 p-4 pt-0">
+        {selectedTag && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">{selectedTag}</Badge>
+          </div>
+        )}
         {items.map((item) => (
           <button
             key={item.id}
