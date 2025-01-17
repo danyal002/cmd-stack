@@ -1,7 +1,7 @@
 'use client';
 
-import * as React from 'react';
-import { File, Search, Settings, Star } from 'lucide-react';
+import { useState } from 'react';
+import { File, Search, Settings, Star, Tags } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Input } from './ui/input';
@@ -13,13 +13,16 @@ import {
 import { Separator } from './ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { TooltipProvider } from './ui/tooltip';
+import { Badge } from './ui/badge';
 import { CommandDisplay } from '@/components/command-display';
 import { CommandList } from '@/components/command-list';
+import { TagTree } from '@/components/tag-tree';
 import { Nav } from '@/components/nav';
 import { useCommand } from '@/use-command';
 import { Command } from '@/types/command';
 import { cmdStackIcon } from '@/components/cmdStackIcon';
 import { AddDialog } from './add-dialog';
+import { ScrollArea } from './ui/scroll-area';
 
 interface MainCommandPageProps {
   commands: Command[];
@@ -34,8 +37,24 @@ export function MainCommandPage({
   defaultCollapsed = false,
   navCollapsedSize,
 }: MainCommandPageProps) {
-  const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const [selectedTagId, setSelectedTagId] = useState<string | undefined>();
+
   const [command] = useCommand();
+
+  const handleClickTag = (tagId: string | undefined) => {
+    setSelectedTagId(tagId);
+  };
+
+  const handleDeselectTag = () => {
+    setSelectedTagId(undefined);
+  };
+
+  const tagFilteredCommands = selectedTagId
+    ? commands.filter(
+        (command) => command.tag && command.tag.startsWith(selectedTagId),
+      )
+    : commands;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -92,13 +111,13 @@ export function MainCommandPage({
             links={[
               {
                 title: 'Commands',
-                label: commands.length.toString(),
+                label: tagFilteredCommands.length.toString(),
                 icon: File,
                 variant: 'default',
               },
               {
                 title: 'Favorites',
-                label: commands
+                label: tagFilteredCommands
                   .filter((item) => item.favourite)
                   .length.toString(),
                 icon: Star,
@@ -119,6 +138,28 @@ export function MainCommandPage({
           />
           <Separator />
           <AddDialog />
+          <Separator />
+          <div onClick={handleDeselectTag}>
+            <Nav
+              isCollapsed={isCollapsed}
+              links={[
+                {
+                  title: 'All Tags',
+                  icon: Tags,
+                  variant: 'ghost',
+                },
+              ]}
+            />
+          </div>
+          {!isCollapsed && (
+            <ScrollArea className="h-[calc(100vh-284px)]">
+              <TagTree
+                commands={commands}
+                selectedTagId={selectedTagId}
+                handleSelectedTagIdChange={handleClickTag}
+              />
+            </ScrollArea>
+          )}
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel
@@ -153,11 +194,18 @@ export function MainCommandPage({
                 </div>
               </form>
             </div>
+            {selectedTagId && (
+              <div className="flex gap-2 px-4 mb-2">
+                <Badge variant="secondary">{selectedTagId}</Badge>
+              </div>
+            )}
             <TabsContent value="all" className="m-0">
-              <CommandList items={commands} />
+              <CommandList items={tagFilteredCommands} />
             </TabsContent>
             <TabsContent value="favourites" className="m-0">
-              <CommandList items={commands.filter((item) => item.favourite)} />
+              <CommandList
+                items={tagFilteredCommands.filter((item) => item.favourite)}
+              />
             </TabsContent>
           </Tabs>
         </ResizablePanel>

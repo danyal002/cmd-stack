@@ -15,7 +15,7 @@ export function CommandList({ items }: CommandListProps) {
   const [command, setCommand] = useCommand();
 
   return (
-    <ScrollArea className="h-[calc(100vh-121px)]">
+    <ScrollArea className="h-[calc(100vh-154px)]">
       <div className="flex flex-col gap-2 p-4 pt-0">
         {items.map((item) => (
           <button
