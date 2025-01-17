@@ -82,9 +82,16 @@ fn delete_command(command: DeleteCommand) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn get_and_replace_parameters(
-    command: String,
-) -> Result<(String, Vec<SerializableParameter>, Vec<String>), String> {
+fn parse_parameters(command: String) -> Result<(Vec<String>, Vec<SerializableParameter>), String> {
+    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
+
+    logic
+        .parse_parameters(command)
+        .map_err(|e| format!("Error parsing parameters: {:?}", e))
+}
+
+#[tauri::command]
+fn replace_parameters(command: String) -> Result<(String, Vec<String>), String> {
     let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
 
     logic
@@ -100,7 +107,8 @@ pub fn run() {
             list_commands,
             add_command,
             delete_command,
-            get_and_replace_parameters
+            replace_parameters,
+            parse_parameters
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

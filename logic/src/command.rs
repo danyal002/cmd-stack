@@ -180,10 +180,14 @@ impl Logic {
 
     #[tokio::main]
     /// Handles the generation of parameters for a command
-    pub async fn generate_parameters(&self, command: String) -> Result<(String, Vec<SerializableParameter>, Vec<String>), ParameterError> {
-        let (parameterized_command, parameters, generated_parameters) =
-            ParameterHandler::default().replace_and_get_parameters(command)?;
-        Ok((parameterized_command, parameters, generated_parameters))
+    pub async fn generate_parameters(&self, command: String) -> Result<(String, Vec<String>), ParameterError> {
+        ParameterHandler::default().replace_parameters(command)
+    }
+
+    #[tokio::main]
+    /// Handles the parsing of parameters for a command
+    pub async fn parse_parameters(&self, command: String) -> Result<(Vec<String>, Vec<SerializableParameter>), ParameterError> {
+        ParameterHandler::default().parse_parameters(command)
     }
 }
 
@@ -532,9 +536,8 @@ mod tests {
 
         let generated_param_result = logic.generate_parameters(commands.first().unwrap().internal_command.command.clone());
         assert!(generated_param_result.is_ok());
-        let (generated_param, parameters, generated_parameters) = generated_param_result.unwrap();
+        let (generated_param,  generated_parameters) = generated_param_result.unwrap();
         assert_ne!(generated_param, "echo @{int}");
-        assert_eq!(parameters.len(), 1);
         assert_eq!(generated_parameters.len(), 1);
     }
 }

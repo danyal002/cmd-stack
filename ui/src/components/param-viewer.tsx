@@ -14,7 +14,9 @@ export function ParamViewer({ parameters, generatedValues }: ParamViewerProps) {
         {parameters.map((parameter, index) => (
           <Param
             parameter={parameter}
-            generatedValue={generatedValues[index]}
+            generatedValue={
+              index < generatedValues.length ? generatedValues[index] : ''
+            }
             index={index}
           />
         ))}

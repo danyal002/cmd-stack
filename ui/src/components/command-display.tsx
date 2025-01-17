@@ -1,5 +1,5 @@
 import format from 'date-fns/format';
-import { Pencil } from 'lucide-react';
+import { Pencil, RefreshCwIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -19,23 +19,43 @@ interface CommandDisplayProps {
 }
 
 export function CommandDisplay({ command }: CommandDisplayProps) {
-  const [generatedCommand, setGeneratedCommand] = useState<string>("");
+  const [parameterRefreshNumber, setParameterRefreshNumber] =
+    useState<number>(0);
+
+  const [generatedCommand, setGeneratedCommand] = useState<string>('');
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [generatedValues, setGeneratedValues] = useState<string[]>([]);
-  
+
+  // This effect handles parsing the parameters
   useEffect(() => {
     if (command) {
-      invoke<[string, Parameter[], string[]]>('get_and_replace_parameters', {
+      invoke<[string[], Parameter[]]>('parse_parameters', {
         command: command.command,
       })
         .then((res) => {
-          setGeneratedCommand(res[0]);
           setParameters(res[1]);
-          setGeneratedValues(res[2]);
         })
         .catch((error) => console.error(error));
     }
   }, [command]);
+
+  // This effect handles generating parameters
+  useEffect(() => {
+    if (command) {
+      invoke<[string, string[]]>('replace_parameters', {
+        command: command.command,
+      })
+        .then((res) => {
+          setGeneratedCommand(res[0]);
+          setGeneratedValues(res[1]);
+        })
+        .catch((error) => console.error(error));
+    }
+  }, [command, parameterRefreshNumber]);
+
+  function onParameterRefresh() {
+    setParameterRefreshNumber(parameterRefreshNumber + 1);
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -82,8 +102,27 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
               value={command.note}
               contentEditable={false}
             />
-            <Label htmlFor="parameters">Parameters</Label>
-            <ParamViewer parameters={parameters} generatedValues={generatedValues}/>
+            <div className="flex items-center">
+              <Label htmlFor="parameters" className="mr-2">
+                Parameters
+              </Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={parameters.length == 0}
+                    onClick={onParameterRefresh}
+                  >
+                    <RefreshCwIcon size={12} />
+                  </Button>
+                </TooltipTrigger>
+              </Tooltip>
+            </div>
+            <ParamViewer
+              parameters={parameters}
+              generatedValues={generatedValues}
+            />
           </div>
           <Separator className="mt-auto" />
           <div className="p-4">
@@ -95,13 +134,6 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                   disabled={true}
                 />
                 <div className="flex items-center">
-                  {/* <Label
-                    htmlFor="mute"
-                    className="flex items-center gap-2 text-xs font-normal"
-                  >
-                    <Switch id="mute" aria-label="Mute thread" /> Mute this
-                    thread
-                  </Label> */}
                   <div className="ml-auto">
                     <Button onClick={(e) => e.preventDefault()} size="sm">
                       Copy
