@@ -24,9 +24,6 @@ const FormSchema = z.object({
   command: z.string().min(1, {
     message: 'Command must be at least 1 character.',
   }),
-  alias: z.string().min(1, {
-    message: 'Alias must be at least 1 character.',
-  }),
   tag: z.string(),
   note: z.string(),
   favourite: z.boolean(),
@@ -43,7 +40,6 @@ export function AddForm({ onSuccess }: AddFormProps) {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       command: '',
-      alias: '',
       tag: '',
       note: '',
       favourite: false,
@@ -83,22 +79,6 @@ export function AddForm({ onSuccess }: AddFormProps) {
                 <Input placeholder="shadcn" {...field} />
               </FormControl>
               <FormDescription>This is your command.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="alias"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Alias</FormLabel>
-              <FormControl>
-                <Input placeholder="shadcn" {...field} />
-              </FormControl>
-              <FormDescription>
-                This is your alias for the command.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

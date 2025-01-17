@@ -34,7 +34,7 @@ export function CommandList({ items }: CommandListProps) {
             <div className="flex w-full flex-col gap-1">
               <div className="flex items-center">
                 <div className="flex items-center gap-2">
-                  <div className="font-semibold">{item.alias}</div>
+                  <div className="font-semibold">{item.command}</div>
                 </div>
                 <div
                   className={cn(
@@ -49,7 +49,6 @@ export function CommandList({ items }: CommandListProps) {
                   })}
                 </div>
               </div>
-              <div className="text-xs font-medium">{item.command}</div>
             </div>
             {item.note && (
               <div className="line-clamp-2 text-xs text-muted-foreground">
