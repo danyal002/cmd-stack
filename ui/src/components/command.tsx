@@ -13,6 +13,7 @@ import {
 import { Separator } from './ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { TooltipProvider } from './ui/tooltip';
+import { Badge } from './ui/badge';
 import { CommandDisplay } from '@/components/command-display';
 import { CommandList } from '@/components/command-list';
 import { TagTree } from '@/components/tag-tree';
@@ -193,16 +194,17 @@ export function MainCommandPage({
                 </div>
               </form>
             </div>
+            {selectedTagId && (
+              <div className="flex gap-2 px-4 mb-2">
+                <Badge variant="secondary">{selectedTagId}</Badge>
+              </div>
+            )}
             <TabsContent value="all" className="m-0">
-              <CommandList
-                items={tagFilteredCommands}
-                selectedTag={selectedTagId}
-              />
+              <CommandList items={tagFilteredCommands} />
             </TabsContent>
             <TabsContent value="favourites" className="m-0">
               <CommandList
                 items={tagFilteredCommands.filter((item) => item.favourite)}
-                selectedTag={selectedTagId}
               />
             </TabsContent>
           </Tabs>
