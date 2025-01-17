@@ -4,21 +4,17 @@ import { useMemo } from 'react';
 
 import { Command } from '@/types/command';
 import { TreeView, TreeDataItem } from './ui/tree-view';
-import { Nav } from './nav';
-import { Tags } from 'lucide-react';
 
 interface TagTreeProps {
   commands: Command[];
   selectedTagId: string | undefined;
   handleSelectedTagIdChange: (tag: string | undefined) => void;
-  isCollapsed: boolean;
 }
 
 export function TagTree({
   commands,
   selectedTagId,
   handleSelectedTagIdChange,
-  isCollapsed,
 }: TagTreeProps) {
   const buildTagTree = (commands: Command[]): TreeDataItem[] => {
     interface TagNode {
@@ -71,33 +67,13 @@ export function TagTree({
     return toTreeDataItems(root);
   };
 
-  const handleDeselect = () => {
-    handleSelectedTagIdChange(undefined);
-  };
-
   const tagData = useMemo(() => buildTagTree(commands), [commands]);
   return (
-    <>
-      <div onClick={handleDeselect}>
-        <Nav
-          isCollapsed={isCollapsed}
-          links={[
-            {
-              title: 'All Tags',
-              icon: Tags,
-              variant: 'ghost',
-            },
-          ]}
-        />
-      </div>
-      {!isCollapsed && (
-        <TreeView
-          data={tagData}
-          initialSelectedItemId={selectedTagId}
-          selectedItemId={selectedTagId}
-          handleSelectedItemIdChange={handleSelectedTagIdChange}
-        />
-      )}
-    </>
+    <TreeView
+      data={tagData}
+      initialSelectedItemId={selectedTagId}
+      selectedItemId={selectedTagId}
+      handleSelectedItemIdChange={handleSelectedTagIdChange}
+    />
   );
 }

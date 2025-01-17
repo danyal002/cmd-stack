@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { File, Search, Settings, Star } from 'lucide-react';
+import { File, Search, Settings, Star, Tags } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Input } from './ui/input';
@@ -43,6 +43,10 @@ export function MainCommandPage({
 
   const handleClickTag = (tagId: string | undefined) => {
     setSelectedTagId(tagId);
+  };
+
+  const handleDeselectTag = () => {
+    setSelectedTagId(undefined);
   };
 
   const tagFilteredCommands = selectedTagId
@@ -134,14 +138,27 @@ export function MainCommandPage({
           <Separator />
           <AddDialog />
           <Separator />
-          <ScrollArea className="h-[calc(100vh-236px)]">
-            <TagTree
-              commands={commands}
-              selectedTagId={selectedTagId}
-              handleSelectedTagIdChange={handleClickTag}
+          <div onClick={handleDeselectTag}>
+            <Nav
               isCollapsed={isCollapsed}
+              links={[
+                {
+                  title: 'All Tags',
+                  icon: Tags,
+                  variant: 'ghost',
+                },
+              ]}
             />
-          </ScrollArea>
+          </div>
+          {!isCollapsed && (
+            <ScrollArea className="h-[calc(100vh-284px)]">
+              <TagTree
+                commands={commands}
+                selectedTagId={selectedTagId}
+                handleSelectedTagIdChange={handleClickTag}
+              />
+            </ScrollArea>
+          )}
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel
