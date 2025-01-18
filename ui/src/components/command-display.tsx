@@ -13,6 +13,7 @@ import { ParamViewer } from './param-viewer';
 import { useEffect, useState } from 'react';
 import { Parameter } from '@/types/parameter';
 import { invoke } from '@tauri-apps/api/core';
+import { toast } from '@/hooks/use-toast';
 
 interface CommandDisplayProps {
   command: Command | null;
@@ -135,7 +136,13 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 />
                 <div className="flex items-center">
                   <div className="ml-auto">
-                    <Button onClick={(e) => e.preventDefault()} size="sm">
+                    <Button onClick={(e) => {
+                        e.preventDefault();
+                        navigator.clipboard.writeText(generatedCommand);
+                        toast({
+                          title: 'Copied ✅',
+                        });
+                      }} size="sm">
                       Copy
                     </Button>
                   </div>
