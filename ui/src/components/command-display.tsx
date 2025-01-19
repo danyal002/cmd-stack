@@ -52,8 +52,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 <AvatarFallback>{command.id}</AvatarFallback>
               </Avatar>
               <div className="grid gap-1">
-                <div className="font-semibold">{command.alias}</div>
-                <div className="line-clamp-1 text-xs">{command.command}</div>
+                <div className="font-semibold">{command.command}</div>
               </div>
             </div>
             {command.last_used && (
