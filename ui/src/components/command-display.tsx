@@ -14,12 +14,48 @@ import { useEffect, useState } from 'react';
 import { Parameter } from '@/types/parameter';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from '@/hooks/use-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import {
+  Form,
+  FormControl, FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from './ui/form';
+import { Input } from './ui/input';
+import { Switch } from './ui/switch';
 
 interface CommandDisplayProps {
   command: Command | null;
 }
 
+const FormSchema = z.object({
+  command: z.string().min(1, {
+    message: 'Command must be at least 1 character.',
+  }),
+  tag: z.string(),
+  note: z.string(),
+  favourite: z.boolean(),
+});
+
 export function CommandDisplay({ command }: CommandDisplayProps) {
+  const form = useForm<z.infer<typeof FormSchema>>({
+    disabled: true,
+    resolver: zodResolver(FormSchema),
+    values: {
+      command: command ? command.command : '',
+      tag: command && command.tag ? command.tag : '',
+      note: command && command.note ? command.note : '',
+      favourite: command ? command.favourite : false,
+    },
+  });
+
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    console.log('Form submitted!');
+  }
+
   const [parameterRefreshNumber, setParameterRefreshNumber] =
     useState<number>(0);
 
@@ -78,7 +114,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
             <Separator orientation="vertical" className="mx-2 h-6" />
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={!command}>
+                <Button variant="ghost" size="icon" disabled={true}>
                   <Pencil className="h-4 w-4" />
                   <span className="sr-only">Edit command</span>
                 </Button>
@@ -89,20 +125,79 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
           </div>
           <Separator />
           <div className="flex-1 whitespace-pre-wrap p-4 text-sm">
-            <Label htmlFor="command">Command</Label>
-            <Textarea
-              id="command"
-              className="p-4 resize-none"
-              value={command.command}
-              contentEditable={false}
-            />
-            <Label htmlFor="note">Note</Label>
-            <Textarea
-              id="note"
-              className="p-4 resize-none"
-              value={command.note}
-              contentEditable={false}
-            />
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-2"
+              >
+                <FormField
+                  control={form.control}
+                  name="command"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Command</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          className="resize-none"
+                          placeholder=""
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="note"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Note</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          className="resize-none"
+                          placeholder=""
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="tag"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tag</FormLabel>
+                      <FormControl>
+                        <Input placeholder="" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="favourite"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>Favourite ❤️</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          // Not sure why I need the disabled flag for a Switch but not Input
+                          disabled={true}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </form>
+            </Form>
             <div className="flex items-center">
               <Label htmlFor="parameters" className="mr-2">
                 Parameters
@@ -136,13 +231,16 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 />
                 <div className="flex items-center">
                   <div className="ml-auto">
-                    <Button onClick={(e) => {
+                    <Button
+                      onClick={(e) => {
                         e.preventDefault();
                         navigator.clipboard.writeText(generatedCommand);
                         toast({
                           title: 'Copied ✅',
                         });
-                      }} size="sm">
+                      }}
+                      size="sm"
+                    >
                       Copy
                     </Button>
                   </div>
