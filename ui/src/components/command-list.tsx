@@ -33,8 +33,8 @@ export function CommandList({ items }: CommandListProps) {
           >
             <div className="flex w-full flex-col gap-1">
               <div className="flex items-center">
-                <div className="flex items-center gap-2">
-                  <div className="font-semibold">{item.command}</div>
+                <div className="truncate flex items-center gap-2">
+                  <div className="truncate font-semibold">{item.command}</div>
                 </div>
                 <div
                   className={cn(
