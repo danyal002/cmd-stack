@@ -20,7 +20,7 @@ import { TagTree } from '@/components/tag-tree';
 import { Nav } from '@/components/nav';
 import { useCommand } from '@/use-command';
 import { Command } from '@/types/command';
-import { cmdStackIcon } from '@/components/cmdStackIcon';
+import { cmdStackIcon, cmdStackIconWithText } from '@/components/cmdStackIcon';
 import { AddDialog } from './add-dialog';
 import { ScrollArea } from './ui/scroll-area';
 
@@ -96,13 +96,8 @@ export function MainCommandPage({
               isCollapsed ? 'h-[52px]' : 'px-2',
             )}
           >
-            <div
-              className={cn('flex items-center gap-2 [&_svg]:h-6 [&_svg]:w-6')}
-            >
-              {cmdStackIcon}
-              {!isCollapsed && (
-                <h1 className="text-base font-normal">CmdStack</h1>
-              )}
+            <div className={cn('flex gap-2 [&_svg]:h-8')}>
+              {isCollapsed ? cmdStackIcon : cmdStackIconWithText}
             </div>
           </div>
           <Separator />
