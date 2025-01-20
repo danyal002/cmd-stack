@@ -85,8 +85,8 @@ impl From<&AddCommand> for InternalCommand {
 fn add_command(command: AddCommand) -> Result<(), UIError> {
     let logic = Logic::try_default()?;
     let internal_command = InternalCommand::from(&command);
-    let ret = logic.add_command(internal_command)?;
-    Ok(ret)
+    logic.add_command(internal_command)?;
+    Ok(())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,8 +97,8 @@ pub struct DeleteCommand {
 #[tauri::command]
 fn delete_command(command: DeleteCommand) -> Result<(), UIError> {
     let logic = Logic::try_default()?;
-    let ret = logic.delete_command(command.id)?;
-    Ok(ret)
+    logic.delete_command(command.id)?;
+    Ok(())
 }
 
 #[tauri::command]

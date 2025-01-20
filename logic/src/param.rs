@@ -149,17 +149,8 @@ impl RandomStringGenerator for IntParameter {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct BooleanParameter {
-    min: i32,
-    max: i32,
-}
-
-impl Default for BooleanParameter {
-    fn default() -> Self {
-        Self { min: 0, max: 1 }
-    }
-}
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct BooleanParameter {}
 
 impl FromStr for BooleanParameter {
     type Err = ParameterError;
@@ -174,7 +165,7 @@ impl FromStr for BooleanParameter {
 
 impl RandomStringGenerator for BooleanParameter {
     fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
-        let random_int = rng.generate_range(self.min, self.max);
+        let random_int = rng.generate_range(0, 1);
         if random_int == 0 {
             "false".to_string()
         } else {
@@ -234,7 +225,10 @@ impl ParameterHandler {
         Ok(())
     }
 
-    pub fn replace_parameters(&mut self, s: String) -> Result<(String, Vec<String>), ParameterError> {
+    pub fn replace_parameters(
+        &mut self,
+        s: String,
+    ) -> Result<(String, Vec<String>), ParameterError> {
         let (other_strings, parameters) = self.parse_parameters(s)?;
 
         // Build the string by generating parameters
