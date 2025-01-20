@@ -1,6 +1,35 @@
 use data::models::{Command, InternalCommand};
-use logic::{param::SerializableParameter, Logic};
+use logic::{
+    command::{AddCommandError, DeleteCommandError, ListCommandError},
+    param::{ParameterError, SerializableParameter},
+    Logic, LogicInitError,
+};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum UIError {
+    #[error("Failed to initialize logic")]
+    LogicInit(#[from] LogicInitError),
+    #[error("Failed to parse parameters")]
+    Parse(#[from] ParameterError),
+    #[error("Failed to delete command")]
+    DeleteCommand(#[from] DeleteCommandError),
+    #[error("Failed to add command")]
+    AddCommand(#[from] AddCommandError),
+    #[error("Failed to list commands")]
+    ListCommand(#[from] ListCommandError),
+}
+
+// we must manually implement serde::Serialize (https://github.com/tauri-apps/tauri/discussions/8805)
+impl serde::Serialize for UIError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        serializer.serialize_str(self.to_string().as_ref())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DisplayCommand {
@@ -26,13 +55,9 @@ impl From<&Command> for DisplayCommand {
 }
 
 #[tauri::command]
-fn list_commands() -> Result<Vec<DisplayCommand>, String> {
-    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
-
-    let commands = logic
-        .list_commands(false, false)
-        .map_err(|e| format!("Error listing commands: {:?}", e))?;
-
+fn list_commands() -> Result<Vec<DisplayCommand>, UIError> {
+    let logic = Logic::try_default()?;
+    let commands = logic.list_commands(false, false)?;
     let commands: Vec<DisplayCommand> = commands.iter().map(DisplayCommand::from).collect();
     Ok(commands)
 }
@@ -57,14 +82,11 @@ impl From<&AddCommand> for InternalCommand {
 }
 
 #[tauri::command]
-fn add_command(command: AddCommand) -> Result<(), String> {
-    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
-
+fn add_command(command: AddCommand) -> Result<(), UIError> {
+    let logic = Logic::try_default()?;
     let internal_command = InternalCommand::from(&command);
-
-    logic
-        .add_command(internal_command)
-        .map_err(|e| format!("Error adding command: {:?}", e))
+    let ret = logic.add_command(internal_command)?;
+    Ok(ret)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,30 +95,24 @@ pub struct DeleteCommand {
 }
 
 #[tauri::command]
-fn delete_command(command: DeleteCommand) -> Result<(), String> {
-    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
-
-    logic
-        .delete_command(command.id)
-        .map_err(|e| format!("Error deleting command: {:?}", e))
+fn delete_command(command: DeleteCommand) -> Result<(), UIError> {
+    let logic = Logic::try_default()?;
+    let ret = logic.delete_command(command.id)?;
+    Ok(ret)
 }
 
 #[tauri::command]
-fn parse_parameters(command: String) -> Result<(Vec<String>, Vec<SerializableParameter>), String> {
-    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
-
-    logic
-        .parse_parameters(command)
-        .map_err(|e| format!("Error parsing parameters: {:?}", e))
+fn parse_parameters(command: String) -> Result<(Vec<String>, Vec<SerializableParameter>), UIError> {
+    let logic = Logic::try_default()?;
+    let ret = logic.parse_parameters(command)?;
+    Ok(ret)
 }
 
 #[tauri::command]
-fn replace_parameters(command: String) -> Result<(String, Vec<String>), String> {
-    let logic = Logic::try_default().map_err(|e| format!("Failed to initialize Logic: {:?}", e))?;
-
-    logic
-        .generate_parameters(command)
-        .map_err(|e| format!("Error generating parameters: {:?}", e))
+fn replace_parameters(command: String) -> Result<(String, Vec<String>), UIError> {
+    let logic = Logic::try_default()?;
+    let ret = logic.generate_parameters(command)?;
+    Ok(ret)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

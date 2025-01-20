@@ -1,5 +1,11 @@
+export enum ParameterType {
+    String = "String",
+    Int = "Int",
+    Boolean = "Boolean"
+};
+
 export type Parameter = {
-    type: string,
+    type: ParameterType,
     data: {
         min: Number,
         max: Number
