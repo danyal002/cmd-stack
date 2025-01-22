@@ -15,7 +15,7 @@ export function Param({ parameter, index, generatedValue }: ParamProps) {
         {parameter.type}{' '}
         {(parameter.type == ParameterType.String ||
           parameter.type == ParameterType.Int) &&
-          `Min: ${parameter.data.min.toString()}, Max: ${parameter.data.max.toString()})`}
+          `(Min: ${parameter.data.min.toString()}, Max: ${parameter.data.max.toString()})`}
       </Label>
       <Input value={generatedValue} />
     </div>
