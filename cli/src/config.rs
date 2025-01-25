@@ -3,7 +3,6 @@ use crate::outputs::{format_output, spacing};
 use inquire::InquireError;
 use inquire::{validator::Validation, CustomType, Select};
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::fs;
 use std::path::PathBuf;
 use thiserror::Error;
