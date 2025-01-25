@@ -1,6 +1,6 @@
 use data::models::{Command, InternalCommand};
 use logic::{
-    command::{AddCommandError, DeleteCommandError, ListCommandError},
+    command::{AddCommandError, DeleteCommandError, ListCommandError, UpdateCommandError},
     param::{ParameterError, SerializableParameter},
     Logic, LogicInitError,
 };
@@ -19,6 +19,8 @@ pub enum UIError {
     AddCommand(#[from] AddCommandError),
     #[error("Failed to list commands")]
     ListCommand(#[from] ListCommandError),
+    #[error("Failed to update command")]
+    UpdateCommand(#[from] UpdateCommandError),
 }
 
 // we must manually implement serde::Serialize (https://github.com/tauri-apps/tauri/discussions/8805)
@@ -63,15 +65,15 @@ fn list_commands() -> Result<Vec<DisplayCommand>, UIError> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AddCommand {
+pub struct ExternalCommand {
     pub command: String,
     pub tag: Option<String>,
     pub note: Option<String>,
     pub favourite: bool,
 }
 
-impl From<&AddCommand> for InternalCommand {
-    fn from(c: &AddCommand) -> Self {
+impl From<&ExternalCommand> for InternalCommand {
+    fn from(c: &ExternalCommand) -> Self {
         InternalCommand {
             command: c.command.clone(),
             tag: c.tag.clone(),
@@ -82,10 +84,18 @@ impl From<&AddCommand> for InternalCommand {
 }
 
 #[tauri::command]
-fn add_command(command: AddCommand) -> Result<(), UIError> {
+fn add_command(command: ExternalCommand) -> Result<(), UIError> {
     let logic = Logic::try_default()?;
     let internal_command = InternalCommand::from(&command);
     logic.add_command(internal_command)?;
+    Ok(())
+}
+
+#[tauri::command]
+fn update_command(command_id: i64, command: ExternalCommand) -> Result<(), UIError> {
+    let logic = Logic::try_default()?;
+    let internal_command = InternalCommand::from(&command);
+    logic.update_command(command_id, internal_command)?;
     Ok(())
 }
 
@@ -124,7 +134,8 @@ pub fn run() {
             add_command,
             delete_command,
             replace_parameters,
-            parse_parameters
+            parse_parameters,
+            update_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
