@@ -5,6 +5,7 @@ use crate::{
         get_search_args_from_user, prompt_user_for_command_selection, CopyTextError,
         FetchSearchCandidatesError, PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
+    config::Config,
 };
 use inquire::InquireError;
 use log::error;
@@ -32,7 +33,10 @@ pub enum HandleSearchError {
 }
 
 /// UI handler for the search command
-pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<(), HandleSearchError> {
+pub fn handle_search_commands(
+    args: SearchAndPrintArgs,
+    config: Config,
+) -> Result<(), HandleSearchError> {
     // Get the arguments used for search
     let search_user_input = if !check_search_args_exist(&args.command, &args.tag) {
         get_search_args_from_user()?
@@ -47,9 +51,11 @@ pub fn handle_search_commands(args: SearchAndPrintArgs) -> Result<(), HandleSear
             _ => HandleSearchError::SearchCandidates(e),
         })?;
 
+    let (print_style, display_limit) = config.merge_config_with_search_and_print_args(&args);
+
     // Prompt the user to select a command
     let selected_command =
-        prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
+        prompt_user_for_command_selection(search_candidates, print_style, display_limit)?;
 
     let logic = Logic::try_default()?;
 

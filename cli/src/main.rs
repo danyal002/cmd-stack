@@ -4,6 +4,7 @@
 
 mod args;
 mod command;
+mod config;
 mod import_export;
 pub mod outputs;
 pub mod utils;
@@ -83,6 +84,12 @@ fn main() {
         std::process::exit(1);
     });
 
+    // Load configuration
+    let user_config = config::Config::load().unwrap_or_else(|_| {
+        ErrorOutput::LoadConfig.print();
+        std::process::exit(1);
+    });
+
     // Configure inquire
     inquire::set_global_render_config(inquire::ui::RenderConfig {
         prompt: inquire::ui::StyleSheet::default().with_fg(inquire::ui::Color::LightBlue),
@@ -104,7 +111,7 @@ fn main() {
             }
         },
         Command::Update(update_args) => {
-            match command::update_command::handle_update_command(update_args) {
+            match command::update_command::handle_update_command(update_args, user_config) {
                 Ok(_) => Output::UpdateCommandSuccess.print(),
                 Err(e) => {
                     match e {
@@ -118,7 +125,7 @@ fn main() {
             }
         }
         Command::Delete(delete_args) => {
-            match command::delete_command::handle_delete_command(delete_args) {
+            match command::delete_command::handle_delete_command(delete_args, user_config) {
                 Ok(_) => Output::DeleteCommandSuccess.print(),
                 Err(e) => {
                     match e {
@@ -132,7 +139,7 @@ fn main() {
             }
         }
         Command::Search(search_args) => {
-            match command::search_command::handle_search_commands(search_args) {
+            match command::search_command::handle_search_commands(search_args, user_config) {
                 Ok(_) => Output::CommandCopiedToClipboard.print(),
                 Err(e) => {
                     match e {
@@ -157,6 +164,13 @@ fn main() {
             Err(e) => {
                 ErrorOutput::Import.print();
                 error!("Error occurred while importing commands: {:?}", e);
+            }
+        },
+        Command::Config(config_args) => match config::handle_config_command(config_args) {
+            Ok(_) => Output::ConfigCommandSuccess.print(),
+            Err(e) => {
+                ErrorOutput::ConfigCommand.print();
+                error!("Error occurred while configuring settings: {:?}", e);
             }
         },
     }

@@ -111,7 +111,7 @@ pub enum PromptUserForCommandSelectionError {
 pub fn prompt_user_for_command_selection(
     commands: Vec<Command>,
     print_style: PrintStyle,
-    display_limit: u32,
+    display_limit: i32,
 ) -> Result<Command, PromptUserForCommandSelectionError> {
     if commands.is_empty() {
         return Err(PromptUserForCommandSelectionError::NoCommandsFound);

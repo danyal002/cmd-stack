@@ -5,6 +5,7 @@ use crate::{
         prompt_user_for_command_selection, FetchSearchCandidatesError,
         PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
+    config::Config,
 };
 use inquire::InquireError;
 use log::error;
@@ -28,7 +29,10 @@ pub enum HandleDeleteError {
 }
 
 /// CLI handler for the delete command
-pub fn handle_delete_command(args: SearchAndPrintArgs) -> Result<(), HandleDeleteError> {
+pub fn handle_delete_command(
+    args: SearchAndPrintArgs,
+    config: Config,
+) -> Result<(), HandleDeleteError> {
     // Get the arguments used for search
     let search_user_input = if !check_search_args_exist(&args.command, &args.tag) {
         get_search_args_from_user()?
@@ -43,9 +47,11 @@ pub fn handle_delete_command(args: SearchAndPrintArgs) -> Result<(), HandleDelet
             _ => HandleDeleteError::SearchCandidates(e),
         })?;
 
+    let (print_style, display_limit) = config.merge_config_with_search_and_print_args(&args);
+
     // Prompt the user to select a command
     let selected_command =
-        prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
+        prompt_user_for_command_selection(search_candidates, print_style, display_limit)?;
 
     let logic = Logic::try_default()?;
 

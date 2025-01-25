@@ -1,11 +1,14 @@
 use crate::{
     args::SearchAndPrintArgs,
-    command::search_utils::{
-        check_search_args_exist, fetch_search_candidates, get_search_args_from_user,
-        prompt_user_for_command_selection, FetchSearchCandidatesError,
-        PromptUserForCommandSelectionError, SearchArgsUserInput,
+    command::{
+        search_utils::{
+            check_search_args_exist, fetch_search_candidates, get_search_args_from_user,
+            prompt_user_for_command_selection, FetchSearchCandidatesError,
+            PromptUserForCommandSelectionError, SearchArgsUserInput,
+        },
+        CommandInputValidator,
     },
-    command::CommandInputValidator,
+    config::Config,
     outputs::{format_output, Output},
     utils::none_if_empty,
 };
@@ -72,7 +75,10 @@ pub fn set_command_properties_wizard(
 }
 
 /// UI handler for the update command
-pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdateError> {
+pub fn handle_update_command(
+    args: SearchAndPrintArgs,
+    config: Config,
+) -> Result<(), HandleUpdateError> {
     // Get the arguments used for search
     let search_user_input = if !check_search_args_exist(&args.command, &args.tag) {
         get_search_args_from_user()?
@@ -87,9 +93,11 @@ pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdat
             _ => HandleUpdateError::SearchCandidates(e),
         })?;
 
+    let (print_style, display_limit) = config.merge_config_with_search_and_print_args(&args);
+
     // Prompt the user to select a command
     let selected_command =
-        prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
+        prompt_user_for_command_selection(search_candidates, print_style, display_limit)?;
 
     // Get the new command properties from the user
     Output::UpdateCommandSectionTitle.print();
