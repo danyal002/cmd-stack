@@ -25,3 +25,4 @@ rustls-pemfile = { version = "2.2.0" }
 serde_json = "1"
 logic = { path = "../../logic" }
 data = { path = "../../data" } 
+thiserror = "1.0"

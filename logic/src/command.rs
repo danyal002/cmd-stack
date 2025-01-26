@@ -4,7 +4,7 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
 
-use crate::param::{ParameterError, ParameterHandler};
+use crate::param::{ParameterError, ParameterHandler, SerializableParameter};
 use crate::Logic;
 
 #[derive(Error, Debug)]
@@ -180,10 +180,14 @@ impl Logic {
 
     #[tokio::main]
     /// Handles the generation of parameters for a command
-    pub async fn generate_parameters(&self, command: Command) -> Result<String, ParameterError> {
-        let parameterized_command =
-            ParameterHandler::default().replace_parameters(command.internal_command.command)?;
-        Ok(parameterized_command)
+    pub async fn generate_parameters(&self, command: String) -> Result<(String, Vec<String>), ParameterError> {
+        ParameterHandler::default().replace_parameters(command)
+    }
+
+    #[tokio::main]
+    /// Handles the parsing of parameters for a command
+    pub async fn parse_parameters(&self, command: String) -> Result<(Vec<String>, Vec<SerializableParameter>), ParameterError> {
+        ParameterHandler::default().parse_parameters(command)
     }
 }
 
@@ -530,9 +534,10 @@ mod tests {
         let commands = list_commands_result.unwrap();
         assert!(commands.len() == 1);
 
-        let generated_param_result = logic.generate_parameters(commands.first().unwrap().clone());
+        let generated_param_result = logic.generate_parameters(commands.first().unwrap().internal_command.command.clone());
         assert!(generated_param_result.is_ok());
-        let generated_param = generated_param_result.unwrap();
+        let (generated_param,  generated_parameters) = generated_param_result.unwrap();
         assert_ne!(generated_param, "echo @{int}");
+        assert_eq!(generated_parameters.len(), 1);
     }
 }
