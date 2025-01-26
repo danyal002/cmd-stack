@@ -64,39 +64,16 @@ fn list_commands() -> Result<Vec<DisplayCommand>, UIError> {
     Ok(commands)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExternalCommand {
-    pub command: String,
-    pub tag: Option<String>,
-    pub note: Option<String>,
-    pub favourite: bool,
-}
-
-impl From<&ExternalCommand> for InternalCommand {
-    fn from(c: &ExternalCommand) -> Self {
-        InternalCommand {
-            command: c.command.clone(),
-            tag: c.tag.clone(),
-            note: c.note.clone(),
-            favourite: c.favourite,
-        }
-    }
+#[tauri::command]
+fn add_command(command: InternalCommand) -> Result<(), UIError> {
+    let logic = Logic::try_default()?;
+    Ok(logic.add_command(command)?)
 }
 
 #[tauri::command]
-fn add_command(command: ExternalCommand) -> Result<(), UIError> {
+fn update_command(command_id: i64, command: InternalCommand) -> Result<(), UIError> {
     let logic = Logic::try_default()?;
-    let internal_command = InternalCommand::from(&command);
-    logic.add_command(internal_command)?;
-    Ok(())
-}
-
-#[tauri::command]
-fn update_command(command_id: i64, command: ExternalCommand) -> Result<(), UIError> {
-    let logic = Logic::try_default()?;
-    let internal_command = InternalCommand::from(&command);
-    logic.update_command(command_id, internal_command)?;
-    Ok(())
+    Ok(logic.update_command(command_id, command)?)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,22 +84,19 @@ pub struct DeleteCommand {
 #[tauri::command]
 fn delete_command(command: DeleteCommand) -> Result<(), UIError> {
     let logic = Logic::try_default()?;
-    logic.delete_command(command.id)?;
-    Ok(())
+    Ok(logic.delete_command(command.id)?)
 }
 
 #[tauri::command]
 fn parse_parameters(command: String) -> Result<(Vec<String>, Vec<SerializableParameter>), UIError> {
     let logic = Logic::try_default()?;
-    let ret = logic.parse_parameters(command)?;
-    Ok(ret)
+    Ok(logic.parse_parameters(command)?)
 }
 
 #[tauri::command]
 fn replace_parameters(command: String) -> Result<(String, Vec<String>), UIError> {
     let logic = Logic::try_default()?;
-    let ret = logic.generate_parameters(command)?;
-    Ok(ret)
+    Ok(logic.generate_parameters(command)?)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
