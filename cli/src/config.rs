@@ -6,7 +6,7 @@ use thiserror::Error;
 pub enum ConfigError {
     #[error("Unknown property provided")]
     UnknownProperty,
-    #[error("Invalid native value provided")]
+    #[error("Invalid value provided")]
     InvalidValue,
     #[error("Failed to read config")]
     ReadConfig(#[source] logic::config::ConfigError),
@@ -14,8 +14,6 @@ pub enum ConfigError {
     WriteConfig(#[source] logic::config::ConfigError),
 }
 
-// String - key
-// String - value
 pub fn handle_config_command(config_args: ConfigArgs) -> Result<(), ConfigError> {
     let mut config = logic::config::Config::read().map_err(ConfigError::ReadConfig)?;
 
@@ -39,7 +37,5 @@ pub fn handle_config_command(config_args: ConfigArgs) -> Result<(), ConfigError>
         }
     }
 
-    config.write().map_err(ConfigError::WriteConfig)?;
-
-    Ok(())
+    config.write().map_err(ConfigError::WriteConfig)
 }

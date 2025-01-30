@@ -1,13 +1,13 @@
 use crate::{
-    args::{PrintStyle, SearchAndPrintArgs},
+    args::SearchArgs,
     outputs::{format_output, spacing},
     utils::{none_if_empty, truncate_string},
+    Cli,
 };
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::{command::SearchCommandArgs, Logic};
 use prettytable::{format, Cell, Row, Table};
 use termion::terminal_size;
 use thiserror::Error;
@@ -16,8 +16,8 @@ pub struct SearchArgsUserInput {
     pub command: Option<String>,
     pub tag: Option<String>,
 }
-impl From<SearchAndPrintArgs> for SearchArgsUserInput {
-    fn from(args: SearchAndPrintArgs) -> Self {
+impl From<SearchArgs> for SearchArgsUserInput {
+    fn from(args: SearchArgs) -> Self {
         SearchArgsUserInput {
             command: args.command,
             tag: args.tag,
@@ -33,176 +33,130 @@ pub fn check_search_args_exist(command: &Option<String>, tag: &Option<String>) -
     command.is_some() || tag.is_some()
 }
 
-/// Generates a wizard to set the properties for command searching
-pub fn get_search_args_from_user() -> Result<SearchArgsUserInput, InquireError> {
-    spacing();
-
-    let command = Text::new(&format_output(
-        "<bold>Command</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
-    ))
-    .prompt()?;
-
-    let tag = Text::new(&format_output(
-        "<bold>Tag</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
-    ))
-    .prompt()?;
-
-    Ok(SearchArgsUserInput {
-        command: none_if_empty(command),
-        tag: none_if_empty(tag),
-    })
-}
-
-#[derive(Error, Debug)]
-pub enum FetchSearchCandidatesError {
-    #[error("No commands found")]
-    NoCommandsFound,
-    #[error("failed to initialize logic")]
-    LogicInit(#[source] logic::LogicInitError),
-    #[error("failed to search for commands")]
-    SearchCommands(#[source] logic::command::SearchCommandError),
-}
-
-/// Gets search candidates from the database
-pub fn fetch_search_candidates(
-    search_args: SearchArgsUserInput,
-    order_by_use: bool,
-    favourites_only: bool,
-) -> Result<Vec<Command>, FetchSearchCandidatesError> {
-    let logic = match Logic::try_default() {
-        Ok(l) => l,
-        Err(e) => {
-            error!(target: "Search Utils", "Failed to initialize logic: {:?}", e);
-            return Err(FetchSearchCandidatesError::LogicInit(e));
-        }
-    };
-
-    let commands = match logic.search_command(SearchCommandArgs {
-        command: search_args.command,
-        tag: search_args.tag,
-        order_by_use,
-        favourites_only,
-    }) {
-        Ok(c) => c,
-        Err(e) => {
-            error!(target: "Search Utils", "Failed to search for commands: {:?}", e);
-            return Err(FetchSearchCandidatesError::SearchCommands(e));
-        }
-    };
-
-    if commands.is_empty() {
-        return Err(FetchSearchCandidatesError::NoCommandsFound);
-    }
-
-    Ok(commands)
-}
-
 #[derive(Error, Debug)]
 pub enum PromptUserForCommandSelectionError {
     #[error("No commands found")]
-    NoCommandsFound,
-    #[error("failed to get selected item")]
-    InquireError(#[from] InquireError),
+    NoCommandsProvided,
+    #[error("failed to render")]
+    Inquire(#[from] InquireError),
 }
 
 /// Handles the UI interaction to prompt the user for selection
 ///
 /// `commands` must be non-empty
-pub fn prompt_user_for_command_selection(
-    commands: Vec<Command>,
-    print_style: PrintStyle,
-    display_limit: u32,
-) -> Result<Command, PromptUserForCommandSelectionError> {
-    if commands.is_empty() {
-        return Err(PromptUserForCommandSelectionError::NoCommandsFound);
+impl Cli {
+    /// Generates a wizard to set the properties for command searching
+    pub fn prompt_user_for_search_args(&self) -> Result<SearchArgsUserInput, InquireError> {
+        spacing();
+
+        let command = Text::new(&format_output(
+            "<bold>Command</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+        ))
+        .prompt()?;
+
+        let tag = Text::new(&format_output(
+            "<bold>Tag</bold> <italics>(Leave blank for no filter)</italics><bold>:</bold>",
+        ))
+        .prompt()?;
+
+        Ok(SearchArgsUserInput {
+            command: none_if_empty(command),
+            tag: none_if_empty(tag),
+        })
     }
 
-    let (formatted_commands, columns) = format_commands_for_printing(&commands, print_style);
-
-    spacing();
-    let selected_command = match Select::new(
-        &format_output(
-            &("<bold>Select a command</bold> <italics>".to_owned()
-                + columns
-                + "</italics><bold>:</bold>"),
-        ),
-        formatted_commands,
-    )
-    // Only display the command once the user makes a selection
-    .with_formatter(&|i| commands[i.index].internal_command.command.to_string())
-    .with_page_size(display_limit as usize)
-    .raw_prompt()
-    {
-        Ok(c) => c,
-        Err(e) => {
-            return Err(PromptUserForCommandSelectionError::InquireError(e));
+    pub fn prompt_user_for_command_selection(
+        &self,
+        commands: Vec<Command>,
+    ) -> Result<Command, PromptUserForCommandSelectionError> {
+        if commands.is_empty() {
+            return Err(PromptUserForCommandSelectionError::NoCommandsProvided);
         }
-    };
 
-    Ok(commands[selected_command.index].clone())
-}
+        let (formatted_commands, columns) = self.format_commands_for_printing(&commands);
 
-/// Formats the commands for printing based on the user's preferred style.
-/// Returns the columns to be printed
-fn format_commands_for_printing(
-    commands: &Vec<Command>,
-    print_style: PrintStyle,
-) -> (Vec<String>, &str) {
-    match print_style {
-        PrintStyle::All => (
-            format_internal_commands(commands),
-            "(Command | Tag | Note | Favourite [*])",
-        ),
-        PrintStyle::Command => (
-            commands
-                .iter()
-                .map(|c| c.internal_command.command.clone())
-                .collect(),
-            "(Command)",
-        ),
-    }
-}
+        spacing();
+        let selected_command = match Select::new(
+            &format_output(
+                &("<bold>Select a command</bold> <italics>".to_owned()
+                    + columns
+                    + "</italics><bold>:</bold>"),
+            ),
+            formatted_commands,
+        )
+        // Only display the command once the user makes a selection
+        .with_formatter(&|i| commands[i.index].internal_command.command.to_string())
+        .with_page_size(self.config.cli_display_limit as usize)
+        .raw_prompt()
+        {
+            Ok(c) => c,
+            Err(e) => {
+                return Err(PromptUserForCommandSelectionError::Inquire(e));
+            }
+        };
 
-fn format_internal_commands(commands: &Vec<Command>) -> Vec<String> {
-    let (width, _) = terminal_size().unwrap_or((150, 0)); // Default to 150 if terminal size cannot be determined
-
-    // Define maximum widths for each column
-    let tag_width = std::cmp::max(width * 5 / 100, 8) as i32; // Tag gets 5% of the width or 8, whichever is more
-    let favourite_width = 5;
-
-    let remaining_width = std::cmp::max(width as i32 - tag_width - favourite_width - 12, 0);
-    let command_width = remaining_width * 75 / 100; // Commands get 75% of remaining width
-    let note_width = remaining_width - command_width;
-
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-
-    for command in commands {
-        let truncated_tag = truncate_string(
-            command.internal_command.tag.as_deref().unwrap_or(""),
-            tag_width as usize,
-        );
-        let truncated_command =
-            truncate_string(&command.internal_command.command, command_width as usize);
-        let truncated_note = truncate_string(
-            command.internal_command.note.as_deref().unwrap_or(""),
-            note_width as usize,
-        );
-
-        table.add_row(Row::new(vec![
-            Cell::new(&truncated_command),
-            Cell::new(&truncated_tag),
-            Cell::new(&truncated_note),
-            Cell::new(if command.internal_command.favourite {
-                "*"
-            } else {
-                ""
-            }),
-        ]));
+        Ok(commands[selected_command.index].clone())
     }
 
-    let table_str = table.to_string();
-    table_str.lines().map(|s| s.to_string()).collect()
+    /// Formats the commands for printing based on the user's preferred style.
+    /// Returns the columns to be printed
+    fn format_commands_for_printing(&self, commands: &Vec<Command>) -> (Vec<String>, &str) {
+        match self.config.cli_print_style {
+            logic::config::PrintStyle::All => (
+                self.format_internal_commands(commands),
+                "(Command | Tag | Note | Favourite [*])",
+            ),
+            logic::config::PrintStyle::Command => (
+                commands
+                    .iter()
+                    .map(|c| c.internal_command.command.clone())
+                    .collect(),
+                "(Command)",
+            ),
+        }
+    }
+
+    fn format_internal_commands(&self, commands: &Vec<Command>) -> Vec<String> {
+        let (width, _) = terminal_size().unwrap_or((150, 0)); // Default to 150 if terminal size cannot be determined
+
+        // Define maximum widths for each column
+        let tag_width = std::cmp::max(width * 5 / 100, 8) as i32; // Tag gets 5% of the width or 8, whichever is more
+        let favourite_width = 5;
+
+        let remaining_width = std::cmp::max(width as i32 - tag_width - favourite_width - 12, 0);
+        let command_width = remaining_width * 75 / 100; // Commands get 75% of remaining width
+        let note_width = remaining_width - command_width;
+
+        let mut table = Table::new();
+        table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+
+        for command in commands {
+            let truncated_tag = truncate_string(
+                command.internal_command.tag.as_deref().unwrap_or(""),
+                tag_width as usize,
+            );
+            let truncated_command =
+                truncate_string(&command.internal_command.command, command_width as usize);
+            let truncated_note = truncate_string(
+                command.internal_command.note.as_deref().unwrap_or(""),
+                note_width as usize,
+            );
+
+            table.add_row(Row::new(vec![
+                Cell::new(&truncated_command),
+                Cell::new(&truncated_tag),
+                Cell::new(&truncated_note),
+                Cell::new(if command.internal_command.favourite {
+                    "*"
+                } else {
+                    ""
+                }),
+            ]));
+        }
+
+        let table_str = table.to_string();
+        table_str.lines().map(|s| s.to_string()).collect()
+    }
 }
 
 #[derive(Error, Debug)]

@@ -1,11 +1,6 @@
-//! # CLI
-//!
-//! This crate handles user interaction in the terminal
-
 mod args;
 mod command;
 mod config;
-mod import_export;
 pub mod outputs;
 pub mod utils;
 
@@ -19,6 +14,7 @@ use log::{error, LevelFilter, SetLoggerError};
 use log4rs::append::file::FileAppender;
 use log4rs::config::runtime::ConfigErrors;
 use log4rs::config::{Appender, Config, Root};
+use logic::Logic;
 use outputs::{ErrorOutput, Output};
 use thiserror::Error;
 
@@ -78,11 +74,23 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
     Ok(())
 }
 
+pub struct Cli {
+    logic: Logic,
+    config: logic::config::Config,
+}
+
 fn main() {
     let _ = initialize_logger().map_err(|_| {
         ErrorOutput::Logger.print();
         std::process::exit(1);
     });
+
+    // TODO: Instead of panicking, show a user-friendly error, log and quit.
+    let logic = Logic::try_default().map_err(|e| panic!("{}", e)).unwrap();
+    let cli = Cli {
+        logic,
+        config: logic::config::Config::default(),
+    };
 
     // Configure inquire
     inquire::set_global_render_config(inquire::ui::RenderConfig {
@@ -90,11 +98,10 @@ fn main() {
         ..Default::default()
     });
 
-    // Parse command line arguments and execute the command
     let args = CmdStackArgs::parse();
 
     match args.command {
-        Command::Add(add_args) => match command::add_command::handle_add_command(add_args) {
+        Command::Add(add_args) => match cli.handle_add_command(add_args) {
             Ok(_) => Output::AddCommandSuccess.print(),
             Err(e) => {
                 match e {
@@ -104,56 +111,50 @@ fn main() {
                 error!("Error occurred while adding command: {:?}", e);
             }
         },
-        Command::Update(update_args) => {
-            match command::update_command::handle_update_command(update_args) {
-                Ok(_) => Output::UpdateCommandSuccess.print(),
-                Err(e) => {
-                    match e {
-                        HandleUpdateError::NoCommandFound => Output::NoCommandsFound.print(),
-                        HandleUpdateError::Inquire(_) => ErrorOutput::UserInput.print(),
-                        HandleUpdateError::SelectCommand(_) => ErrorOutput::UserInput.print(),
-                        _ => ErrorOutput::UpdateCommand.print(),
-                    };
-                    error!("Error occurred while updating command: {:?}", e);
-                }
+        Command::Update(update_args) => match cli.handle_update_command(update_args) {
+            Ok(_) => Output::UpdateCommandSuccess.print(),
+            Err(e) => {
+                match e {
+                    HandleUpdateError::NoCommandFound => Output::NoCommandsFound.print(),
+                    HandleUpdateError::Inquire(_) => ErrorOutput::UserInput.print(),
+                    HandleUpdateError::SelectCommand(_) => ErrorOutput::UserInput.print(),
+                    _ => ErrorOutput::UpdateCommand.print(),
+                };
+                error!("Error occurred while updating command: {:?}", e);
             }
-        }
-        Command::Delete(delete_args) => {
-            match command::delete_command::handle_delete_command(delete_args) {
-                Ok(_) => Output::DeleteCommandSuccess.print(),
-                Err(e) => {
-                    match e {
-                        HandleDeleteError::NoCommandFound => Output::NoCommandsFound.print(),
-                        HandleDeleteError::Inquire(_) => ErrorOutput::UserInput.print(),
-                        HandleDeleteError::SelectCommand(_) => ErrorOutput::UserInput.print(),
-                        _ => ErrorOutput::DeleteCommand.print(),
-                    };
-                    error!("Error occurred while deleting command: {:?}", e);
-                }
+        },
+        Command::Delete(delete_args) => match cli.handle_delete_command(delete_args) {
+            Ok(_) => Output::DeleteCommandSuccess.print(),
+            Err(e) => {
+                match e {
+                    HandleDeleteError::NoCommandsFound => Output::NoCommandsFound.print(),
+                    HandleDeleteError::Inquire(_) => ErrorOutput::UserInput.print(),
+                    HandleDeleteError::SelectCommand(_) => ErrorOutput::UserInput.print(),
+                    _ => ErrorOutput::DeleteCommand.print(),
+                };
+                error!("Error occurred while deleting command: {:?}", e);
             }
-        }
-        Command::Search(search_args) => {
-            match command::search_command::handle_search_commands(search_args) {
-                Ok(_) => Output::CommandCopiedToClipboard.print(),
-                Err(e) => {
-                    match e {
-                        HandleSearchError::NoCommandFound => Output::NoCommandsFound.print(),
-                        HandleSearchError::Inquire(_) => ErrorOutput::UserInput.print(),
-                        HandleSearchError::SelectCommand(_) => ErrorOutput::UserInput.print(),
-                        _ => ErrorOutput::SearchCommand.print(),
-                    };
-                    error!("Error occurred while searching commands: {:?}", e);
-                }
+        },
+        Command::Search(search_args) => match cli.handle_search_command(search_args) {
+            Ok(_) => Output::CommandCopiedToClipboard.print(),
+            Err(e) => {
+                match e {
+                    HandleSearchError::NoCommandFound => Output::NoCommandsFound.print(),
+                    HandleSearchError::Inquire(_) => ErrorOutput::UserInput.print(),
+                    HandleSearchError::SelectCommand(_) => ErrorOutput::UserInput.print(),
+                    _ => ErrorOutput::SearchCommand.print(),
+                };
+                error!("Error occurred while searching commands: {:?}", e);
             }
-        }
-        Command::Export(export_args) => match import_export::handle_export_command(export_args) {
+        },
+        Command::Export(export_args) => match cli.handle_export_command(export_args) {
             Ok(file_path) => Output::ExportCommandsSuccess(&file_path).print(),
             Err(e) => {
                 ErrorOutput::Export.print();
                 error!("Error occurred while exporting commands: {:?}", e);
             }
         },
-        Command::Import(import_args) => match import_export::handle_import_command(import_args) {
+        Command::Import(import_args) => match cli.handle_import_command(import_args) {
             Ok((num, file_path)) => Output::ImportCommandsSuccess(num, &file_path).print(),
             Err(e) => {
                 ErrorOutput::Import.print();

@@ -14,13 +14,13 @@ pub enum Command {
     Add(AddArgs),
 
     /// Update a command in your stack
-    Update(SearchAndPrintArgs),
+    Update(SearchArgs),
 
     /// Delete a command in your stack
-    Delete(SearchAndPrintArgs),
+    Delete(SearchArgs),
 
     /// Search for a command in your stack
-    Search(SearchAndPrintArgs),
+    Search(SearchArgs),
 
     /// Export stack to a JSON file
     Export(ImportExportArgs),
@@ -28,7 +28,7 @@ pub enum Command {
     /// Import stack from a JSON file
     Import(ImportExportArgs),
 
-    /// Modify the configs
+    /// Modify the config values
     Config(ConfigArgs),
 }
 
@@ -63,7 +63,7 @@ pub enum PrintStyle {
 
 /// Arguments for searching and printing commands
 #[derive(Debug, Args, Clone)]
-pub struct SearchAndPrintArgs {
+pub struct SearchArgs {
     /// The text used to filter by command when searching
     pub command: Option<String>,
 
@@ -78,14 +78,6 @@ pub struct SearchAndPrintArgs {
     /// Only display favourite commands
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
-
-    /// Configure how commands are displayed
-    #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
-    pub print_style: PrintStyle,
-
-    /// Configure how many commands are displayed at a time
-    #[clap(long = "display-limit", default_value = "10")]
-    pub display_limit: u32,
 }
 
 /// Arguments for importing/exporting commands
