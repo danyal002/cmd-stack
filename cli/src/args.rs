@@ -1,4 +1,5 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use validator::Validate;
 
 #[derive(Debug, Parser)]
 #[clap(version, about)]
@@ -26,6 +27,9 @@ pub enum Command {
 
     /// Import stack from a JSON file
     Import(ImportExportArgs),
+
+    /// Modify the configs
+    Config(ConfigArgs),
 }
 
 /// Arguments for adding a command
@@ -89,4 +93,13 @@ pub struct SearchAndPrintArgs {
 pub struct ImportExportArgs {
     /// The relative path of the file
     pub file: String,
+}
+
+/// Arguments for setting the CLI config
+#[derive(Debug, Args, Validate)]
+pub struct ConfigArgs {
+    pub property: String,
+
+    #[validate(length(min = 1))]
+    pub value: String,
 }

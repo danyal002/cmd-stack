@@ -4,6 +4,7 @@
 
 mod args;
 mod command;
+mod config;
 mod import_export;
 pub mod outputs;
 pub mod utils;
@@ -157,6 +158,13 @@ fn main() {
             Err(e) => {
                 ErrorOutput::Import.print();
                 error!("Error occurred while importing commands: {:?}", e);
+            }
+        },
+        Command::Config(config_args) => match config::handle_config_command(config_args) {
+            Ok(()) => Output::ConfigUpdate.print(),
+            Err(e) => {
+                ErrorOutput::Config.print();
+                error!("Error occurred while updating config: {:?}", e);
             }
         },
     }

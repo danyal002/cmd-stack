@@ -3,6 +3,7 @@
 //! This crate handles the business logic of the application
 
 pub mod command;
+pub mod config;
 pub mod import_export;
 pub mod param;
 
