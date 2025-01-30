@@ -16,11 +16,9 @@ pub enum ConfigError {
 
 /// The configuration properties for this application
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Config {
-    #[serde(default)]
     pub cli_print_style: PrintStyle,
-
-    #[serde(default)]
     pub cli_display_limit: u32,
 }
 
@@ -66,7 +64,7 @@ impl Config {
         let config_path = Config::config_file_path()?;
         let config_content = fs::read_to_string(config_path).unwrap_or_else(|_| String::from("{}"));
 
-        let config = serde_json::from_str(&config_content)?;
+        let config = serde_json::from_str(&config_content).unwrap_or_default();
 
         Ok(config)
     }
