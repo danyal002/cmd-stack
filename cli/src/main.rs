@@ -87,10 +87,10 @@ fn main() {
 
     // TODO: Instead of panicking, show a user-friendly error, log and quit.
     let logic = Logic::try_default().map_err(|e| panic!("{}", e)).unwrap();
-    let cli = Cli {
-        logic,
-        config: logic::config::Config::default(),
-    };
+    let config = logic::config::Config::read()
+        .map_err(|e| panic!("{}", e))
+        .unwrap();
+    let cli = Cli { logic, config };
 
     // Configure inquire
     inquire::set_global_render_config(inquire::ui::RenderConfig {

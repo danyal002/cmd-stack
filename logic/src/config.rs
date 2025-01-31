@@ -20,7 +20,6 @@ pub enum ConfigError {
 pub struct Config {
     pub cli_print_style: PrintStyle,
     pub cli_display_limit: u32,
-    pub cli_display_by_most_recently_used: bool,
 }
 
 impl Default for Config {
@@ -28,7 +27,6 @@ impl Default for Config {
         Self {
             cli_print_style: PrintStyle::All,
             cli_display_limit: 10,
-            cli_display_by_most_recently_used: true,
         }
     }
 }
