@@ -20,6 +20,7 @@ import { toast } from '@/hooks/use-toast';
 import { useRefresh } from '@/use-command';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
+import { CirclePlus } from 'lucide-react';
 
 const FormSchema = z.object({
   command: z.string().min(1, {
@@ -77,7 +78,10 @@ export function AddForm({ onSuccess }: AddFormProps) {
             <FormItem>
               <FormLabel>Command</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input
+                  placeholder="INSERT INTO users VALUES (@{string[5,10]}, @{int});"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>This is your command.</FormDescription>
               <FormMessage />
@@ -91,7 +95,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
             <FormItem>
               <FormLabel>Tag</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input placeholder="SQL/INSERT" {...field} />
               </FormControl>
               <FormDescription>
                 This is your tag for the command.
@@ -107,7 +111,10 @@ export function AddForm({ onSuccess }: AddFormProps) {
             <FormItem>
               <FormLabel>Note</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input
+                  placeholder="SQL for inserting a random user"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 This is your note for the command.
@@ -141,6 +148,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
         <div className="flex justify-center">
           <Button className="w-1/2" type="submit">
             Add Command
+            <CirclePlus className="h-4 w-4" />
           </Button>
         </div>
       </form>
