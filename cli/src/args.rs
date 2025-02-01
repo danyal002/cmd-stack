@@ -1,5 +1,5 @@
-use clap::{Args, Parser, Subcommand, ValueEnum};
-use validator::Validate;
+use crate::command::config_command::ConfigArgs;
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[clap(version, about)]
@@ -28,6 +28,7 @@ pub enum Command {
     /// Import stack from a JSON file
     Import(ImportExportArgs),
 
+    #[clap(subcommand)]
     /// Modify the config values
     Config(ConfigArgs),
 }
@@ -51,16 +52,6 @@ pub struct AddArgs {
     pub favourite: bool,
 }
 
-/// Different supported printing styles for commands
-#[derive(Debug, ValueEnum, Clone)]
-pub enum PrintStyle {
-    /// Display the command, tag, and notes
-    All,
-
-    /// Only display the command
-    Command,
-}
-
 /// Arguments for searching and printing commands
 #[derive(Debug, Args, Clone)]
 pub struct SearchArgs {
@@ -73,7 +64,7 @@ pub struct SearchArgs {
 
     /// Display commands in order of most recent use
     #[clap(long = "recent", short = 'r', action)]
-    pub recent: bool,
+    pub order_by_recently_used: bool,
 
     /// Only display favourite commands
     #[clap(long = "favourite", short = 'f', action)]
@@ -85,13 +76,4 @@ pub struct SearchArgs {
 pub struct ImportExportArgs {
     /// The relative path of the file
     pub file: String,
-}
-
-/// Arguments for setting the CLI config
-#[derive(Debug, Args, Validate)]
-pub struct ConfigArgs {
-    pub property: String,
-
-    #[validate(length(min = 1))]
-    pub value: String,
 }

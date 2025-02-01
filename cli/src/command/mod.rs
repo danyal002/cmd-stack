@@ -1,4 +1,5 @@
 pub mod add_command;
+pub mod config_command;
 pub mod delete_command;
 pub mod export_command;
 pub mod import_command;

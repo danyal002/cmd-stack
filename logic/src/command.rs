@@ -55,7 +55,7 @@ pub enum DeleteCommandError {
 pub struct SearchCommandArgs {
     pub command: Option<String>,
     pub tag: Option<String>,
-    pub order_by_use: bool,
+    pub order_by_recently_used: bool,
     pub favourites_only: bool,
 }
 
@@ -83,7 +83,7 @@ impl Logic {
         // Get all commands from the database
         let commands = self
             .dal
-            .get_all_commands(params.order_by_use, params.favourites_only)
+            .get_all_commands(params.order_by_recently_used, params.favourites_only)
             .await?;
 
         // Filter the commands based on the search parameters using fuzzy matching
@@ -369,7 +369,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: None,
             tag: Some("gree".to_string()),
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -380,7 +380,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: None,
             tag: Some("green".to_string()),
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -391,7 +391,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: Some("abc".to_string()),
             tag: None,
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -402,7 +402,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: Some("abcd".to_string()),
             tag: None,
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -413,7 +413,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: None,
             tag: None,
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());

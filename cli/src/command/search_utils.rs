@@ -102,11 +102,11 @@ impl Cli {
     /// Returns the columns to be printed
     fn format_commands_for_printing(&self, commands: &Vec<Command>) -> (Vec<String>, &str) {
         match self.config.cli_print_style {
-            logic::config::PrintStyle::All => (
+            logic::config::CliPrintStyle::All => (
                 self.format_internal_commands(commands),
                 "(Command | Tag | Note | Favourite [*])",
             ),
-            logic::config::PrintStyle::Command => (
+            logic::config::CliPrintStyle::CommandsOnly => (
                 commands
                     .iter()
                     .map(|c| c.internal_command.command.clone())

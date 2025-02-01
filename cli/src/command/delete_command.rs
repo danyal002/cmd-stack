@@ -34,15 +34,12 @@ impl Cli {
             SearchArgsUserInput::from(args.clone())
         };
 
-        let search_results = self
-            .logic
-            .search_command(SearchCommandArgs {
-                command: search_user_input.command,
-                tag: search_user_input.tag,
-                order_by_use: args.recent,
-                favourites_only: args.favourite,
-            })
-            .map_err(HandleDeleteError::Search)?;
+        let search_results = self.logic.search_command(SearchCommandArgs {
+            command: search_user_input.command,
+            tag: search_user_input.tag,
+            order_by_recently_used: args.order_by_recently_used,
+            favourites_only: args.favourite,
+        })?;
 
         if search_results.is_empty() {
             return Err(HandleDeleteError::NoCommandsFound);

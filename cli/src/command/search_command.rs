@@ -38,15 +38,12 @@ impl Cli {
         } else {
             SearchArgsUserInput::from(args.clone())
         };
-        let search_results = self
-            .logic
-            .search_command(SearchCommandArgs {
-                command: search_user_input.command,
-                tag: search_user_input.tag,
-                order_by_use: args.recent,
-                favourites_only: args.favourite,
-            })
-            .map_err(HandleSearchError::Search)?;
+        let search_results = self.logic.search_command(SearchCommandArgs {
+            command: search_user_input.command,
+            tag: search_user_input.tag,
+            order_by_recently_used: args.order_by_recently_used,
+            favourites_only: args.favourite,
+        })?;
 
         let user_selection = self.prompt_user_for_command_selection(search_results)?;
 
