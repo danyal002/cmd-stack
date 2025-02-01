@@ -168,7 +168,7 @@ export function MainCommandPage({
           minSize={30}
           className="min-w-[290px]"
         >
-          <div className="flex items-center px-4 py-2">
+          <div className="flex items-center pl-4 pr-2 py-2">
             <h1 className="text-xl font-bold">Commands</h1>
             <div className="ml-auto">
               <AddDialog />
