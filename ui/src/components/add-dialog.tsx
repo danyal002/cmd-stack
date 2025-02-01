@@ -16,17 +16,15 @@ export function AddDialog({}: AddDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <div className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2">
-        <DialogTrigger className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-          <Button variant={'default'} size={'sm'} className="justify-start">
-            <CirclePlus className="mr-2 h-4 w-4" />
-            Add Command
-          </Button>
-        </DialogTrigger>
-      </div>
+      <DialogTrigger>
+        <Button variant="default" type="button" size="icon">
+          <CirclePlus className="h-4 w-4" />
+          <span className="sr-only">Add command</span>
+        </Button>
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <AddForm onSuccess={() => setOpen(false)}/>
+          <AddForm onSuccess={() => setOpen(false)} />
         </DialogHeader>
       </DialogContent>
     </Dialog>

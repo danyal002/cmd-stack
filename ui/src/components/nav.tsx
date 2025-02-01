@@ -1,23 +1,24 @@
-"use client"
+'use client';
 
-import { LucideIcon } from "lucide-react"
+import { LucideIcon } from 'lucide-react';
 
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from '@/components/ui/tooltip';
 
 interface NavProps {
-  isCollapsed: boolean
+  isCollapsed: boolean;
   links: {
-    title: string
-    label?: string
-    icon: LucideIcon
-    variant: "default" | "ghost"
-  }[]
+    title: string;
+    label?: string;
+    icon: LucideIcon;
+    variant: 'default' | 'ghost';
+    onClick: () => void;
+  }[];
 }
 
 export function Nav({ links, isCollapsed }: NavProps) {
@@ -34,11 +35,12 @@ export function Nav({ links, isCollapsed }: NavProps) {
                 <a
                   href="#"
                   className={cn(
-                    buttonVariants({ variant: link.variant, size: "icon" }),
-                    "h-9 w-9",
-                    link.variant === "default" &&
-                      "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                    buttonVariants({ variant: link.variant, size: 'icon' }),
+                    'h-9 w-9',
+                    link.variant === 'default' &&
+                      'dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white',
                   )}
+                  onClick={link.onClick}
                 >
                   <link.icon className="h-4 w-4" />
                   <span className="sr-only">{link.title}</span>
@@ -58,29 +60,30 @@ export function Nav({ links, isCollapsed }: NavProps) {
               key={index}
               href="#"
               className={cn(
-                buttonVariants({ variant: link.variant, size: "sm" }),
-                link.variant === "default" &&
-                  "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white",
-                "justify-start"
+                buttonVariants({ variant: link.variant, size: 'sm' }),
+                link.variant === 'default' &&
+                  'dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white',
+                'justify-start',
               )}
+              onClick={link.onClick}
             >
               <link.icon className="mr-2 h-4 w-4" />
               {link.title}
               {link.label && (
                 <span
                   className={cn(
-                    "ml-auto",
-                    link.variant === "default" &&
-                      "text-background dark:text-white"
+                    'ml-auto',
+                    link.variant === 'default' &&
+                      'text-background dark:text-white',
                   )}
                 >
                   {link.label}
                 </span>
               )}
             </a>
-          )
+          ),
         )}
       </nav>
     </div>
-  )
+  );
 }

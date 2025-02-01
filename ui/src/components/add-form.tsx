@@ -18,7 +18,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { useRefresh } from '@/use-command';
-import { Switch } from './ui/switch';
+import { Checkbox } from './ui/checkbox';
+import { Separator } from './ui/separator';
 
 const FormSchema = z.object({
   command: z.string().min(1, {
@@ -68,7 +69,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="command"
@@ -119,23 +120,29 @@ export function AddForm({ onSuccess }: AddFormProps) {
           control={form.control}
           name="favourite"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-              <div className="space-y-0.5">
-                <FormLabel>Favourite</FormLabel>
-                <FormDescription>
-                  Add this command to favourites.
-                </FormDescription>
+            <FormItem>
+              <div className="flex items-center">
+                <FormLabel className="mr-2">Favourite</FormLabel>
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
               </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
+              <FormDescription>
+                This is whether this command is a favourite.
+              </FormDescription>
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Separator />
+        <div className="flex justify-center">
+          <Button className="w-1/2" type="submit">
+            Add Command
+          </Button>
+        </div>
       </form>
     </Form>
   );
