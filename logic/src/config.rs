@@ -1,14 +1,28 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::path::PathBuf;
+use std::{fs, io};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum ConfigError {
+pub enum ConfigWriteError {
     #[error("Invalid value provided: {0}")]
     InvalidValue(String),
     #[error("Failed to locate config directory")]
-    Directory(#[from] std::io::Error),
+    ConfigPath,
+    #[error("Failed to write config to file: {0}")]
+    Io(#[from] io::Error),
+    #[error("Failed to deserialize config file")]
+    Deserialize(#[from] serde_json::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum ConfigReadError {
+    #[error("Invalid value provided: {0}")]
+    InvalidValue(String),
+    #[error("Failed to locate config directory")]
+    ConfigPath,
+    #[error("Failed to read from config file: {0}")]
+    Io(#[from] io::Error),
     #[error("Failed to serialize config file")]
     Serialize(#[from] serde_json::Error),
 }
@@ -48,32 +62,32 @@ pub enum CliPrintStyle {
 }
 
 impl Config {
-    pub fn read() -> Result<Config, ConfigError> {
-        let config_path = Config::config_file_path()?;
+    pub fn read() -> Result<Config, ConfigReadError> {
+        let config_path = Config::default_config_file_path()?.ok_or(ConfigReadError::ConfigPath)?;
         let config_content = fs::read_to_string(&config_path).unwrap_or_else(|_| "{}".to_string());
-        let config = serde_json::from_str(&config_content).unwrap_or_default();
+        let config: Config =
+            serde_json::from_str(&config_content).map_err(ConfigReadError::Serialize)?;
 
         Ok(config)
     }
 
-    pub fn write(&self) -> Result<(), ConfigError> {
-        let config_path = Config::config_file_path()?;
-        let config_content = serde_json::to_string_pretty(self).map_err(ConfigError::Serialize)?;
-        fs::write(config_path, config_content)?;
+    pub fn write(&self) -> Result<(), ConfigWriteError> {
+        let config_path =
+            Config::default_config_file_path()?.ok_or(ConfigWriteError::ConfigPath)?;
+        let config_file_content =
+            serde_json::to_string_pretty(self).map_err(ConfigWriteError::Deserialize)?;
 
-        Ok(())
+        Ok(fs::write(config_path, config_file_content)?)
     }
 
-    fn config_file_path() -> Result<PathBuf, ConfigError> {
-        let mut config_dir = dirs::config_dir().ok_or_else(|| {
-            ConfigError::Directory(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "Could not find config directory",
-            ))
-        })?;
-        config_dir.push("cmdstack");
-        fs::create_dir_all(&config_dir)?;
-        config_dir.push("config.json");
-        Ok(config_dir)
+    fn default_config_file_path() -> Result<Option<PathBuf>, io::Error> {
+        if let Some(mut path) = dirs::config_dir() {
+            path.push("cmdstack");
+            fs::create_dir_all(path.as_path())?;
+            path.push("config.json");
+
+            return Ok(Some(path));
+        }
+        Ok(None)
     }
 }

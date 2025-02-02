@@ -11,10 +11,10 @@ pub enum ConfigError {
     UnknownProperty,
     #[error("Invalid value provided: {0}")]
     InvalidValue(String),
-    #[error("Failed to read config")]
-    ReadConfig(#[source] logic::config::ConfigError),
-    #[error("Failed to write config")]
-    WriteConfig(#[source] logic::config::ConfigError),
+    #[error("Failed to read config: {0}")]
+    ReadConfig(#[from] logic::config::ConfigReadError),
+    #[error("Failed to write config: {0}")]
+    WriteConfig(#[from] logic::config::ConfigWriteError),
 }
 
 #[derive(Debug, Subcommand)]
@@ -53,7 +53,7 @@ pub enum CliPrintStyle {
 impl Cli {
     /// Handles the config modification command
     pub fn handle_config_command(&self, config_args: ConfigArgs) -> Result<(), ConfigError> {
-        let mut config = logic::config::Config::read().map_err(ConfigError::ReadConfig)?;
+        let mut config = logic::config::Config::read()?;
 
         match config_args {
             ConfigArgs::CliPrintStyle(cli_print_style_args) => {
@@ -67,7 +67,7 @@ impl Cli {
                 config.cli_display_limit = cli_display_limit_args.value
             }
         }
-        config.write().map_err(ConfigError::WriteConfig)
+        Ok(config.write()?)
     }
 }
 

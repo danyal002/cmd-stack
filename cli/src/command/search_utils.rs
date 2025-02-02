@@ -35,9 +35,9 @@ pub fn check_search_args_exist(command: &Option<String>, tag: &Option<String>) -
 
 #[derive(Error, Debug)]
 pub enum PromptUserForCommandSelectionError {
-    #[error("No commands found")]
+    #[error("Cannot select on empty list of commands")]
     NoCommandsProvided,
-    #[error("failed to render")]
+    #[error("Failed to render")]
     Inquire(#[from] InquireError),
 }
 
