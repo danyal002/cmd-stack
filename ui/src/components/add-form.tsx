@@ -20,7 +20,7 @@ import { toast } from '@/hooks/use-toast';
 import { useRefresh } from '@/use-command';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
-import { CirclePlus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const FormSchema = z.object({
   command: z.string().min(1, {
@@ -139,7 +139,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
                 <FormMessage />
               </div>
               <FormDescription>
-                This is whether this command is a favourite.
+                Add this command to favourites.
               </FormDescription>
             </FormItem>
           )}
@@ -148,7 +148,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
         <div className="flex justify-center">
           <Button className="w-1/2" type="submit">
             Add Command
-            <CirclePlus className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
       </form>
