@@ -18,7 +18,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { useRefresh } from '@/use-command';
-import { Switch } from './ui/switch';
+import { Checkbox } from './ui/checkbox';
+import { Separator } from './ui/separator';
+import { Plus } from 'lucide-react';
 
 const FormSchema = z.object({
   command: z.string().min(1, {
@@ -68,7 +70,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="command"
@@ -76,7 +78,10 @@ export function AddForm({ onSuccess }: AddFormProps) {
             <FormItem>
               <FormLabel>Command</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input
+                  placeholder="INSERT INTO users VALUES (@{string[5,10]}, @{int});"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>This is your command.</FormDescription>
               <FormMessage />
@@ -90,7 +95,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
             <FormItem>
               <FormLabel>Tag</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input placeholder="SQL/INSERT" {...field} />
               </FormControl>
               <FormDescription>
                 This is your tag for the command.
@@ -106,7 +111,10 @@ export function AddForm({ onSuccess }: AddFormProps) {
             <FormItem>
               <FormLabel>Note</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input
+                  placeholder="SQL for inserting a random user"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 This is your note for the command.
@@ -119,23 +127,30 @@ export function AddForm({ onSuccess }: AddFormProps) {
           control={form.control}
           name="favourite"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-              <div className="space-y-0.5">
-                <FormLabel>Favourite</FormLabel>
-                <FormDescription>
-                  Add this command to favourites.
-                </FormDescription>
+            <FormItem>
+              <div className="flex items-center">
+                <FormLabel className="mr-2">Favourite</FormLabel>
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
               </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
+              <FormDescription>
+                Add this command to favourites.
+              </FormDescription>
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Separator />
+        <div className="flex justify-center">
+          <Button className="w-1/2" type="submit">
+            Add Command
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </form>
     </Form>
   );
