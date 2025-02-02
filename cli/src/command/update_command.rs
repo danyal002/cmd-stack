@@ -1,18 +1,19 @@
 use crate::{
-    args::SearchAndPrintArgs,
-    command::search_utils::{
-        check_search_args_exist, fetch_search_candidates, get_search_args_from_user,
-        prompt_user_for_command_selection, FetchSearchCandidatesError,
-        PromptUserForCommandSelectionError, SearchArgsUserInput,
+    args::SearchArgs,
+    command::{
+        search_utils::{
+            check_search_args_exist, PromptUserForCommandSelectionError, SearchArgsUserInput,
+        },
+        CommandInputValidator,
     },
-    command::CommandInputValidator,
     outputs::{format_output, Output},
     utils::none_if_empty,
+    Cli,
 };
 use data::models::InternalCommand;
 use inquire::{InquireError, Select, Text};
 use log::error;
-use logic::Logic;
+use logic::command::{SearchCommandArgs, SearchCommandError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -21,13 +22,11 @@ pub enum HandleUpdateError {
     Inquire(#[from] InquireError),
     #[error("No command found")]
     NoCommandFound,
-    #[error("Failed to get search candidates")]
-    SearchCandidates(#[from] FetchSearchCandidatesError),
+    #[error("Failed to search for command")]
+    Search(#[from] SearchCommandError),
     #[error("Failed to select a command")]
     SelectCommand(#[from] PromptUserForCommandSelectionError),
-    #[error("Failed to initialize logic")]
-    LogicInit(#[from] logic::LogicInitError),
-    #[error("Failed to delete command")]
+    #[error("Failed to update command")]
     LogicUpdate(#[from] logic::command::UpdateCommandError),
 }
 
@@ -38,7 +37,7 @@ pub enum HandleUpdateError {
 /// - cur_note: Option<String> - The current note of the command
 /// - cur_tag: Option<String> - The current tag of the command
 /// - cur_favourite: bool - The current favourite status of the command
-pub fn set_command_properties_wizard(
+pub fn prompt_user_for_command(
     cur_command: InternalCommand,
 ) -> Result<InternalCommand, InquireError> {
     let command = Text::new(&format_output("<bold>Command</bold>:"))
@@ -71,34 +70,31 @@ pub fn set_command_properties_wizard(
     })
 }
 
-/// UI handler for the update command
-pub fn handle_update_command(args: SearchAndPrintArgs) -> Result<(), HandleUpdateError> {
-    // Get the arguments used for search
-    let search_user_input = if !check_search_args_exist(&args.command, &args.tag) {
-        get_search_args_from_user()?
-    } else {
-        SearchArgsUserInput::from(args.clone())
-    };
+impl Cli {
+    /// UI handler for the update command
+    pub fn handle_update_command(&self, args: SearchArgs) -> Result<(), HandleUpdateError> {
+        // Get the arguments used for search
+        let search_user_input = if !check_search_args_exist(&args.command, &args.tag) {
+            self.prompt_user_for_search_args()?
+        } else {
+            SearchArgsUserInput::from(args.clone())
+        };
 
-    // Get the search candidates
-    let search_candidates = fetch_search_candidates(search_user_input, args.recent, args.favourite)
-        .map_err(|e| match e {
-            FetchSearchCandidatesError::NoCommandsFound => HandleUpdateError::NoCommandFound,
-            _ => HandleUpdateError::SearchCandidates(e),
+        let search_results = self.logic.search_command(SearchCommandArgs {
+            command: search_user_input.command,
+            tag: search_user_input.tag,
+            order_by_recently_used: args.order_by_recently_used,
+            favourites_only: args.favourite,
         })?;
 
-    // Prompt the user to select a command
-    let selected_command =
-        prompt_user_for_command_selection(search_candidates, args.print_style, args.display_limit)?;
+        let user_selection = self.prompt_user_for_command_selection(search_results)?;
 
-    // Get the new command properties from the user
-    Output::UpdateCommandSectionTitle.print();
-    let new_internal_command = set_command_properties_wizard(selected_command.internal_command)?;
+        // Get the new command properties from the user
+        Output::UpdateCommandSectionTitle.print();
+        let new_internal_command = prompt_user_for_command(user_selection.internal_command)?;
 
-    let logic = Logic::try_default()?;
-
-    // Update the selected command
-    logic.update_command(selected_command.id, new_internal_command)?;
-
-    Ok(())
+        Ok(self
+            .logic
+            .update_command(user_selection.id, new_internal_command)?)
+    }
 }

@@ -80,6 +80,7 @@ pub enum Output<'a> {
     ExportCommandsSuccess(&'a Path),
     ImportCommandsSuccess(u64, &'a Path),
     CommandCopiedToClipboard,
+    ConfigUpdate,
 }
 
 impl fmt::Display for Output<'_> {
@@ -102,6 +103,7 @@ impl fmt::Display for Output<'_> {
             Output::CommandCopiedToClipboard => {
                 "✅ <bold>Command copied to clipboard</bold>\n".to_string()
             }
+            Output::ConfigUpdate => "✅ <bold>Config updated</bold>\n".to_string(),
         };
 
         write!(f, "{}", format_output(&message))
@@ -124,6 +126,7 @@ pub enum ErrorOutput {
     Export,
     Import,
     Logger,
+    Config,
 }
 
 impl fmt::Display for ErrorOutput {
@@ -137,6 +140,7 @@ impl fmt::Display for ErrorOutput {
             ErrorOutput::Export => "Failed to export stack",
             ErrorOutput::Import => "Failed to import stack",
             ErrorOutput::Logger => "Failed to initialize the logger",
+            ErrorOutput::Config => "Failed to update the config",
         };
 
         write!(

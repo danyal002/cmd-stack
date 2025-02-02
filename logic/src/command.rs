@@ -55,7 +55,7 @@ pub enum DeleteCommandError {
 pub struct SearchCommandArgs {
     pub command: Option<String>,
     pub tag: Option<String>,
-    pub order_by_use: bool,
+    pub order_by_recently_used: bool,
     pub favourites_only: bool,
 }
 
@@ -83,7 +83,7 @@ impl Logic {
         // Get all commands from the database
         let commands = self
             .dal
-            .get_all_commands(params.order_by_use, params.favourites_only)
+            .get_all_commands(params.order_by_recently_used, params.favourites_only)
             .await?;
 
         // Filter the commands based on the search parameters using fuzzy matching
@@ -180,13 +180,19 @@ impl Logic {
 
     #[tokio::main]
     /// Handles the generation of parameters for a command
-    pub async fn generate_parameters(&self, command: String) -> Result<(String, Vec<String>), ParameterError> {
+    pub async fn generate_parameters(
+        &self,
+        command: String,
+    ) -> Result<(String, Vec<String>), ParameterError> {
         ParameterHandler::default().replace_parameters(command)
     }
 
     #[tokio::main]
     /// Handles the parsing of parameters for a command
-    pub async fn parse_parameters(&self, command: String) -> Result<(Vec<String>, Vec<SerializableParameter>), ParameterError> {
+    pub async fn parse_parameters(
+        &self,
+        command: String,
+    ) -> Result<(Vec<String>, Vec<SerializableParameter>), ParameterError> {
         ParameterHandler::default().parse_parameters(command)
     }
 }
@@ -363,7 +369,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: None,
             tag: Some("gree".to_string()),
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -374,7 +380,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: None,
             tag: Some("green".to_string()),
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -385,7 +391,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: Some("abc".to_string()),
             tag: None,
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -396,7 +402,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: Some("abcd".to_string()),
             tag: None,
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -407,7 +413,7 @@ mod tests {
         let search_command_result = logic.search_command(SearchCommandArgs {
             command: None,
             tag: None,
-            order_by_use: false,
+            order_by_recently_used: false,
             favourites_only: false,
         });
         assert!(search_command_result.is_ok());
@@ -534,9 +540,10 @@ mod tests {
         let commands = list_commands_result.unwrap();
         assert!(commands.len() == 1);
 
-        let generated_param_result = logic.generate_parameters(commands.first().unwrap().internal_command.command.clone());
+        let generated_param_result =
+            logic.generate_parameters(commands.first().unwrap().internal_command.command.clone());
         assert!(generated_param_result.is_ok());
-        let (generated_param,  generated_parameters) = generated_param_result.unwrap();
+        let (generated_param, generated_parameters) = generated_param_result.unwrap();
         assert_ne!(generated_param, "echo @{int}");
         assert_eq!(generated_parameters.len(), 1);
     }

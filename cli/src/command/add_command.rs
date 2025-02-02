@@ -3,12 +3,12 @@ use crate::{
     command::CommandInputValidator,
     outputs::{format_output, print_internal_command_table, spacing},
     utils::none_if_empty,
+    Cli,
 };
 use data::models::InternalCommand;
 use inquire::error::InquireError;
 use inquire::{Select, Text};
 use log::error;
-use logic::Logic;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -18,30 +18,34 @@ pub enum HandleAddError {
     #[error("Missing field: {0}")]
     MissingField(String),
     #[error("Failed to initialize logic")]
-    LogicInit(#[from] logic::LogicInitError),
-    #[error("Failed to add command")]
     LogicAdd(#[from] logic::command::AddCommandError),
 }
 
-impl TryFrom<AddArgs> for InternalCommand {
-    type Error = HandleAddError;
+impl Cli {
+    /// CLI handler for the add command
+    pub fn handle_add_command(&self, args: AddArgs) -> Result<(), HandleAddError> {
+        let add_args_exist = args.command.is_some();
 
-    fn try_from(args: AddArgs) -> Result<Self, Self::Error> {
-        if let Some(command) = args.command {
-            Ok(InternalCommand {
-                command,
-                tag: args.tag,
-                note: args.note,
-                favourite: args.favourite,
-            })
+        let user_input = if !add_args_exist {
+            prompt_user_for_add_args(args)?
         } else {
-            Err(HandleAddError::MissingField("command".to_string()))
+            InternalCommand::try_from(args)?
+        };
+
+        self.logic.add_command(user_input.clone())?;
+
+        if add_args_exist {
+            // If the user added the command via CLI arguments, we need to
+            // display the information so they can confirm the validity
+            print_internal_command_table(&user_input);
         }
+
+        Ok(())
     }
 }
 
 /// Generates a wizard to set the properties of a command
-fn get_add_args_from_user(args: AddArgs) -> Result<InternalCommand, InquireError> {
+fn prompt_user_for_add_args(args: AddArgs) -> Result<InternalCommand, InquireError> {
     spacing();
     // No check needed since wizard is only displayed if the command field is not present
     let command = Text::new(&format_output("<bold>Command:</bold>"))
@@ -73,27 +77,19 @@ fn get_add_args_from_user(args: AddArgs) -> Result<InternalCommand, InquireError
     })
 }
 
-/// CLI handler for the add command
-pub fn handle_add_command(args: AddArgs) -> Result<(), HandleAddError> {
-    let add_args_exist = args.command.is_some();
+impl TryFrom<AddArgs> for InternalCommand {
+    type Error = HandleAddError;
 
-    // Get the command to add either from CLI args or user input
-    let internal_command = if !add_args_exist {
-        get_add_args_from_user(args)?
-    } else {
-        InternalCommand::try_from(args)?
-    };
-
-    let logic = Logic::try_default()?;
-
-    // Write the command to the db
-    logic.add_command(internal_command.clone())?;
-
-    if add_args_exist {
-        // If the user added the command via CLI arguments, we need to
-        // display the information so they can confirm the validity
-        print_internal_command_table(&internal_command);
+    fn try_from(args: AddArgs) -> Result<Self, Self::Error> {
+        if let Some(command) = args.command {
+            Ok(InternalCommand {
+                command,
+                tag: args.tag,
+                note: args.note,
+                favourite: args.favourite,
+            })
+        } else {
+            Err(HandleAddError::MissingField("command".to_string()))
+        }
     }
-
-    Ok(())
 }

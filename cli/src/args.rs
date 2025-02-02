@@ -1,4 +1,5 @@
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use crate::command::config_command::ConfigArgs;
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[clap(version, about)]
@@ -13,19 +14,23 @@ pub enum Command {
     Add(AddArgs),
 
     /// Update a command in your stack
-    Update(SearchAndPrintArgs),
+    Update(SearchArgs),
 
     /// Delete a command in your stack
-    Delete(SearchAndPrintArgs),
+    Delete(SearchArgs),
 
     /// Search for a command in your stack
-    Search(SearchAndPrintArgs),
+    Search(SearchArgs),
 
     /// Export stack to a JSON file
     Export(ImportExportArgs),
 
     /// Import stack from a JSON file
     Import(ImportExportArgs),
+
+    #[clap(subcommand)]
+    /// Modify the config values
+    Config(ConfigArgs),
 }
 
 /// Arguments for adding a command
@@ -47,19 +52,9 @@ pub struct AddArgs {
     pub favourite: bool,
 }
 
-/// Different supported printing styles for commands
-#[derive(Debug, ValueEnum, Clone)]
-pub enum PrintStyle {
-    /// Display the command, tag, and notes
-    All,
-
-    /// Only display the command
-    Command,
-}
-
 /// Arguments for searching and printing commands
 #[derive(Debug, Args, Clone)]
-pub struct SearchAndPrintArgs {
+pub struct SearchArgs {
     /// The text used to filter by command when searching
     pub command: Option<String>,
 
@@ -69,19 +64,11 @@ pub struct SearchAndPrintArgs {
 
     /// Display commands in order of most recent use
     #[clap(long = "recent", short = 'r', action)]
-    pub recent: bool,
+    pub order_by_recently_used: bool,
 
     /// Only display favourite commands
     #[clap(long = "favourite", short = 'f', action)]
     pub favourite: bool,
-
-    /// Configure how commands are displayed
-    #[clap(long="print-style", value_enum, default_value_t=PrintStyle::All)]
-    pub print_style: PrintStyle,
-
-    /// Configure how many commands are displayed at a time
-    #[clap(long = "display-limit", default_value = "10")]
-    pub display_limit: u32,
 }
 
 /// Arguments for importing/exporting commands
