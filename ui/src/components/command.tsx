@@ -1,28 +1,26 @@
 'use client';
 
-import { useState } from 'react';
-import { File, Search, Settings, Star, Tags } from 'lucide-react';
-
+import { cmdStackIcon, cmdStackIconWithText } from '@/components/cmdStackIcon';
+import { CommandDisplay } from '@/components/command-display';
+import { CommandList } from '@/components/command-list';
+import { Nav } from '@/components/nav';
+import { TagTree } from '@/components/tag-tree';
 import { cn } from '@/lib/utils';
-import { Input } from './ui/input';
+import { Command } from '@/types/command';
+import { useCommand } from '@/use-command';
+import { File, Settings, Star, Tags } from 'lucide-react';
+import { useState } from 'react';
+import { AddDialog } from './add-dialog';
+import { SearchForm } from './search-form';
+import { Badge } from './ui/badge';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from './ui/resizable';
+import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { TooltipProvider } from './ui/tooltip';
-import { Badge } from './ui/badge';
-import { CommandDisplay } from '@/components/command-display';
-import { CommandList } from '@/components/command-list';
-import { TagTree } from '@/components/tag-tree';
-import { Nav } from '@/components/nav';
-import { useCommand } from '@/use-command';
-import { Command } from '@/types/command';
-import { cmdStackIcon, cmdStackIconWithText } from '@/components/cmdStackIcon';
-import { AddDialog } from './add-dialog';
-import { ScrollArea } from './ui/scroll-area';
-import { SearchForm } from './search-form';
 
 interface MainCommandPageProps {
   commands: Command[];
