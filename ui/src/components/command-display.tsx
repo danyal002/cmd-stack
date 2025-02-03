@@ -3,7 +3,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { Command } from '@/types/command';
 import { Parameter } from '@/types/parameter';
-import { useRefresh } from '@/use-command';
+import { useCommands } from '@/use-command';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
 import format from 'date-fns/format';
@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { ParamViewer } from './param-viewer';
 import { RemoveDialog } from './remove-dialog';
+import { Checkbox } from './ui/checkbox';
 import {
   Form,
   FormControl,
@@ -25,7 +26,6 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { Checkbox } from './ui/checkbox';
 
 interface CommandDisplayProps {
   command: Command | null;
@@ -42,7 +42,7 @@ const FormSchema = z.object({
 
 export function CommandDisplay({ command }: CommandDisplayProps) {
   const [editing, setEditing] = useState(false);
-  const [, refreshData] = useRefresh();
+  const [, refreshCommands] = useCommands();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     disabled: !editing,
@@ -63,7 +63,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
           title: 'Command updated ✅ ',
         });
 
-        refreshData();
+        refreshCommands();
         setEditing(false);
       })
       .catch((error) => {

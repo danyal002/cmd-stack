@@ -13,6 +13,7 @@ export function ParamViewer({ parameters, generatedValues }: ParamViewerProps) {
       <div className="p-4">
         {parameters.map((parameter, index) => (
           <Param
+            key={index}
             parameter={parameter}
             generatedValue={
               index < generatedValues.length ? generatedValues[index] : ''
