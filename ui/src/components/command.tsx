@@ -56,6 +56,10 @@ export function MainCommandPage({
       )
     : commands;
 
+  const cmdListHeight = selectedTagId
+    ? 'h-[calc(100vh-154px)]'
+    : 'h-[calc(100vh-121px)]';
+
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
@@ -188,9 +192,7 @@ export function MainCommandPage({
               <Badge variant="secondary">{selectedTagId}</Badge>
             </div>
           )}
-          <ScrollArea
-            className={`h-[calc(100vh-${selectedTagId ? '154px' : '121px'})]`}
-          >
+          <ScrollArea className={cmdListHeight}>
             <CommandList
               items={
                 favouriteFilter
