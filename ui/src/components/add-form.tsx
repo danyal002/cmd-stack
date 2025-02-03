@@ -17,10 +17,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { useRefresh } from '@/use-command';
+import { useCommands } from '@/use-command';
+import { Plus } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
-import { Plus } from 'lucide-react';
 
 const FormSchema = z.object({
   command: z.string().min(1, {
@@ -36,7 +36,7 @@ interface AddFormProps {
 }
 
 export function AddForm({ onSuccess }: AddFormProps) {
-  const [, refreshData] = useRefresh();
+  const [, refreshCommands] = useCommands();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -56,7 +56,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
           title: 'Command added ✅ ',
         });
 
-        refreshData();
+        refreshCommands();
 
         onSuccess();
       })
@@ -138,9 +138,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
                 </FormControl>
                 <FormMessage />
               </div>
-              <FormDescription>
-                Add this command to favourites.
-              </FormDescription>
+              <FormDescription>Add this command to favourites.</FormDescription>
             </FormItem>
           )}
         />

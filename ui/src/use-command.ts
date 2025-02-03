@@ -1,34 +1,34 @@
-import { atom, useAtom } from "jotai"
-import { loadable } from 'jotai/utils'
+import { atom, useAtom } from 'jotai';
+import { atomWithRefresh } from 'jotai/utils';
 import { invoke } from '@tauri-apps/api/core';
 
-import { Command } from "./types/command"
+import { Command } from './types/command';
 
 type Config = {
-  selected: Command["id"] | null
-}
+  selected: Command['id'] | null;
+};
 
 const configAtom = atom<Config>({
   selected: null,
-})
-
-export function useCommand() {
-  return useAtom(configAtom)
-}
-
-const responseAsync = atom<Command[]>([]) 
-
-const setAsyncCommandsAtom = atom(null, async (_get, set) => {
-  const res = await invoke<Command[]>('list_commands')
-  set(responseAsync, res)
 });
 
-const loadableCommandsAtom = loadable(responseAsync);
-
-export function useCommands() {
-  return useAtom(loadableCommandsAtom)
+export function useCommand() {
+  return useAtom(configAtom);
 }
 
-export function useRefresh() {
-  return useAtom(setAsyncCommandsAtom)
+const searchAtom = atom('');
+
+export function useSearch() {
+  return useAtom(searchAtom);
+}
+
+const commandsAtom = atomWithRefresh((get) => {
+  const search = get(searchAtom);
+  return invoke<Command[]>('search_commands', { search: search }).then(
+    (r) => r,
+  );
+});
+
+export function useCommands() {
+  return useAtom(commandsAtom);
 }
