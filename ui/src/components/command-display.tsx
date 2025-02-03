@@ -26,6 +26,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Checkbox } from './ui/checkbox';
+import { ScrollArea } from './ui/scroll-area';
 
 interface CommandDisplayProps {
   command: Command | null;
@@ -136,13 +137,11 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
         <div className="flex h-full flex-col">
           {command ? (
-            <div className="flex flex-1 flex-col">
-              <div className="flex items-center p-4">
-                <div className="flex items-start gap-4 text-sm">
-                  <div className="grid gap-1">
-                    <div className="font-semibold">
-                      {command.tag ? command.tag : 'Untagged'}
-                    </div>
+            <>
+              <div className="flex items-center p-2">
+                <div className="flex items-center gap-2">
+                  <div className="pl-2 font-semibold">
+                    {command.tag ? command.tag : 'Untagged'}
                   </div>
                 </div>
                 {command.last_used && (
@@ -181,127 +180,130 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 <RemoveDialog command={command} />
               </div>
               <Separator />
-              <div className="flex-1 whitespace-pre-wrap p-4 text-sm">
-                <FormField
-                  control={form.control}
-                  name="command"
-                  render={({ field }) => (
-                    <FormItem className="mb-4">
-                      <FormLabel>Command</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          className="resize-none"
-                          placeholder=""
-                          {...field}
+              <div className="flex flex-1 flex-col">
+                <ScrollArea className="h-[calc(100vh-180px)]">
+                  <div className="p-4">
+                    <FormField
+                      control={form.control}
+                      name="command"
+                      render={({ field }) => (
+                        <FormItem className="mb-4">
+                          <FormLabel>Command</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              className="resize-none"
+                              placeholder=""
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="note"
+                      render={({ field }) => (
+                        <FormItem className="mb-4">
+                          <FormLabel>Note</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              className="resize-none"
+                              placeholder=""
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="tag"
+                      render={({ field }) => (
+                        <FormItem className="mb-4">
+                          <FormLabel>Tag</FormLabel>
+                          <FormControl>
+                            <Input placeholder="" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="favourite"
+                      render={({ field }) => (
+                        <FormItem className="mb-4">
+                          <div className="flex items-center">
+                            <FormLabel className="mr-2">Favourite</FormLabel>
+                            <FormControl>
+                              <Checkbox
+                                // Not sure why I need the disabled flag for a Checkbox but not Input
+                                disabled={!editing}
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    {parameters.length > 0 && (
+                      <>
+                        <Separator className="mt-auto" />
+                        <div className="flex items-center">
+                          <Label htmlFor="parameters">Parameters</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={onParameterRefresh}
+                              >
+                                <RefreshCwIcon size={12} />
+                              </Button>
+                            </TooltipTrigger>
+                          </Tooltip>
+                        </div>
+                        <ParamViewer
+                          parameters={parameters}
+                          generatedValues={generatedValues}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="note"
-                  render={({ field }) => (
-                    <FormItem className="mb-4">
-                      <FormLabel>Note</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          className="resize-none"
-                          placeholder=""
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="tag"
-                  render={({ field }) => (
-                    <FormItem className="mb-4">
-                      <FormLabel>Tag</FormLabel>
-                      <FormControl>
-                        <Input placeholder="" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="favourite"
-                  render={({ field }) => (
-                    <FormItem className="mb-4">
-                      <div className="flex items-center">
-                        <FormLabel className="mr-2">Favourite</FormLabel>
-                        <FormControl>
-                          <Checkbox
-                            // Not sure why I need the disabled flag for a Checkbox but not Input
-                            disabled={!editing}
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                      </>
+                    )}
+                  </div>
+                </ScrollArea>
                 <Separator className="mt-auto" />
-                <div className="flex items-center">
-                  <Label htmlFor="parameters" className="mr-2">
-                    Parameters
-                  </Label>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        type="button"
-                        disabled={parameters.length == 0}
-                        onClick={onParameterRefresh}
-                      >
-                        <RefreshCwIcon size={12} />
-                      </Button>
-                    </TooltipTrigger>
-                  </Tooltip>
-                </div>
-                <ParamViewer
-                  parameters={parameters}
-                  generatedValues={generatedValues}
-                />
-              </div>
-              <Separator className="mt-auto" />
-              <div className="p-4">
-                <div className="flex items-center">
-                  <Label htmlFor="generated-command" className="mr-2">
-                    Generated Command
-                  </Label>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        type="button"
-                        disabled={editing}
-                        onClick={onCopy}
-                      >
-                        <Copy size={12} />
-                      </Button>
-                    </TooltipTrigger>
-                  </Tooltip>
-                </div>
-                <div className="grid gap-4">
-                  <Textarea
-                    className="p-4 resize-none"
-                    value={generatedCommand}
-                    disabled={true}
-                  />
+                <div className="px-4">
+                  <div className="flex items-center">
+                    <Label htmlFor="generated-command">Generated Command</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          disabled={editing}
+                          onClick={onCopy}
+                        >
+                          <Copy size={12} />
+                        </Button>
+                      </TooltipTrigger>
+                    </Tooltip>
+                  </div>
+                  <div className="grid gap-4">
+                    <Textarea
+                      className="p-4 resize-none"
+                      value={generatedCommand}
+                      disabled={true}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <div className="p-8 text-center text-muted-foreground">
               No command selected
