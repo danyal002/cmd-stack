@@ -70,6 +70,7 @@ export function TagTree({
   const tagData = useMemo(() => buildTagTree(commands), [commands]);
   return (
     <TreeView
+      className="pl-2"
       data={tagData}
       initialSelectedItemId={selectedTagId}
       selectedItemId={selectedTagId}

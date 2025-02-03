@@ -55,7 +55,11 @@ export function MainCommandPage({
         (command) => command.tag && command.tag.startsWith(selectedTagId),
       )
     : commands;
-  
+
+  const cmdListHeight = selectedTagId
+    ? 'h-[calc(100vh-154px)]'
+    : 'h-[calc(100vh-121px)]';
+
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
@@ -153,7 +157,7 @@ export function MainCommandPage({
             />
           </div>
           {!isCollapsed && (
-            <ScrollArea className="h-[calc(100vh-284px)]">
+            <ScrollArea className="h-[calc(100vh-235px)]">
               <TagTree
                 commands={commands}
                 selectedTagId={selectedTagId}
@@ -188,9 +192,15 @@ export function MainCommandPage({
               <Badge variant="secondary">{selectedTagId}</Badge>
             </div>
           )}
-          <CommandList
-            items={favouriteFilter ? tagFilteredCommands.filter((item) => item.favourite) : tagFilteredCommands}
-          />
+          <ScrollArea className={cmdListHeight}>
+            <CommandList
+              items={
+                favouriteFilter
+                  ? tagFilteredCommands.filter((item) => item.favourite)
+                  : tagFilteredCommands
+              }
+            />
+          </ScrollArea>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
