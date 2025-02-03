@@ -1,124 +1,370 @@
 {
     "commands": [
         {
-            "command": "git clone https://github.com/user/repo.git",
+            "command": "git clone https://github.com/@{string[3,8]}/@{string[3,8]}.git",
             "tag": "git/clone",
-            "note": "Clones a repository from GitHub to the local machine. Use this to quickly pull down a project.",
+            "note": "Clones a repository from GitHub to your local machine. Great for quickly starting on a project.",
             "favourite": true
         },
         {
-            "command": "docker run --name postgres -e POSTGRES_PASSWORD=pass -d postgres",
+            "command": "git pull origin @{string[3,8]}",
+            "tag": "git/pull",
+            "note": "Pulls the latest changes from the specified branch. Keep your local copy up-to-date.",
+            "favourite": false
+        },
+        {
+            "command": "git checkout -b @{string[3,12]}",
+            "tag": "git/branch",
+            "note": "Creates and checks out a new branch. Useful for working on new features separately.",
+            "favourite": false
+        },
+        {
+            "command": "git commit -am '@{string[5,20]}'",
+            "tag": "git/commit",
+            "note": "Commits changes with a meaningful message. Always write descriptive commit messages!",
+            "favourite": false
+        },
+        {
+            "command": "git push origin @{string[3,12]}",
+            "tag": "git/push",
+            "note": "Pushes the current branch to the remote repository.",
+            "favourite": false
+        },
+        {
+            "command": "docker run --name @{string} -e POSTGRES_PASSWORD=@{string[6,12]} -d postgres",
             "tag": "docker/databases/postgres",
-            "note": "Starts a PostgreSQL database instance in Docker. Useful for local development.",
+            "note": "Starts a PostgreSQL container for local development. Ensure you update your credentials.",
             "favourite": true
         },
         {
-            "command": "aws s3 ls s3://my-bucket/",
+            "command": "docker build -t @{string}:@{string} .",
+            "tag": "docker/build",
+            "note": "Builds a Docker image tagged with the given name and version from your Dockerfile in the current directory.",
+            "favourite": false
+        },
+        {
+            "command": "docker ps -a",
+            "tag": "docker/ps",
+            "note": "Lists all containers (running and stopped) to help manage your Docker environment.",
+            "favourite": false
+        },
+        {
+            "command": "docker-compose up -d",
+            "tag": "docker/compose",
+            "note": "Starts your multi-container Docker application in detached mode.",
+            "favourite": true
+        },
+        {
+            "command": "docker logs @{}",
+            "tag": "docker/logs",
+            "note": "Fetches logs from a Docker container. Replace the token with the actual container ID.",
+            "favourite": false
+        },
+        {
+            "command": "aws s3 ls s3://@{}/",
             "tag": "aws/s3",
-            "note": "Lists the contents of an S3 bucket. Modify the bucket name as needed.",
+            "note": "Lists the contents of an S3 bucket. Replace the token with your bucket name.",
             "favourite": false
         },
         {
-            "command": "kubectl get pods --namespace=my-namespace",
+            "command": "aws ec2 describe-instances",
+            "tag": "aws/ec2",
+            "note": "Describes all EC2 instances in your account. Useful for checking instance statuses.",
+            "favourite": false
+        },
+        {
+            "command": "aws lambda list-functions",
+            "tag": "aws/lambda",
+            "note": "Lists all Lambda functions available in your AWS account.",
+            "favourite": false
+        },
+        {
+            "command": "kubectl get pods --namespace=@{}",
             "tag": "kubernetes/pods",
-            "note": "Retrieves a list of all pods in a specific Kubernetes namespace. Replace 'my-namespace' with the actual namespace.",
+            "note": "Lists all pods in a specific namespace. Replace the token with your target namespace.",
             "favourite": true
         },
         {
-            "command": "gcloud auth login",
-            "tag": "gcloud/auth",
-            "note": "Authenticates the Google Cloud CLI with your Google account. Needed for other gcloud operations.",
+            "command": "kubectl describe pod @{string} --namespace=@{string}",
+            "tag": "kubernetes/pods",
+            "note": "Provides detailed information about a specific pod. Replace tokens with the pod name and namespace.",
             "favourite": false
         },
         {
-            "command": "ssh user@production-server.com",
+            "command": "kubectl logs @{string} --namespace=@{string}",
+            "tag": "kubernetes/logs",
+            "note": "Shows logs for a given pod to help with debugging issues. Replace tokens accordingly.",
+            "favourite": false
+        },
+        {
+            "command": "kubectl apply -f @{}",
+            "tag": "kubernetes/deployments",
+            "note": "Deploys or updates resources defined in a YAML file. Replace the blank token with your file name.",
+            "favourite": false
+        },
+        {
+            "command": "gcloud auth login --PASWORD @{string}",
+            "tag": "gcloud/auth",
+            "note": "Authenticates the Google Cloud CLI with your Google account.",
+            "favourite": false
+        },
+        {
+            "command": "gcloud compute instances list",
+            "tag": "gcloud/compute",
+            "note": "Lists all compute instances in your Google Cloud project.",
+            "favourite": false
+        },
+        {
+            "command": "gcloud projects list",
+            "tag": "gcloud/projects",
+            "note": "Lists all projects under your Google Cloud account.",
+            "favourite": false
+        },
+        {
+            "command": "ssh @{string}@{string}.com",
             "tag": "ssh/production",
-            "note": "Connects to the production server. Ensure you have proper permissions and a secure key configured.",
+            "note": "Connects to a production server. The first token represents the user and the second the domain.",
             "favourite": true
+        },
+        {
+            "command": "ssh @{string}@@{string}.com",
+            "tag": "ssh/staging",
+            "note": "Connects to a staging server. Make sure to verify the server details before connecting.",
+            "favourite": false
+        },
+        {
+            "command": "ssh -i ~/.ssh/@{} @{string}@@{string}",
+            "tag": "ssh/aws",
+            "note": "Connects to an AWS instance using a specific SSH key. Replace tokens with your key filename, user, and server.",
+            "favourite": false
         },
         {
             "command": "npm start",
             "tag": "npm/project/start",
-            "note": "Starts the development server for a Node.js project. Run this in the project root.",
+            "note": "Starts the development server for your Node.js project.",
             "favourite": false
         },
         {
-            "command": "pip install requests",
+            "command": "npm run build",
+            "tag": "npm/project/build",
+            "note": "Builds your Node.js project for production deployment.",
+            "favourite": false
+        },
+        {
+            "command": "npm install",
+            "tag": "npm/project/install",
+            "note": "Installs all dependencies listed in your package.json.",
+            "favourite": false
+        },
+        {
+            "command": "pip install @{string}",
             "tag": "python/pip",
-            "note": "Installs the popular Python requests library for HTTP operations. Useful for API development.",
+            "note": "Installs a Python package. Replace the token with the package name.",
+            "favourite": false
+        },
+        {
+            "command": "pip freeze > @{}.txt",
+            "tag": "python/pip",
+            "note": "Exports the list of installed packages to a requirements file.",
+            "favourite": false
+        },
+        {
+            "command": "terraform plan",
+            "tag": "terraform/plan",
+            "note": "Shows the execution plan for your Terraform configuration. Always review before applying!",
             "favourite": false
         },
         {
             "command": "terraform apply",
             "tag": "terraform/deploy",
-            "note": "Applies Terraform configurations to provision infrastructure. Review the plan before applying.",
+            "note": "Provisions infrastructure as per your Terraform configurations.",
+            "favourite": false
+        },
+        {
+            "command": "terraform destroy",
+            "tag": "terraform/destroy",
+            "note": "Destroys all resources managed by Terraform. Use with caution!",
             "favourite": false
         },
         {
             "command": "ansible all -m ping",
             "tag": "ansible/testing",
-            "note": "Tests the connectivity to all hosts defined in the Ansible inventory file. Ensure the inventory file is correct.",
+            "note": "Pings all hosts in your Ansible inventory to test connectivity.",
             "favourite": false
         },
         {
-            "command": "curl -X GET https://api.example.com/endpoint",
+            "command": "ansible-playbook @{}",
+            "tag": "ansible/deploy",
+            "note": "Runs a playbook to deploy your application or infrastructure changes. Replace the blank token with your playbook file.",
+            "favourite": false
+        },
+        {
+            "command": "curl -X GET https://api.@{string}.com/@{string}",
             "tag": "curl/api/testing",
-            "note": "Tests an API endpoint with a GET request. Replace the URL and endpoint as needed.",
+            "note": "Sends a GET request to test an API endpoint. Replace tokens with the appropriate API domain and endpoint.",
             "favourite": false
         },
         {
-            "command": "vim ~/.config/some_config_file",
+            "command": "curl -X POST -d '{\"@{string}\": \"@{string}\"}' https://api.@{}.com/@{string}",
+            "tag": "curl/api/testing",
+            "note": "Sends a POST request with JSON data to an API endpoint. Adjust tokens as needed.",
+            "favourite": false
+        },
+        {
+            "command": "vim ~/.config/@{}",
             "tag": "vim/config",
-            "note": "Opens a configuration file in Vim for editing. Replace 'some_config_file' with the actual file name.",
+            "note": "Opens a configuration file for editing. Replace the token with the actual config filename.",
+            "favourite": false
+        },
+        {
+            "command": "vim ~/.vimrc",
+            "tag": "vim/config",
+            "note": "Opens your Vim configuration file. Customize your Vim experience!",
             "favourite": false
         },
         {
             "command": "htop",
-            "tag": "system/monitoring",
-            "note": "Launches htop, an interactive system-monitoring tool. Use this to monitor system processes and resource usage.",
+            "tag": "system/monitoring/htop",
+            "note": "Launches htop, an interactive process viewer for your system.",
             "favourite": true
         },
         {
-            "command": "tmux new -s my_session",
-            "tag": "tmux/sessions",
-            "note": "Creates a new tmux session named 'my_session'. Replace with the desired session name.",
+            "command": "top",
+            "tag": "system/monitoring/top",
+            "note": "Runs the classic top command to monitor system processes.",
             "favourite": false
         },
         {
-            "command": "scp local_file user@remote:/path/to/destination",
+            "command": "df -h",
+            "tag": "system/disk",
+            "note": "Displays disk space usage in a human-readable format.",
+            "favourite": false
+        },
+        {
+            "command": "tmux new -s @{string}",
+            "tag": "tmux/sessions",
+            "note": "Starts a new tmux session with the specified session name.",
+            "favourite": false
+        },
+        {
+            "command": "tmux attach -t @{string}",
+            "tag": "tmux/sessions",
+            "note": "Reattaches to an existing tmux session. Replace the token with your session name.",
+            "favourite": false
+        },
+        {
+            "command": "tmux list-sessions",
+            "tag": "tmux/sessions",
+            "note": "Lists all active tmux sessions.",
+            "favourite": false
+        },
+        {
+            "command": "scp @{string} @{string}@{string}:/@{string}",
             "tag": "ssh/scp",
-            "note": "Transfers a file to a remote server using SCP. Replace 'local_file' and paths as needed.",
+            "note": "Transfers a file to a remote server using SCP. Tokens represent the local file, remote user, server, and destination path.",
+            "favourite": false
+        },
+        {
+            "command": "scp @{string}@{string}:/@{string} @{string}",
+            "tag": "ssh/scp",
+            "note": "Downloads a file from a remote server. Replace tokens with the appropriate remote user, server, file path, and local destination.",
             "favourite": false
         },
         {
             "command": "jupyter notebook",
             "tag": "python/jupyter",
-            "note": "Starts a Jupyter Notebook server in the current directory. Use this for data analysis or prototyping.",
+            "note": "Starts a Jupyter Notebook server for interactive Python development.",
             "favourite": true
         },
         {
-            "command": "pytest tests/",
-            "tag": "python/testing/pytest",
-            "note": "Runs all tests in the 'tests' directory using pytest. Ensure tests are properly written.",
+            "command": "jupyter lab",
+            "tag": "python/jupyter",
+            "note": "Launches Jupyter Lab, a more feature-rich interface for working with notebooks.",
             "favourite": false
         },
         {
-            "command": "mysql -u root -p",
+            "command": "pytest @{string}",
+            "tag": "python/testing/pytest",
+            "note": "Runs tests in the specified directory. Replace the token with the path to your tests.",
+            "favourite": false
+        },
+        {
+            "command": "pytest --maxfail=@{int} --disable-warnings -q",
+            "tag": "python/testing/pytest",
+            "note": "Runs tests in quiet mode, stopping at the first failure and suppressing warnings. Adjust the max fail count as needed.",
+            "favourite": false
+        },
+        {
+            "command": "mysql -u @{string} -p",
             "tag": "databases/mysql",
-            "note": "Connects to a MySQL server on localhost with the root user. Enter the password when prompted.",
+            "note": "Connects to a MySQL server using the specified user. The password prompt follows.",
+            "favourite": false
+        },
+        {
+            "command": "mysqladmin version",
+            "tag": "databases/mysql",
+            "note": "Displays the MySQL server version and other details.",
             "favourite": false
         },
         {
             "command": "az vm list --output table",
             "tag": "azure/vm",
-            "note": "Lists all virtual machines in your Azure subscription in a table format. Requires Azure CLI.",
+            "note": "Lists all Azure virtual machines in a table format. Requires Azure CLI login.",
             "favourite": true
         },
         {
-            "command": "rsync -avz /source/path/ /backup/path/",
+            "command": "az storage account list",
+            "tag": "azure/storage",
+            "note": "Lists all storage accounts in your Azure subscription.",
+            "favourite": false
+        },
+        {
+            "command": "rsync -avz @{string} @{string}",
             "tag": "backup/rsync",
-            "note": "Synchronizes files from a source directory to a backup directory. Modify paths as needed.",
+            "note": "Synchronizes files from a source directory to a backup directory. Adjust the tokens to match your paths.",
             "favourite": true
+        },
+        {
+            "command": "rsync -avz --delete @{string} @{string}",
+            "tag": "backup/rsync",
+            "note": "Synchronizes files and deletes destination files that no longer exist in the source. Replace tokens with your paths.",
+            "favourite": false
+        },
+        {
+            "command": "ssh -p @{int[1024,65535]} @{string}@{string}.com",
+            "tag": "ssh/production",
+            "note": "Connects to a production server on a specific port. The integer token generates a port number between 1024 and 65535.",
+            "favourite": false
+        },
+        {
+            "command": "nc -l -p @{int} ",
+            "tag": "network/netcat",
+            "note": "Starts a netcat listener on a randomly generated port. The token @{int} will be replaced with a port number.",
+            "favourite": false
+        },
+        {
+            "command": "python -m http.server @{int[8000,9000]}",
+            "tag": "python/http",
+            "note": "Starts a simple HTTP server on a port between 8000 and 9000.",
+            "favourite": false
+        },
+        {
+            "command": "curl -I http://localhost:@{int[1024,65535]}",
+            "tag": "curl/api/testing",
+            "note": "Sends a HEAD request to a local server on a port generated between 1024 and 65535.",
+            "favourite": false
+        },
+        {
+            "command": "ping -c @{int[1,10]} 8.8.8.8",
+            "tag": "system/network",
+            "note": "Pings 8.8.8.8 with a count between 1 and 10 to test network connectivity.",
+            "favourite": false
+        },
+        {
+            "command": "netstat -an | grep :@{int[1024,65535]}",
+            "tag": "system/network",
+            "note": "Checks for network connections on a port between 1024 and 65535.",
+            "favourite": false
         }
     ]
 }
