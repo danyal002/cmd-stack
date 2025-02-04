@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { Command } from '@/types/command';
-import { useCommand, useRefresh } from '@/use-command';
+import { useCommand, useCommands } from '@/use-command';
 import { invoke } from '@tauri-apps/api/core';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -21,7 +21,7 @@ interface RemoveDialogProps {
 }
 
 export function RemoveDialog({ command }: RemoveDialogProps) {
-  const [, refreshData] = useRefresh();
+  const [, refreshCommands] = useCommands();
   const [_, setCommand] = useCommand();
   const [open, setOpen] = useState(false);
 
@@ -33,7 +33,7 @@ export function RemoveDialog({ command }: RemoveDialogProps) {
           title: 'Command removed ✅',
         });
 
-        refreshData();
+        refreshCommands();
         setCommand({ selected: null });
         setOpen(false);
       })
@@ -50,7 +50,12 @@ export function RemoveDialog({ command }: RemoveDialogProps) {
       <DialogTrigger disabled={!command}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={!command}>
+            <Button
+              variant="ghost"
+              type="button"
+              size="icon"
+              disabled={!command}
+            >
               <Trash2 className="h-4 w-4" />
               <span className="sr-only">Move to trash</span>
             </Button>

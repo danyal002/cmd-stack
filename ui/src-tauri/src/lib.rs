@@ -1,6 +1,9 @@
 use data::models::{Command, InternalCommand};
 use logic::{
-    command::{AddCommandError, DeleteCommandError, ListCommandError, UpdateCommandError},
+    command::{
+        AddCommandError, DeleteCommandError, ListCommandError, SearchCommandArgs,
+        SearchCommandError, UpdateCommandError,
+    },
     param::{ParameterError, SerializableParameter},
     Logic, LogicInitError,
 };
@@ -21,6 +24,8 @@ pub enum UIError {
     ListCommand(#[from] ListCommandError),
     #[error("Failed to update command")]
     UpdateCommand(#[from] UpdateCommandError),
+    #[error("Failed to search command")]
+    SearchCommand(#[from] SearchCommandError),
 }
 
 // we must manually implement serde::Serialize (https://github.com/tauri-apps/tauri/discussions/8805)
@@ -99,6 +104,20 @@ fn replace_parameters(command: String) -> Result<(String, Vec<String>), UIError>
     Ok(logic.generate_parameters(command)?)
 }
 
+#[tauri::command]
+fn search_commands(search: String) -> Result<Vec<DisplayCommand>, UIError> {
+    let logic = Logic::try_default()?;
+
+    let commands = logic.search_command(SearchCommandArgs {
+        command: if search == "" { None } else { Some(search) },
+        tag: None,
+        order_by_recently_used: false,
+        favourites_only: false,
+    })?;
+    let commands: Vec<DisplayCommand> = commands.iter().map(DisplayCommand::from).collect();
+    Ok(commands)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -109,7 +128,8 @@ pub fn run() {
             delete_command,
             replace_parameters,
             parse_parameters,
-            update_command
+            update_command,
+            search_commands
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

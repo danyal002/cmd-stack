@@ -1,27 +1,26 @@
 'use client';
 
-import { useState } from 'react';
-import { File, Search, Settings, Star, Tags } from 'lucide-react';
-
+import { cmdStackIcon, cmdStackIconWithText } from '@/components/cmdStackIcon';
+import { CommandDisplay } from '@/components/command-display';
+import { CommandList } from '@/components/command-list';
+import { Nav } from '@/components/nav';
+import { TagTree } from '@/components/tag-tree';
 import { cn } from '@/lib/utils';
-import { Input } from './ui/input';
+import { Command } from '@/types/command';
+import { useCommand } from '@/use-command';
+import { File, Settings, Star, Tags } from 'lucide-react';
+import { useState } from 'react';
+import { AddDialog } from './add-dialog';
+import { SearchForm } from './search-form';
+import { Badge } from './ui/badge';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from './ui/resizable';
+import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { TooltipProvider } from './ui/tooltip';
-import { Badge } from './ui/badge';
-import { CommandDisplay } from '@/components/command-display';
-import { CommandList } from '@/components/command-list';
-import { TagTree } from '@/components/tag-tree';
-import { Nav } from '@/components/nav';
-import { useCommand } from '@/use-command';
-import { Command } from '@/types/command';
-import { cmdStackIcon, cmdStackIconWithText } from '@/components/cmdStackIcon';
-import { AddDialog } from './add-dialog';
-import { ScrollArea } from './ui/scroll-area';
 
 interface MainCommandPageProps {
   commands: Command[];
@@ -180,12 +179,7 @@ export function MainCommandPage({
           </div>
           <Separator />
           <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <form>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search" className="pl-8" />
-              </div>
-            </form>
+            <SearchForm />
           </div>
           {selectedTagId && (
             <div className="flex gap-2 px-4 mb-2">
