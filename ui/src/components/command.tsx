@@ -8,10 +8,11 @@ import { TagTree } from '@/components/tag-tree';
 import { cn } from '@/lib/utils';
 import { Command } from '@/types/command';
 import { useCommand } from '@/use-command';
-import { File, ListFilter, Settings, Star, Tags } from 'lucide-react';
+import { File, ListFilter, Star, Tags } from 'lucide-react';
 import { useState } from 'react';
 import { AddDialog } from './add-dialog';
 import { SearchForm } from './search-form';
+import { SettingsDialog } from './settings-dialog';
 import { Badge } from './ui/badge';
 import {
   ResizableHandle,
@@ -130,18 +131,6 @@ export function MainCommandPage({
             ]}
           />
           <Separator />
-          <Nav
-            isCollapsed={isCollapsed}
-            links={[
-              {
-                title: 'Settings',
-                icon: Settings,
-                variant: 'ghost',
-                onClick() {},
-              },
-            ]}
-          />
-          <Separator />
           <div onClick={handleDeselectTag}>
             <Nav
               isCollapsed={isCollapsed}
@@ -164,6 +153,8 @@ export function MainCommandPage({
               />
             </ScrollArea>
           )}
+          <Separator />
+          <SettingsDialog isCollapsed={isCollapsed}/>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel
