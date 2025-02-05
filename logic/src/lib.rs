@@ -6,6 +6,7 @@ pub mod command;
 pub mod config;
 pub mod import_export;
 pub mod param;
+pub mod parameters;
 
 use data::dal::{sqlite::SqliteDbConnectionError, sqlite_dal::SqliteDal};
 use thiserror::Error;
