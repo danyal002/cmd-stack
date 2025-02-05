@@ -24,7 +24,7 @@ pub enum HandleSearchError {
     #[error("Failed to copy command")]
     Copy(#[from] CopyTextError),
     #[error("Failed to generate parameters")]
-    LogicParam(#[from] logic::param::ParameterError),
+    LogicParam(#[from] logic::parameters::ParameterError),
     #[error("Failed to update command")]
     LogicUpdate(#[from] logic::command::UpdateCommandError),
 }

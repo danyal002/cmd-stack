@@ -4,7 +4,7 @@ use logic::{
         AddCommandError, DeleteCommandError, ListCommandError, SearchCommandArgs,
         SearchCommandError, UpdateCommandError,
     },
-    param::{ParameterError, SerializableParameter},
+    parameters::{parser::SerializableParameter, ParameterError},
     Logic, LogicInitError,
 };
 use serde::{Deserialize, Serialize};

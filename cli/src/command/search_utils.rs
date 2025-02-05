@@ -86,7 +86,7 @@ impl Cli {
         )
         // Only display the command once the user makes a selection
         .with_formatter(&|i| commands[i.index].internal_command.command.to_string())
-        .with_page_size(self.config.cli_display_limit as usize)
+        .with_page_size(self.logic.config.cli_display_limit as usize)
         .raw_prompt()
         {
             Ok(c) => c,
@@ -101,7 +101,7 @@ impl Cli {
     /// Formats the commands for printing based on the user's preferred style.
     /// Returns the columns to be printed
     fn format_commands_for_printing(&self, commands: &Vec<Command>) -> (Vec<String>, &str) {
-        match self.config.cli_print_style {
+        match self.logic.config.cli_print_style {
             logic::config::CliPrintStyle::All => (
                 self.format_internal_commands(commands),
                 "(Command | Tag | Note | Favourite [*])",

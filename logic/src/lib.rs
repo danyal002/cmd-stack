@@ -8,6 +8,7 @@ pub mod import_export;
 pub mod param;
 pub mod parameters;
 
+use config::{Config, ConfigReadError};
 use data::dal::{sqlite::SqliteDbConnectionError, sqlite_dal::SqliteDal};
 use thiserror::Error;
 
@@ -15,19 +16,20 @@ use thiserror::Error;
 pub enum LogicInitError {
     #[error("Failed to initalize the database connection")]
     Database(#[from] SqliteDbConnectionError),
+    #[error("Failed to read from config file")]
+    Config(#[from] ConfigReadError),
 }
 
 pub struct Logic {
     dal: SqliteDal,
+    pub config: Config,
 }
 
 impl Logic {
-    pub fn new(dal: SqliteDal) -> Logic {
-        Logic { dal }
-    }
-
     pub fn try_default() -> Result<Logic, LogicInitError> {
-        let dal = SqliteDal::new()?;
-        Ok(Logic::new(dal))
+        Ok(Self {
+            dal: SqliteDal::new()?,
+            config: Config::read()?,
+        })
     }
 }

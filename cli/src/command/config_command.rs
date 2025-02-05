@@ -52,22 +52,20 @@ pub enum CliPrintStyle {
 
 impl Cli {
     /// Handles the config modification command
-    pub fn handle_config_command(&self, config_args: ConfigArgs) -> Result<(), ConfigError> {
-        let mut config = logic::config::Config::read()?;
-
+    pub fn handle_config_command(&mut self, config_args: ConfigArgs) -> Result<(), ConfigError> {
         match config_args {
             ConfigArgs::CliPrintStyle(cli_print_style_args) => {
-                config.cli_print_style = cli_print_style_args.style.into()
+                self.logic.config.cli_print_style = cli_print_style_args.style.into()
             }
             ConfigArgs::CliDisplayLimit(cli_display_limit_args) => {
                 cli_display_limit_args
                     .validate()
                     .map_err(|e| ConfigError::InvalidValue(e.to_string()))?;
 
-                config.cli_display_limit = cli_display_limit_args.value
+                self.logic.config.cli_display_limit = cli_display_limit_args.value
             }
         }
-        Ok(config.write()?)
+        Ok(self.logic.config.write()?)
     }
 }
 
