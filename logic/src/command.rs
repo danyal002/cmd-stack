@@ -195,7 +195,6 @@ mod tests {
     use std::{thread, time::Duration};
 
     use data::dal::sqlite_dal::SqliteDal;
-    use log::Log;
     use tempfile::TempDir;
 
     use super::*;

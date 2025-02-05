@@ -31,24 +31,18 @@ pub enum ConfigReadError {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
-    #[serde(default)]
     pub cli_print_style: CliPrintStyle,
-    #[serde(default)]
     pub cli_display_limit: u32,
-    #[serde(default)]
     pub param_string_min: u32,
-    #[serde(default)]
     pub param_string_max: u32,
-    #[serde(default)]
     pub param_int_min: i32,
-    #[serde(default)]
     pub param_int_max: i32,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            cli_print_style: CliPrintStyle::All,
+            cli_print_style: CliPrintStyle::default(),
             cli_display_limit: 10,
             param_string_min: 5,
             param_string_max: 10,
@@ -56,13 +50,6 @@ impl Default for Config {
             param_int_max: 10,
         }
     }
-}
-
-/// Arguments for setting the CLI config
-#[derive(Debug, Clone)]
-pub enum ConfigProperty {
-    CliPrintStyle(CliPrintStyle),
-    CliDisplayLimit(u32),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

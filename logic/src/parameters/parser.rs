@@ -32,7 +32,7 @@ impl Logic {
         command: String,
     ) -> Result<(Vec<String>, Vec<SerializableParameter>), ParameterError> {
         let regex_string = r"\@\{(?P<param>([^}]*))\}";
-        let re = Regex::new(&regex_string)
+        let re = Regex::new(regex_string)
             .map_err(|e| ParameterError::InvalidRegex(regex_string.to_string(), e.to_string()))?;
 
         let mut parameters = Vec::new();
