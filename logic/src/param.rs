@@ -114,6 +114,38 @@ impl FromStr for StringParameter {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct BlankParameter {}
+
+impl BlankParameter {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for BlankParameter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RandomStringGenerator for BlankParameter {
+    fn generate_random(&self, _rng: &mut dyn RandomNumberGenerator) -> String {
+        "@{}".to_string()
+    }
+}
+
+impl FromStr for BlankParameter {
+    type Err = ParameterError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "@{}" => Ok(BlankParameter::default()),
+            _ => Err(ParameterError::InvalidParameter),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct IntParameter {
     min: i32,
     max: i32,
@@ -177,6 +209,7 @@ impl RandomStringGenerator for BooleanParameter {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", content = "data")]
 pub enum SerializableParameter {
+    Blank(BlankParameter),
     Int(IntParameter),
     String(StringParameter),
     Boolean(BooleanParameter),
@@ -185,6 +218,7 @@ pub enum SerializableParameter {
 impl RandomStringGenerator for SerializableParameter {
     fn generate_random(&self, rng: &mut dyn RandomNumberGenerator) -> String {
         match self {
+            SerializableParameter::Blank(param) => param.generate_random(rng),
             SerializableParameter::Int(param) => param.generate_random(rng),
             SerializableParameter::String(param) => param.generate_random(rng),
             SerializableParameter::Boolean(param) => param.generate_random(rng),
@@ -202,6 +236,11 @@ impl ParameterHandler {
     }
 
     fn parse_parameter(&self, s: String) -> Result<SerializableParameter, ParameterError> {
+        let ret = BlankParameter::from_str(&s);
+        if let Ok(ph) = ret {
+            return Ok(SerializableParameter::Blank(ph));
+        }
+
         let ret = StringParameter::from_str(&s);
         if let Ok(ph) = ret {
             return Ok(SerializableParameter::String(ph));

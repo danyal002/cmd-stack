@@ -8,7 +8,7 @@ use crate::{
 };
 use inquire::InquireError;
 use log::error;
-use logic::command::{SearchCommandArgs, SearchCommandError};
+use logic::{command::{SearchCommandArgs, SearchCommandError}, param::SerializableParameter};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -48,11 +48,32 @@ impl Cli {
         let user_selection = self.prompt_user_for_command_selection(search_results)?;
 
         // Generate parameters for the command
-        let (text_to_copy, _) = self
+        let (generated_params_cmd, _) = self
             .logic
             .generate_parameters(user_selection.internal_command.command)?;
+        
+        let (other_strings, parameters) = self
+            .logic
+            .parse_parameters(generated_params_cmd)?;
 
-        copy_to_clipboard(text_to_copy)?;
+        let mut generated_result = String::new();
+
+        for (i, other_string) in other_strings.iter().enumerate() {
+            generated_result.push_str(other_string);
+
+            if i < other_strings.len() - 1 {
+                match parameters[i] {
+                    SerializableParameter::Blank(_) => {
+                        let filled_parameter = self.prompt_user_for_parameter(i)?;
+                        generated_result.push_str(&filled_parameter);
+                    }
+                    _ => (),
+                }
+                
+            }
+        }  
+
+        copy_to_clipboard(generated_result)?;
 
         Ok(self
             .logic

@@ -98,6 +98,18 @@ impl Cli {
         Ok(commands[selected_command.index].clone())
     }
 
+    pub fn prompt_user_for_parameter(&self, param_index: usize) -> Result<String, InquireError> {
+        spacing();
+        let param = Text::new(&format_output(
+            &("<bold>Enter value for parameter</bold> <italics>".to_owned()
+                + (param_index + 1).to_string().as_str()
+                + "</italics><bold>:</bold>"),
+        ))
+        .prompt()?;
+
+        Ok(param)
+    }
+
     /// Formats the commands for printing based on the user's preferred style.
     /// Returns the columns to be printed
     fn format_commands_for_printing(&self, commands: &Vec<Command>) -> (Vec<String>, &str) {
