@@ -4,7 +4,6 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
 
-// use crate::param::{ParameterError, ParameterHandler, SerializableParameter};
 use crate::parameters::ParameterError;
 use crate::Logic;
 
@@ -211,7 +210,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::try_default().unwrap();
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -242,7 +241,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::try_default().unwrap();
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let mut invalid_command = InternalCommand {
             command: "@{bad}".to_string(),
@@ -289,7 +288,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::try_default().unwrap();
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -338,8 +337,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        // let logic = Logic::try_default().unwrap();
-        let logic = Logic::try_default().unwrap();
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "abcd".to_string(),
@@ -427,7 +425,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::try_default().unwrap();
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -470,7 +468,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::try_default().unwrap();
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -517,7 +515,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::try_default().unwrap();
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "echo @{int}".to_string(),

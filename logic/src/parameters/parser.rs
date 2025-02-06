@@ -66,16 +66,16 @@ impl Logic {
     }
 
     fn parse_parameter(&self, s: String) -> Result<SerializableParameter, ParameterError> {
-        if let Ok(ph) = StringParameter::from_str(&s, &self.config) {
-            return Ok(SerializableParameter::String(ph));
+        if let Ok(string_param) = StringParameter::from_str(&s, &self.config) {
+            return Ok(SerializableParameter::String(string_param));
         }
 
-        if let Ok(ph) = IntParameter::from_str(&s, &self.config) {
-            return Ok(SerializableParameter::Int(ph));
+        if let Ok(int_param) = IntParameter::from_str(&s, &self.config) {
+            return Ok(SerializableParameter::Int(int_param));
         }
 
-        if let Ok(ph) = BooleanParameter::from_str(&s) {
-            return Ok(SerializableParameter::Boolean(ph));
+        if let Ok(bool_param) = BooleanParameter::from_str(&s) {
+            return Ok(SerializableParameter::Boolean(bool_param));
         }
 
         Err(ParameterError::InvalidParameter)

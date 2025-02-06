@@ -5,7 +5,6 @@
 pub mod command;
 pub mod config;
 pub mod import_export;
-pub mod param;
 pub mod parameters;
 
 use config::{Config, ConfigReadError};
@@ -26,6 +25,13 @@ pub struct Logic {
 }
 
 impl Logic {
+    pub fn new(dal: SqliteDal) -> Result<Logic, LogicInitError> {
+        Ok(Logic {
+            dal,
+            config: Config::read()?,
+        })
+    }
+
     pub fn try_default() -> Result<Logic, LogicInitError> {
         Ok(Self {
             dal: SqliteDal::new()?,
