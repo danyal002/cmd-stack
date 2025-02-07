@@ -38,7 +38,7 @@ export function SettingsDialog({ isCollapsed }: SettingsDialogProps) {
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
             <div className="flex items-center">
-              <Label>Toggle Dark Mode</Label>
+              <Label>Theme</Label>
               <div className="m-2">
                 <ModeToggle />
               </div>
