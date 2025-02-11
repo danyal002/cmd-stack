@@ -9,7 +9,7 @@ const treeVariants = cva(
 );
 
 const selectedTreeVariants = cva(
-  'before:opacity-100 before:bg-accent text-accent-foreground',
+  'before:opacity-100 before:bg-accent text-accent-foreground before:border-l-4 before:border-primary',
 );
 
 interface TreeDataItem {
