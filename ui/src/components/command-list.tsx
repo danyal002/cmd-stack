@@ -1,10 +1,9 @@
-import { ComponentProps } from 'react';
-import formatDistanceToNow from 'date-fns/formatDistanceToNow';
-
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { useCommand } from '@/use-command';
+import { invoke } from '@tauri-apps/api/core';
+import { useCommand, useCommands } from '@/use-command';
 import { Command } from '@/types/command';
+import { Star } from 'lucide-react';
 
 interface CommandListProps {
   items: Command[];
@@ -12,6 +11,7 @@ interface CommandListProps {
 
 export function CommandList({ items }: CommandListProps) {
   const [command, setCommand] = useCommand();
+  const [, refreshCommands] = useCommands();
 
   return (
     <div className="flex flex-col gap-2 p-4 pt-0">
@@ -19,7 +19,7 @@ export function CommandList({ items }: CommandListProps) {
         <button
           key={item.id}
           className={cn(
-            'flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent',
+            'group flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent',
             command.selected === item.id && 'bg-muted',
           )}
           onClick={() =>
@@ -34,18 +34,6 @@ export function CommandList({ items }: CommandListProps) {
               <div className="truncate flex items-center gap-2">
                 <div className="truncate font-semibold">{item.command}</div>
               </div>
-              <div
-                className={cn(
-                  'ml-auto text-xs',
-                  command.selected === item.id
-                    ? 'text-foreground'
-                    : 'text-muted-foreground',
-                )}
-              >
-                {formatDistanceToNow(new Date(item.last_used * 1000), {
-                  addSuffix: true,
-                })}
-              </div>
             </div>
           </div>
           {item.note && (
@@ -53,36 +41,37 @@ export function CommandList({ items }: CommandListProps) {
               {item.note.substring(0, 300)}
             </div>
           )}
-          {item.tag ? (
-            <div className="flex items-center gap-2">
-              <Badge
-                key={item.tag}
-                variant={getBadgeVariantFromLabel(item.tag)}
-              >
-                {item.tag}
-              </Badge>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Badge variant={'secondary'}>{'Untagged'}</Badge>
-            </div>
-          )}
+          <div className="w-full flex items-center gap-2">
+            <Badge key={item.tag} variant={'secondary'}>
+              {item.tag ? item.tag : 'Untagged'}
+            </Badge>
+            <Star
+              className={cn(
+                'ml-auto h-3.5 hover:stroke-foreground stroke-muted-foreground invisible group-hover:visible',
+                item.favourite &&
+                  'visible fill-muted-foreground hover:fill-foreground',
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                invoke('update_command', {
+                  commandId: item.id,
+                  command: {
+                    ...item,
+                    favourite: !item.favourite,
+                  },
+                })
+                  .then((res) => {
+                    console.log(res);
+                    refreshCommands();
+                  })
+                  .catch((error) => {
+                    console.log(error);
+                  });
+              }}
+            />
+          </div>
         </button>
       ))}
     </div>
   );
-}
-
-function getBadgeVariantFromLabel(
-  label: string,
-): ComponentProps<typeof Badge>['variant'] {
-  if (['work'].includes(label.toLowerCase())) {
-    return 'default';
-  }
-
-  if (['personal'].includes(label.toLowerCase())) {
-    return 'outline';
-  }
-
-  return 'secondary';
 }
