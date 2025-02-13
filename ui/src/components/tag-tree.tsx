@@ -48,20 +48,22 @@ export function TagTree({
     });
 
     const toTreeDataItems = (node: Record<string, TagNode>): TreeDataItem[] => {
-      return Object.values(node).map(({ id, name, children, onClick }) => {
-        const treeDataItem: TreeDataItem = {
-          id,
-          name,
-          onClick,
-        };
+      return Object.values(node)
+        .map(({ id, name, children, onClick }) => {
+          const treeDataItem: TreeDataItem = {
+            id,
+            name,
+            onClick,
+          };
 
-        const childItems = toTreeDataItems(children);
-        if (childItems.length > 0) {
-          treeDataItem.children = childItems;
-        }
+          const childItems = toTreeDataItems(children);
+          if (childItems.length > 0) {
+            treeDataItem.children = childItems;
+          }
 
-        return treeDataItem;
-      });
+          return treeDataItem;
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
     };
 
     return toTreeDataItems(root);

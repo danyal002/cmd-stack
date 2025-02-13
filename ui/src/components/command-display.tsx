@@ -27,6 +27,9 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { ScrollArea } from './ui/scroll-area';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 interface CommandDisplayProps {
   command: Command | null;
@@ -132,6 +135,8 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     });
   }
 
+  const tagParts = command?.tag ? command.tag.split('/') : [];
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
@@ -141,13 +146,49 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
               <div className="flex items-center p-2">
                 <div className="flex items-center gap-2">
                   <div className="pl-2 font-semibold">
-                    {command.tag ? command.tag : 'Untagged'}
+                    {command.tag &&
+                      tagParts.map((tag, index) => (
+                        <>
+                          <Badge
+                            key={index}
+                            variant={
+                              index == tagParts.length - 1
+                                ? 'default'
+                                : 'outline'
+                            }
+                            className={cn(
+                              index !== tagParts.length - 1 &&
+                                'text-secondary-foreground/40',
+                            )}
+                          >
+                            {tag}
+                          </Badge>
+                          {index !== tagParts.length - 1 && (
+                            <span className="text-xs font-semibold px-1.5">
+                              /
+                            </span>
+                          )}
+                        </>
+                      ))}
                   </div>
                 </div>
                 {command.last_used && (
-                  <div className="ml-auto text-xs text-muted-foreground">
-                    {format(new Date(command.last_used * 1000), 'PPpp')}
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="ml-auto text-xs text-muted-foreground">
+                        Last used&nbsp;
+                        {formatDistanceToNow(
+                          new Date(command.last_used * 1000),
+                          {
+                            addSuffix: true,
+                          },
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {format(new Date(command.last_used * 1000), 'PPp')}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
                 <Separator orientation="vertical" className="mx-2 h-6" />
                 {!editing && (
