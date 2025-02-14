@@ -153,8 +153,8 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                             key={index}
                             variant={
                               index == tagParts.length - 1
-                                ? 'default'
-                                : 'outline'
+                                ? 'outline'
+                                : 'secondary'
                             }
                             className={cn(
                               index !== tagParts.length - 1 &&
