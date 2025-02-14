@@ -8,7 +8,7 @@ import { TagTree } from '@/components/tag-tree';
 import { cn } from '@/lib/utils';
 import { Command } from '@/types/command';
 import { useCommand } from '@/use-command';
-import { File, Settings, Star, Tags } from 'lucide-react';
+import { File, ListFilter, Settings, Star, Tags } from 'lucide-react';
 import { useState } from 'react';
 import { AddDialog } from './add-dialog';
 import { SearchForm } from './search-form';
@@ -182,7 +182,8 @@ export function MainCommandPage({
             <SearchForm />
           </div>
           {selectedTagId && (
-            <div className="flex gap-2 px-4 mb-2">
+            <div className="flex gap-2 px-4 mb-2 items-center">
+              <ListFilter size={12} />
               <Badge variant="secondary">{selectedTagId}</Badge>
             </div>
           )}

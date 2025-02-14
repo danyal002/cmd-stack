@@ -42,7 +42,11 @@ export function CommandList({ items }: CommandListProps) {
             </div>
           )}
           <div className="w-full flex items-center gap-2">
-            <Badge key={item.tag} variant={'secondary'}>
+            <Badge
+              key={item.tag}
+              variant={item.tag ? 'outline' : 'secondary'}
+              className={cn(!item.tag && 'text-secondary-foreground/40')}
+            >
               {item.tag ? item.tag : 'Untagged'}
             </Badge>
             <Star
