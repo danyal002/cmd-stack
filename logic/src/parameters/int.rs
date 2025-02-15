@@ -57,7 +57,7 @@ impl FromStrWithConfig for IntParameter {
 }
 
 impl GenerateRandomValues for IntParameter {
-    fn generate_random_values(&self, rng: &mut dyn RandomNumberGenerator) -> String {
-        rng.generate_range(self.min, self.max + 1).to_string()
+    fn generate_random_value(&self, rng: &mut dyn RandomNumberGenerator) -> String {
+        rng.generate_range(self.min, self.max).to_string()
     }
 }

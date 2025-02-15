@@ -9,7 +9,7 @@ pub trait RandomNumberGenerator {
 
 impl RandomNumberGenerator for ThreadRng {
     fn generate_range(&mut self, low: i32, high: i32) -> i32 {
-        self.gen_range(low..high + 1)
+        self.gen_range(low..=high)
     }
 }
 
@@ -29,7 +29,7 @@ impl Logic {
             generated_result.push_str(other_string);
 
             if i < non_parameter_strs.len() - 1 {
-                let s = parameters[i].generate_random_values(&mut rng);
+                let s = parameters[i].generate_random_value(&mut rng);
                 generated_result.push_str(&s);
                 generated_parameters.push(s);
             }

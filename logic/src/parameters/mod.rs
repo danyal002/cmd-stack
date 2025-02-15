@@ -14,7 +14,7 @@ pub trait FromStrWithConfig: Sized {
 }
 
 pub trait GenerateRandomValues {
-    fn generate_random_values(&self, rng: &mut dyn RandomNumberGenerator) -> String;
+    fn generate_random_value(&self, rng: &mut dyn RandomNumberGenerator) -> String;
 }
 
 #[derive(Error, Debug)]

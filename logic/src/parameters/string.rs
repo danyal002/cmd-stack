@@ -57,7 +57,7 @@ impl FromStrWithConfig for StringParameter {
 }
 
 impl GenerateRandomValues for StringParameter {
-    fn generate_random_values(&self, rng: &mut dyn RandomNumberGenerator) -> String {
+    fn generate_random_value(&self, rng: &mut dyn RandomNumberGenerator) -> String {
         let charset: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
         let length = rng.generate_range(self.min as i32, self.max as i32) as usize;

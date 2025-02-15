@@ -17,11 +17,11 @@ pub enum SerializableParameter {
 }
 
 impl GenerateRandomValues for SerializableParameter {
-    fn generate_random_values(&self, rng: &mut dyn RandomNumberGenerator) -> String {
+    fn generate_random_value(&self, rng: &mut dyn RandomNumberGenerator) -> String {
         match self {
-            SerializableParameter::Int(param) => param.generate_random_values(rng),
-            SerializableParameter::String(param) => param.generate_random_values(rng),
-            SerializableParameter::Boolean(param) => param.generate_random_values(rng),
+            SerializableParameter::Int(param) => param.generate_random_value(rng),
+            SerializableParameter::String(param) => param.generate_random_value(rng),
+            SerializableParameter::Boolean(param) => param.generate_random_value(rng),
         }
     }
 }
@@ -40,14 +40,8 @@ impl Logic {
         let mut last_end = 0;
 
         for mat in re.find_iter(&command) {
-            match self.parse_parameter(mat.as_str().to_owned()) {
-                Ok(param) => {
-                    parameters.push(param);
-                }
-                Err(e) => {
-                    return Err(e);
-                }
-            }
+            let param = self.parse_parameter(mat.as_str().to_owned())?;
+            parameters.push(param);
 
             non_parameter_strs.push(command[last_end..mat.start()].to_string());
             last_end = mat.end();

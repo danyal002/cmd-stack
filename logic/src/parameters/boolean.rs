@@ -18,7 +18,7 @@ impl FromStr for BooleanParameter {
 }
 
 impl GenerateRandomValues for BooleanParameter {
-    fn generate_random_values(&self, rng: &mut dyn RandomNumberGenerator) -> String {
+    fn generate_random_value(&self, rng: &mut dyn RandomNumberGenerator) -> String {
         if rng.generate_range(0, 1) == 0 {
             "false".to_string()
         } else {
