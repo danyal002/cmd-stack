@@ -29,7 +29,7 @@ impl FromStrWithConfig for IntParameter {
                     )
                 })?
             } else {
-                config.param_int_min
+                config.param_int_range_min
             };
 
             let max: i32 = if let Some(max) = caps.name("max") {
@@ -40,7 +40,7 @@ impl FromStrWithConfig for IntParameter {
                     )
                 })?
             } else {
-                config.param_int_max
+                config.param_int_range_max
             };
 
             if min > max {

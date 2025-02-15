@@ -27,10 +27,10 @@ pub enum ConfigArgs {
     CliDisplayLimit(CliDisplayLimitArgs),
 
     /// Modify string parameter min/max limits
-    ParamStringLength(ParamStringArgs),
+    ParamStringLength(ParamStringLengthArgs),
 
     /// Modify integer parameter min/max limits
-    ParamIntRange(ParamIntArgs),
+    ParamIntRange(ParamIntRangeArgs),
 }
 
 #[derive(Debug, Args)]
@@ -58,24 +58,28 @@ pub enum CliPrintStyle {
 
 #[derive(Debug, Args, Validate)]
 #[command(arg_required_else_help(true))]
-pub struct ParamStringArgs {
-    #[validate(range(min = 1, message = "param-string-min must be at least 1"))]
+pub struct ParamStringLengthArgs {
     /// The minimum length for string parameters (min. 1)
-    pub min: u32,
+    #[validate(range(min = 1, message = "param-string-length-min must be at least 1"))]
+    #[arg(long = "min")]
+    pub min: Option<u32>,
 
-    #[validate(range(min = 1, message = "param-string-max must be at least 1"))]
     /// The maximum length for string parameters (min. 1)
-    pub max: u32,
+    #[validate(range(min = 1, message = "param-string-length-max must be at least 1"))]
+    #[arg(long = "max")]
+    pub max: Option<u32>,
 }
 
 #[derive(Debug, Args, Validate)]
 #[command(arg_required_else_help(true))]
-pub struct ParamIntArgs {
+pub struct ParamIntRangeArgs {
     /// The minimum value for integer parameters
-    pub min: i32,
+    #[arg(long = "min")]
+    pub min: Option<i32>,
 
     /// The maximum value for integer parameters
-    pub max: i32,
+    #[arg(long = "max")]
+    pub max: Option<i32>,
 }
 
 impl Cli {
@@ -93,30 +97,58 @@ impl Cli {
                 self.logic.config.cli_display_limit = cli_display_limit_args.value
             }
             ConfigArgs::ParamStringLength(param_string_args) => {
+                if param_string_args.min.is_none() && param_string_args.max.is_none() {
+                    return Err(ConfigError::InvalidValue(
+                        "No value(s) provided for param-string-length".to_string(),
+                    ));
+                }
+
                 param_string_args
                     .validate()
                     .map_err(|e| ConfigError::InvalidValue(e.to_string()))?;
 
-                if param_string_args.min > param_string_args.max {
+                let min = param_string_args
+                    .min
+                    .unwrap_or(self.logic.config.param_string_length_min);
+
+                let max = param_string_args
+                    .max
+                    .unwrap_or(self.logic.config.param_string_length_max);
+
+                if min > max {
                     return Err(ConfigError::InvalidValue(format!(
-                        "param-string-min ({}) cannot be greater than param-string-max ({})",
-                        param_string_args.min, param_string_args.max
+                        "param-string-length-min ({}) cannot be greater than param-string-length-max ({})",
+                        min, max
                     )));
                 }
 
-                self.logic.config.param_string_min = param_string_args.min;
-                self.logic.config.param_string_max = param_string_args.max;
+                self.logic.config.param_string_length_min = min;
+                self.logic.config.param_string_length_max = max;
             }
             ConfigArgs::ParamIntRange(param_int_args) => {
-                if param_int_args.min > param_int_args.max {
+                if param_int_args.min.is_none() && param_int_args.max.is_none() {
+                    return Err(ConfigError::InvalidValue(
+                        "No value(s) provided for param-int-range".to_string(),
+                    ));
+                }
+
+                let min = param_int_args
+                    .min
+                    .unwrap_or(self.logic.config.param_int_range_min);
+
+                let max = param_int_args
+                    .max
+                    .unwrap_or(self.logic.config.param_int_range_min);
+
+                if min > max {
                     return Err(ConfigError::InvalidValue(format!(
-                        "param-int-min ({}) cannot be greater than param-int-max ({})",
-                        param_int_args.min, param_int_args.max
+                        "param-int-range-min ({}) cannot be greater than param-int-range-max ({})",
+                        min, max
                     )));
                 }
 
-                self.logic.config.param_int_min = param_int_args.min;
-                self.logic.config.param_int_max = param_int_args.max;
+                self.logic.config.param_int_range_min = min;
+                self.logic.config.param_int_range_max = max;
             }
         }
         Ok(self.logic.config.write()?)

@@ -29,7 +29,7 @@ impl FromStrWithConfig for StringParameter {
                     )
                 })?
             } else {
-                config.param_string_min
+                config.param_string_length_min
             };
 
             let max: u32 = if let Some(max) = caps.name("max") {
@@ -40,7 +40,7 @@ impl FromStrWithConfig for StringParameter {
                     )
                 })?
             } else {
-                config.param_string_max
+                config.param_string_length_max
             };
 
             if min > max {
