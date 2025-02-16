@@ -18,8 +18,13 @@ impl Logic {
         &self,
         non_parameter_strs: Vec<String>,
         parameters: Vec<SerializableParameter>,
+        rng: Option<Box<dyn RandomNumberGenerator>>,
     ) -> Result<(String, Vec<String>), ParameterError> {
-        let mut rng = rand::rngs::ThreadRng::default();
+        let mut rng = if let Some(rng) = rng {
+            rng
+        } else {
+            Box::new(ThreadRng::default())
+        };
 
         // Build the string by generating parameters
         let mut generated_result = String::new();
@@ -29,7 +34,7 @@ impl Logic {
             generated_result.push_str(other_string);
 
             if i < non_parameter_strs.len() - 1 {
-                let s = parameters[i].generate_random_value(&mut rng);
+                let s = parameters[i].generate_random_value(rng.as_mut());
                 generated_result.push_str(&s);
                 generated_parameters.push(s);
             }
@@ -38,3 +43,244 @@ impl Logic {
         Ok((generated_result, generated_parameters))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        parameters::{
+            boolean::BooleanParameter, int::IntParameter, parser::SerializableParameter,
+            populator::RandomNumberGenerator, string::StringParameter,
+        },
+        Logic,
+    };
+
+    pub struct MockRng {
+        values: Vec<u32>,
+        index: usize,
+    }
+
+    impl MockRng {
+        pub fn new(values: Vec<u32>) -> Self {
+            Self { values, index: 0 }
+        }
+    }
+
+    impl RandomNumberGenerator for MockRng {
+        fn generate_range(&mut self, low: i32, high: i32) -> i32 {
+            let value = self.values[self.index];
+            self.index = (self.index + 1) % self.values.len();
+
+            let length = high - low + 1;
+
+            low + (value as i32 % length)
+        }
+    }
+
+    #[test]
+    fn test_populate_parameters_1() {
+        let logic = Logic::try_default().unwrap();
+
+        let rng = Box::new(MockRng::new(vec![0, 1, 2, 4]));
+
+        let non_parameter_strs = vec![
+            "red-".to_string(),
+            " @nothing ".to_string(),
+            " ".to_string(),
+            "".to_string(),
+        ];
+        let parameters = vec![
+            SerializableParameter::Int(IntParameter::default()),
+            SerializableParameter::String(StringParameter::default()),
+            SerializableParameter::Int(IntParameter::default()),
+        ];
+
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        assert!(ret.is_ok());
+
+        let (generated_string, generated_parameters) = ret.unwrap();
+        assert_eq!(
+            vec!["5".to_string(), "CEABCE".to_string(), "5".to_string()],
+            generated_parameters
+        );
+        assert_eq!("red-5 @nothing CEABCE 5", generated_string);
+    }
+
+    #[test]
+    fn test_populate_parameters_2() {
+        let logic = Logic::try_default().unwrap();
+
+        let rng = Box::new(MockRng::new(vec![2, 3, 4, 7]));
+
+        let non_parameter_strs = vec![
+            "ls ".to_string(),
+            " ".to_string(),
+            " ".to_string(),
+            " ".to_string(),
+            "".to_string(),
+        ];
+        let parameters = vec![
+            SerializableParameter::Int(IntParameter::default()),
+            SerializableParameter::Int(IntParameter::default()),
+            SerializableParameter::String(StringParameter::default()),
+            SerializableParameter::Boolean(BooleanParameter {}),
+        ];
+
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        assert!(ret.is_ok());
+
+        let (generated_string, generated_parameters) = ret.unwrap();
+        assert_eq!(
+            vec![
+                "7".to_string(),
+                "8".to_string(),
+                "HCDEHCDEH".to_string(),
+                "false".to_string()
+            ],
+            generated_parameters
+        );
+        assert_eq!("ls 7 8 HCDEHCDEH false", generated_string);
+    }
+
+    #[test]
+    fn test_populate_parameters_bounds() {
+        let logic = Logic::try_default().unwrap();
+
+        let rng = Box::new(MockRng::new(vec![2, 3, 4, 7]));
+
+        let non_parameter_strs = vec![
+            "ls ".to_string(),
+            " ".to_string(),
+            " ".to_string(),
+            " ".to_string(),
+            "".to_string(),
+        ];
+        let parameters = vec![
+            SerializableParameter::Int(IntParameter::default()),
+            SerializableParameter::Int(IntParameter::default()),
+            SerializableParameter::String(StringParameter::default()),
+            SerializableParameter::String(StringParameter::default()),
+        ];
+
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        assert!(ret.is_ok());
+
+        let (generated_string, generated_parameters) = ret.unwrap();
+        assert_eq!(
+            vec![
+                "7".to_string(),
+                "8".to_string(),
+                "HCDEHCDEH".to_string(),
+                "DEHCDEH".to_string()
+            ],
+            generated_parameters
+        );
+        assert_eq!("ls 7 8 HCDEHCDEH DEHCDEH", generated_string);
+    }
+
+    // let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![2, 2, 2, 2])));
+    // let ret = ph.replace_parameters("ls @{string[7,7]} @{string[3,3]}".to_string());
+    // assert!(ret.is_ok());
+    // let (generated_string, generated_parameters) = ret.unwrap();
+    // assert_eq!("ls CCCCCCC CCC", generated_string);
+
+    // let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![1, 2, 3])));
+    // let ret = ph.replace_parameters("ls @{boolean} @{boolean} @{boolean}".to_string());
+    // assert!(ret.is_ok());
+    // let (generated_string, generated_parameters) = ret.unwrap();
+    // assert_eq!("ls true false true", generated_string);
+
+    // let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![1, 2, 3])));
+    // let ret = ph.replace_parameters("@{string}".to_string());
+    // assert!(ret.is_ok());
+    // let (generated_string, generated_parameters) = ret.unwrap();
+    // assert_eq!("CDBCDB", generated_string);
+
+    #[test]
+    fn test_populate_parameters_no_parameters() {
+        let logic = Logic::try_default().unwrap();
+
+        let rng = Box::new(MockRng::new(vec![0, 1, 2, 4]));
+
+        let non_parameter_strs = vec!["some string".to_string()];
+        let parameters = vec![];
+
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        assert!(ret.is_ok());
+
+        let (generated_string, generated_parameters) = ret.unwrap();
+        assert_eq!(Vec::<String>::new(), generated_parameters);
+        assert_eq!("some string", generated_string);
+    }
+
+    #[test]
+    fn test_populate_parameters_empty() {
+        let logic = Logic::try_default().unwrap();
+
+        let rng = Box::new(MockRng::new(vec![0, 1, 2, 4]));
+
+        let non_parameter_strs = vec![];
+        let parameters = vec![];
+
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        assert!(ret.is_ok());
+
+        let (generated_string, generated_parameters) = ret.unwrap();
+        assert_eq!(Vec::<String>::new(), generated_parameters);
+        assert_eq!("", generated_string);
+    }
+}
+
+// #[cfg(test)]
+// mod tests {
+//     use crate::param::{MockRng, ParameterHandler};
+
+//     #[test]
+//     fn test_zero_parameters() {
+//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
+//         let ret = ph.replace_parameters("fasd @ @email @wadsf @test {} @".to_string());
+//         assert!(ret.is_ok());
+//         let (generated_string, generated_parameters) = ret.unwrap();
+//         assert_eq!("fasd @ @email @wadsf @test {} @", generated_string);
+//     }
+
+//     #[test]
+//     fn test_validate_parameters() {
+//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+//         let ret = ph.validate_parameters("fasd @{bad-command}".to_string());
+//         assert!(ret.is_err());
+
+//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+//         let ret = ph.validate_parameters("fasd @{string[cat, dog]}".to_string());
+//         assert!(ret.is_err());
+
+//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+//         let ret = ph.validate_parameters("fasd @{string[3]}".to_string());
+//         assert!(ret.is_err());
+
+//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+//         let ret = ph.validate_parameters("fasd @{string[,]}".to_string());
+//         assert!(ret.is_err());
+
+//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+//         let ret = ph.validate_parameters("fasd @{string[-1,5]}".to_string());
+//         assert!(ret.is_err());
+
+//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+//         let ret = ph.validate_parameters("fasd @{string[-1,5]}".to_string());
+//         assert!(ret.is_err());
+
+//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
+//         let ret = ph.validate_parameters("fasd @{string[7,5]}".to_string());
+//         assert!(ret.is_err());
+//     }
+
+//     #[test]
+//     fn test_default_random() {
+//         let mut ph = ParameterHandler::default();
+//         let ret = ph.validate_parameters("asdfjkf  @{string[1, 1]}".to_string());
+//         assert!(!ret.is_err());
+
+//         let ret = ph.validate_parameters("asdfjkf  @{string[1, 0]}".to_string());
+//         assert!(ret.is_err());
+//     }
+// }

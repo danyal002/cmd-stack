@@ -13,6 +13,12 @@ pub struct IntParameter {
     max: i32,
 }
 
+impl Default for IntParameter {
+    fn default() -> Self {
+        IntParameter { min: 5, max: 10 }
+    }
+}
+
 impl FromStrWithConfig for IntParameter {
     fn from_str(s: &str, config: &Config) -> Result<Self, ParameterError> {
         let int_param_regex = r"@\{int(?:\[(?P<min>-?\d+),\s*(?P<max>-?\d+)\])?\}";

@@ -185,7 +185,7 @@ impl Logic {
         command: String,
     ) -> Result<(String, Vec<String>), ParameterError> {
         let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
-        self.populate_parameters(non_parameter_strs, parameters)
+        self.populate_parameters(non_parameter_strs, parameters, None)
     }
 }
 

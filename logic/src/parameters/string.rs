@@ -13,6 +13,12 @@ pub struct StringParameter {
     max: u32,
 }
 
+impl Default for StringParameter {
+    fn default() -> Self {
+        StringParameter { min: 5, max: 10 }
+    }
+}
+
 impl FromStrWithConfig for StringParameter {
     fn from_str(s: &str, config: &Config) -> Result<Self, ParameterError> {
         let string_param_regex = r"@\{string(?:\[(?P<min>(\d+)),\s*(?P<max>(\d+))\])?\}";
