@@ -79,3 +79,62 @@ impl GenerateRandomValues for StringParameter {
         random_string
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        parameters::{string::StringParameter, FromStrWithConfig},
+        Config,
+    };
+
+    #[test]
+    fn test_from_str_no_params() {
+        let ret = StringParameter::from_str("@{string}", &Config::default());
+        assert!(ret.is_ok());
+        let param = ret.unwrap();
+        assert_eq!(param.min, 5);
+        assert_eq!(param.max, 10);
+    }
+
+    #[test]
+    fn test_from_str_params() {
+        let ret = StringParameter::from_str("@{string[99, 100]}", &Config::default());
+        assert!(ret.is_ok());
+        let param = ret.unwrap();
+        assert_eq!(param.min, 99);
+        assert_eq!(param.max, 100);
+
+        let ret = StringParameter::from_str("@{string[0, 0]}", &Config::default());
+        assert!(ret.is_ok());
+        let param = ret.unwrap();
+        assert_eq!(param.min, 0);
+        assert_eq!(param.max, 0);
+    }
+
+    #[test]
+    fn test_from_str_errors() {
+        // Min and max swapped
+        let ret = StringParameter::from_str("@{string[1, 0]}", &Config::default());
+        assert!(ret.is_err());
+
+        // Max missing
+        let ret = StringParameter::from_str("@{string[1, ]}", &Config::default());
+        assert!(ret.is_err());
+
+        // Min missing
+        let ret = StringParameter::from_str("@{string[, 1]}", &Config::default());
+        assert!(ret.is_err());
+
+        // Min and max missing
+        let ret = StringParameter::from_str("@{string[, ]}", &Config::default());
+        assert!(ret.is_err());
+
+        // Bracket missing
+        let ret = StringParameter::from_str("@{string[0, 1}", &Config::default());
+        assert!(ret.is_err());
+
+        // Incorrect type
+        let ret = StringParameter::from_str("@{int[0, 1]}", &Config::default());
+        assert!(ret.is_err());
+    }
+}

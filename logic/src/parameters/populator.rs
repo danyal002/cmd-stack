@@ -142,42 +142,6 @@ mod tests {
     }
 
     #[test]
-    fn test_populate_parameters_bounds() {
-        let logic = Logic::try_default().unwrap();
-
-        let rng = Box::new(MockRng::new(vec![2, 3, 4, 7]));
-
-        let non_parameter_strs = vec![
-            "ls ".to_string(),
-            " ".to_string(),
-            " ".to_string(),
-            " ".to_string(),
-            "".to_string(),
-        ];
-        let parameters = vec![
-            SerializableParameter::Int(IntParameter::default()),
-            SerializableParameter::Int(IntParameter::default()),
-            SerializableParameter::String(StringParameter::default()),
-            SerializableParameter::String(StringParameter::default()),
-        ];
-
-        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
-        assert!(ret.is_ok());
-
-        let (generated_string, generated_parameters) = ret.unwrap();
-        assert_eq!(
-            vec![
-                "7".to_string(),
-                "8".to_string(),
-                "HCDEHCDEH".to_string(),
-                "DEHCDEH".to_string()
-            ],
-            generated_parameters
-        );
-        assert_eq!("ls 7 8 HCDEHCDEH DEHCDEH", generated_string);
-    }
-
-    #[test]
     fn test_populate_parameters_no_parameters() {
         let logic = Logic::try_default().unwrap();
 

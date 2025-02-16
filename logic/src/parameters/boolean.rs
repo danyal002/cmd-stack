@@ -26,3 +26,26 @@ impl GenerateRandomValues for BooleanParameter {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::parameters::boolean::BooleanParameter;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_from_str() {
+        let ret = BooleanParameter::from_str("@{boolean}");
+        assert!(ret.is_ok());
+    }
+
+    #[test]
+    fn test_from_str_errors() {
+        // Parameters provided
+        let ret = BooleanParameter::from_str("@{boolean[0, 1]}");
+        assert!(ret.is_err());
+
+        // Wrong type
+        let ret = BooleanParameter::from_str("@{int}");
+        assert!(ret.is_err());
+    }
+}

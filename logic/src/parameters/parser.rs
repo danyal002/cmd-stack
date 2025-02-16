@@ -120,7 +120,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_parameter_int_no_param() {
+    fn test_parse_parameter_int() {
         let logic = Logic::try_default().unwrap();
 
         let ret = logic.parse_parameter("@{int}".to_string());
@@ -129,46 +129,12 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_parameter_int_param() {
-        let logic = Logic::try_default().unwrap();
-
-        let ret = logic.parse_parameter("@{int[-20, 20]}".to_string());
-        assert!(ret.is_ok());
-        matches!(ret.unwrap(), SerializableParameter::Int(_));
-    }
-
-    #[test]
-    fn test_parse_parameter_int_invalid_param() {
-        let logic = Logic::try_default().unwrap();
-
-        let ret = logic.parse_parameter("@{int[}".to_string());
-        assert!(ret.is_err());
-    }
-
-    #[test]
-    fn test_parse_parameter_string_no_param() {
+    fn test_parse_parameter_string() {
         let logic = Logic::try_default().unwrap();
 
         let ret = logic.parse_parameter("@{string}".to_string());
         assert!(ret.is_ok());
         matches!(ret.unwrap(), SerializableParameter::String(_));
-    }
-
-    #[test]
-    fn test_parse_parameter_string_param() {
-        let logic = Logic::try_default().unwrap();
-
-        let ret = logic.parse_parameter("@{string[16, 20]}".to_string());
-        assert!(ret.is_ok());
-        matches!(ret.unwrap(), SerializableParameter::String(_));
-    }
-
-    #[test]
-    fn test_parse_parameter_string_invalid_param() {
-        let logic = Logic::try_default().unwrap();
-
-        let ret = logic.parse_parameter("@{string[}".to_string());
-        assert!(ret.is_err());
     }
 
     #[test]
@@ -179,13 +145,4 @@ mod tests {
         assert!(ret.is_ok());
         matches!(ret.unwrap(), SerializableParameter::Boolean(_));
     }
-
-    #[test]
-    fn test_parse_parameter_boolean_invalid_param() {
-        let logic = Logic::try_default().unwrap();
-
-        let ret = logic.parse_parameter("@{boolean[]}".to_string());
-        assert!(ret.is_err());
-    }
 }
-

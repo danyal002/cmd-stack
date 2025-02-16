@@ -67,3 +67,74 @@ impl GenerateRandomValues for IntParameter {
         rng.generate_range(self.min, self.max).to_string()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        parameters::{int::IntParameter, FromStrWithConfig},
+        Config,
+    };
+
+    #[test]
+    fn test_from_str_no_params() {
+        let ret = IntParameter::from_str("@{int}", &Config::default());
+        assert!(ret.is_ok());
+        let param = ret.unwrap();
+        assert_eq!(param.min, 5);
+        assert_eq!(param.max, 10);
+    }
+
+    #[test]
+    fn test_from_str_params() {
+        let ret = IntParameter::from_str("@{int[-100, -99]}", &Config::default());
+        assert!(ret.is_ok());
+        let param = ret.unwrap();
+        assert_eq!(param.min, -100);
+        assert_eq!(param.max, -99);
+
+        let ret = IntParameter::from_str("@{int[-100, 100]}", &Config::default());
+        assert!(ret.is_ok());
+        let param = ret.unwrap();
+        assert_eq!(param.min, -100);
+        assert_eq!(param.max, 100);
+
+        let ret = IntParameter::from_str("@{int[99, 100]}", &Config::default());
+        assert!(ret.is_ok());
+        let param = ret.unwrap();
+        assert_eq!(param.min, 99);
+        assert_eq!(param.max, 100);
+
+        let ret = IntParameter::from_str("@{int[0, 0]}", &Config::default());
+        assert!(ret.is_ok());
+        let param = ret.unwrap();
+        assert_eq!(param.min, 0);
+        assert_eq!(param.max, 0);
+    }
+
+    #[test]
+    fn test_from_str_errors() {
+        // Min and max swapped
+        let ret = IntParameter::from_str("@{int[1, 0]}", &Config::default());
+        assert!(ret.is_err());
+
+        // Max missing
+        let ret = IntParameter::from_str("@{int[1, ]}", &Config::default());
+        assert!(ret.is_err());
+
+        // Min missing
+        let ret = IntParameter::from_str("@{int[, 1]}", &Config::default());
+        assert!(ret.is_err());
+
+        // Min and max missing
+        let ret = IntParameter::from_str("@{int[, ]}", &Config::default());
+        assert!(ret.is_err());
+
+        // Bracket missing
+        let ret = IntParameter::from_str("@{int[0, 1}", &Config::default());
+        assert!(ret.is_err());
+
+        // Wrong type
+        let ret = IntParameter::from_str("@{string[0, 1]}", &Config::default());
+        assert!(ret.is_err());
+    }
+}
