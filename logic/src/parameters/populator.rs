@@ -49,7 +49,7 @@ mod tests {
     use crate::{
         parameters::{
             boolean::BooleanParameter, int::IntParameter, parser::SerializableParameter,
-            populator::RandomNumberGenerator, string::StringParameter,
+            string::StringParameter, RandomNumberGenerator,
         },
         Logic,
     };
@@ -177,24 +177,6 @@ mod tests {
         assert_eq!("ls 7 8 HCDEHCDEH DEHCDEH", generated_string);
     }
 
-    // let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![2, 2, 2, 2])));
-    // let ret = ph.replace_parameters("ls @{string[7,7]} @{string[3,3]}".to_string());
-    // assert!(ret.is_ok());
-    // let (generated_string, generated_parameters) = ret.unwrap();
-    // assert_eq!("ls CCCCCCC CCC", generated_string);
-
-    // let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![1, 2, 3])));
-    // let ret = ph.replace_parameters("ls @{boolean} @{boolean} @{boolean}".to_string());
-    // assert!(ret.is_ok());
-    // let (generated_string, generated_parameters) = ret.unwrap();
-    // assert_eq!("ls true false true", generated_string);
-
-    // let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![1, 2, 3])));
-    // let ret = ph.replace_parameters("@{string}".to_string());
-    // assert!(ret.is_ok());
-    // let (generated_string, generated_parameters) = ret.unwrap();
-    // assert_eq!("CDBCDB", generated_string);
-
     #[test]
     fn test_populate_parameters_no_parameters() {
         let logic = Logic::try_default().unwrap();
@@ -208,7 +190,7 @@ mod tests {
         assert!(ret.is_ok());
 
         let (generated_string, generated_parameters) = ret.unwrap();
-        assert_eq!(Vec::<String>::new(), generated_parameters);
+        assert_eq!(generated_parameters.len(), 0);
         assert_eq!("some string", generated_string);
     }
 
@@ -225,62 +207,7 @@ mod tests {
         assert!(ret.is_ok());
 
         let (generated_string, generated_parameters) = ret.unwrap();
-        assert_eq!(Vec::<String>::new(), generated_parameters);
+        assert_eq!(generated_parameters.len(), 0);
         assert_eq!("", generated_string);
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use crate::param::{MockRng, ParameterHandler};
-
-//     #[test]
-//     fn test_zero_parameters() {
-//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![0, 2])));
-//         let ret = ph.replace_parameters("fasd @ @email @wadsf @test {} @".to_string());
-//         assert!(ret.is_ok());
-//         let (generated_string, generated_parameters) = ret.unwrap();
-//         assert_eq!("fasd @ @email @wadsf @test {} @", generated_string);
-//     }
-
-//     #[test]
-//     fn test_validate_parameters() {
-//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
-//         let ret = ph.validate_parameters("fasd @{bad-command}".to_string());
-//         assert!(ret.is_err());
-
-//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
-//         let ret = ph.validate_parameters("fasd @{string[cat, dog]}".to_string());
-//         assert!(ret.is_err());
-
-//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
-//         let ret = ph.validate_parameters("fasd @{string[3]}".to_string());
-//         assert!(ret.is_err());
-
-//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
-//         let ret = ph.validate_parameters("fasd @{string[,]}".to_string());
-//         assert!(ret.is_err());
-
-//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
-//         let ret = ph.validate_parameters("fasd @{string[-1,5]}".to_string());
-//         assert!(ret.is_err());
-
-//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
-//         let ret = ph.validate_parameters("fasd @{string[-1,5]}".to_string());
-//         assert!(ret.is_err());
-
-//         let mut ph = ParameterHandler::new(Box::new(MockRng::new(vec![])));
-//         let ret = ph.validate_parameters("fasd @{string[7,5]}".to_string());
-//         assert!(ret.is_err());
-//     }
-
-//     #[test]
-//     fn test_default_random() {
-//         let mut ph = ParameterHandler::default();
-//         let ret = ph.validate_parameters("asdfjkf  @{string[1, 1]}".to_string());
-//         assert!(!ret.is_err());
-
-//         let ret = ph.validate_parameters("asdfjkf  @{string[1, 0]}".to_string());
-//         assert!(ret.is_err());
-//     }
-// }

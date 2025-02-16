@@ -75,3 +75,117 @@ impl Logic {
         Err(ParameterError::InvalidParameter)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{parameters::parser::SerializableParameter, Logic};
+
+    #[test]
+    fn test_parse_parameters_no_parameter() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameters("cmd @ @email @wadsf @test {} @".to_string());
+        assert!(ret.is_ok());
+        let (non_parameter_strings, parameters) = ret.unwrap();
+        assert_eq!(parameters.len(), 0);
+        assert_eq!(
+            non_parameter_strings,
+            vec!["cmd @ @email @wadsf @test {} @".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_parse_parameters() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameters("cmd @{boolean} @{int} @{string}".to_string());
+        assert!(ret.is_ok());
+        let (non_parameter_strings, parameters) = ret.unwrap();
+        assert_eq!(parameters.len(), 3);
+        matches!(
+            parameters.get(0).unwrap(),
+            SerializableParameter::Boolean(_)
+        );
+        matches!(parameters.get(1).unwrap(), SerializableParameter::Int(_));
+        matches!(parameters.get(2).unwrap(), SerializableParameter::String(_));
+        assert_eq!(
+            non_parameter_strings,
+            vec![
+                "cmd ".to_string(),
+                " ".to_string(),
+                " ".to_string(),
+                "".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn test_parse_parameter_int_no_param() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{int}".to_string());
+        assert!(ret.is_ok());
+        matches!(ret.unwrap(), SerializableParameter::Int(_));
+    }
+
+    #[test]
+    fn test_parse_parameter_int_param() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{int[-20, 20]}".to_string());
+        assert!(ret.is_ok());
+        matches!(ret.unwrap(), SerializableParameter::Int(_));
+    }
+
+    #[test]
+    fn test_parse_parameter_int_invalid_param() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{int[}".to_string());
+        assert!(ret.is_err());
+    }
+
+    #[test]
+    fn test_parse_parameter_string_no_param() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{string}".to_string());
+        assert!(ret.is_ok());
+        matches!(ret.unwrap(), SerializableParameter::String(_));
+    }
+
+    #[test]
+    fn test_parse_parameter_string_param() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{string[16, 20]}".to_string());
+        assert!(ret.is_ok());
+        matches!(ret.unwrap(), SerializableParameter::String(_));
+    }
+
+    #[test]
+    fn test_parse_parameter_string_invalid_param() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{string[}".to_string());
+        assert!(ret.is_err());
+    }
+
+    #[test]
+    fn test_parse_parameter_boolean() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{boolean}".to_string());
+        assert!(ret.is_ok());
+        matches!(ret.unwrap(), SerializableParameter::Boolean(_));
+    }
+
+    #[test]
+    fn test_parse_parameter_boolean_invalid_param() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{boolean[]}".to_string());
+        assert!(ret.is_err());
+    }
+}
+
