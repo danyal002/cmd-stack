@@ -1,17 +1,24 @@
+use std::sync::RwLock;
+
 use data::models::{Command, InternalCommand};
 use logic::{
     command::{
         AddCommandError, DeleteCommandError, ListCommandError, SearchCommandArgs,
         SearchCommandError, UpdateCommandError,
     },
-    param::{ParameterError, SerializableParameter},
+    parameters::{parser::SerializableParameter, ParameterError},
     Logic, LogicInitError,
 };
 use serde::{Deserialize, Serialize};
+use tauri::State;
 use thiserror::Error;
 
+pub struct Ui {
+    logic: RwLock<Logic>,
+}
+
 #[derive(Error, Debug)]
-pub enum UIError {
+pub enum UiError {
     #[error("Failed to initialize logic")]
     LogicInit(#[from] LogicInitError),
     #[error("Failed to parse parameters")]
@@ -26,10 +33,12 @@ pub enum UIError {
     UpdateCommand(#[from] UpdateCommandError),
     #[error("Failed to search command")]
     SearchCommand(#[from] SearchCommandError),
+    #[error("Failed to obtain lock to complete the required action")]
+    Race,
 }
 
 // we must manually implement serde::Serialize (https://github.com/tauri-apps/tauri/discussions/8805)
-impl serde::Serialize for UIError {
+impl serde::Serialize for UiError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::ser::Serializer,
@@ -62,23 +71,35 @@ impl From<&Command> for DisplayCommand {
 }
 
 #[tauri::command]
-fn list_commands() -> Result<Vec<DisplayCommand>, UIError> {
-    let logic = Logic::try_default()?;
-    let commands = logic.list_commands(false, false)?;
-    let commands: Vec<DisplayCommand> = commands.iter().map(DisplayCommand::from).collect();
-    Ok(commands)
+fn list_commands(state: State<Ui>) -> Result<Vec<DisplayCommand>, UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic
+            .list_commands(false, false)?
+            .iter()
+            .map(DisplayCommand::from)
+            .collect());
+    }
+    Err(UiError::Race)
 }
 
 #[tauri::command]
-fn add_command(command: InternalCommand) -> Result<(), UIError> {
-    let logic = Logic::try_default()?;
-    Ok(logic.add_command(command)?)
+fn add_command(command: InternalCommand, state: State<Ui>) -> Result<(), UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.add_command(command)?);
+    }
+    Err(UiError::Race)
 }
 
 #[tauri::command]
-fn update_command(command_id: i64, command: InternalCommand) -> Result<(), UIError> {
-    let logic = Logic::try_default()?;
-    Ok(logic.update_command(command_id, command)?)
+fn update_command(
+    command_id: i64,
+    command: InternalCommand,
+    state: State<Ui>,
+) -> Result<(), UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.update_command(command_id, command)?);
+    }
+    Err(UiError::Race)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -87,40 +108,65 @@ pub struct DeleteCommand {
 }
 
 #[tauri::command]
-fn delete_command(command: DeleteCommand) -> Result<(), UIError> {
-    let logic = Logic::try_default()?;
-    Ok(logic.delete_command(command.id)?)
+fn delete_command(command: DeleteCommand, state: State<Ui>) -> Result<(), UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.delete_command(command.id)?);
+    }
+    Err(UiError::Race)
 }
 
 #[tauri::command]
-fn parse_parameters(command: String) -> Result<(Vec<String>, Vec<SerializableParameter>), UIError> {
-    let logic = Logic::try_default()?;
-    Ok(logic.parse_parameters(command)?)
+fn parse_parameters(
+    command: String,
+    state: State<Ui>,
+) -> Result<(Vec<String>, Vec<SerializableParameter>), UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.parse_parameters(command)?);
+    }
+    Err(UiError::Race)
 }
 
 #[tauri::command]
-fn replace_parameters(command: String) -> Result<(String, Vec<String>), UIError> {
-    let logic = Logic::try_default()?;
-    Ok(logic.generate_parameters(command)?)
+fn replace_parameters(command: String, state: State<Ui>) -> Result<(String, Vec<String>), UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.generate_parameters(command)?);
+    }
+    Err(UiError::Race)
 }
 
 #[tauri::command]
-fn search_commands(search: String) -> Result<Vec<DisplayCommand>, UIError> {
-    let logic = Logic::try_default()?;
+fn search_commands(search: String, state: State<Ui>) -> Result<Vec<DisplayCommand>, UiError> {
+    if let Ok(logic) = state.logic.write() {
+        let commands = logic
+            .search_command(SearchCommandArgs {
+                command: if search.is_empty() {
+                    None
+                } else {
+                    Some(search)
+                },
+                tag: None,
+                order_by_recently_used: false,
+                favourites_only: false,
+            })?
+            .iter()
+            .map(DisplayCommand::from)
+            .collect();
 
-    let commands = logic.search_command(SearchCommandArgs {
-        command: if search == "" { None } else { Some(search) },
-        tag: None,
-        order_by_recently_used: false,
-        favourites_only: false,
-    })?;
-    let commands: Vec<DisplayCommand> = commands.iter().map(DisplayCommand::from).collect();
-    Ok(commands)
+        return Ok(commands);
+    }
+    Err(UiError::Race)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let logic = Logic::try_default()
+        .map_err(|e| panic!("Failed to initialize Logic: {}", e))
+        .unwrap();
+
     tauri::Builder::default()
+        .manage(Ui {
+            logic: logic.into(),
+        })
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             list_commands,

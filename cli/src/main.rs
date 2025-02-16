@@ -75,7 +75,6 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
 
 pub struct Cli {
     logic: Logic,
-    config: logic::config::Config,
 }
 
 fn main() {
@@ -86,10 +85,7 @@ fn main() {
 
     // TODO: Instead of panicking, show a user-friendly error, log and quit.
     let logic = Logic::try_default().map_err(|e| panic!("{}", e)).unwrap();
-    let config = logic::config::Config::read()
-        .map_err(|e| panic!("{}", e))
-        .unwrap();
-    let cli = Cli { logic, config };
+    let mut cli = Cli { logic };
 
     // Configure inquire
     inquire::set_global_render_config(inquire::ui::RenderConfig {

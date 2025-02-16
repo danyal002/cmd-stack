@@ -4,7 +4,7 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use thiserror::Error;
 
-use crate::param::{ParameterError, ParameterHandler, SerializableParameter};
+use crate::parameters::ParameterError;
 use crate::Logic;
 
 #[derive(Error, Debug)]
@@ -67,7 +67,7 @@ impl Logic {
             return Err(AddCommandError::InvalidInput);
         }
 
-        ParameterHandler::default().validate_parameters(command.command.clone())?;
+        self.parse_parameters(command.command.clone())?;
 
         self.dal.insert_command(command).await?;
 
@@ -161,7 +161,7 @@ impl Logic {
             return Err(UpdateCommandError::InvalidInput);
         }
 
-        ParameterHandler::default().validate_parameters(new_command_props.command.clone())?;
+        self.parse_parameters(new_command_props.command.clone())?;
 
         self.dal
             .update_command(command_id, new_command_props)
@@ -184,16 +184,8 @@ impl Logic {
         &self,
         command: String,
     ) -> Result<(String, Vec<String>), ParameterError> {
-        ParameterHandler::default().replace_parameters(command)
-    }
-
-    #[tokio::main]
-    /// Handles the parsing of parameters for a command
-    pub async fn parse_parameters(
-        &self,
-        command: String,
-    ) -> Result<(Vec<String>, Vec<SerializableParameter>), ParameterError> {
-        ParameterHandler::default().parse_parameters(command)
+        let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
+        self.populate_parameters(non_parameter_strs, parameters, None)
     }
 }
 
@@ -218,7 +210,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -249,7 +241,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let mut invalid_command = InternalCommand {
             command: "@{bad}".to_string(),
@@ -296,7 +288,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -345,7 +337,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "abcd".to_string(),
@@ -433,7 +425,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -476,7 +468,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "test_command".to_string(),
@@ -523,7 +515,7 @@ mod tests {
             .into_owned();
         let dal = SqliteDal::new_with_custom_path(path);
         assert!(dal.is_ok());
-        let logic = Logic::new(dal.unwrap());
+        let logic = Logic::new(dal.unwrap()).unwrap();
 
         let command = InternalCommand {
             command: "echo @{int}".to_string(),
