@@ -1,4 +1,4 @@
-name: Build and Release CLI
+name: Release
 
 on:
     push:
@@ -6,7 +6,7 @@ on:
             - "*"
 
 jobs:
-    build:
+    release-cli:
         runs-on: ubuntu-latest
         permissions:
             contents: write
@@ -14,6 +14,15 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
+
+            - name: Cache Cargo registry and build files
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      target
+                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
             - name: Set up Rust toolchain
               uses: dtolnay/rust-toolchain@stable
