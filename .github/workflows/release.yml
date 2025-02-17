@@ -1,0 +1,33 @@
+name: Build and Release CLI
+
+on:
+    push:
+        tags:
+            - "*"
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Rust toolchain
+              uses: dtolnay/rust-toolchain@stable
+
+            - name: Run Clippy
+              run: cargo clippy --manifest-path cli/Cargo.toml -- -D warnings
+
+            - name: Run Tests
+              run: cargo test --manifest-path cli/Cargo.toml
+
+            - name: Build CLI App
+              run: cargo build --release --manifest-path cli/Cargo.toml
+
+            - name: Upload Release Asset
+              uses: ncipollo/release-action@v1
+              with:
+                  artifacts: target/release/cmdstack
