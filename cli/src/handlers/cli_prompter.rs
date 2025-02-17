@@ -65,6 +65,28 @@ impl Cli {
         })
     }
 
+    /// Prompt user to edit the generated command
+    pub fn prompt_user_for_command_edit(
+        &self,
+        initial_value: &str,
+    ) -> Result<String, InquireError> {
+        Text::new(&format_output(
+            "<bold>Edit</bold> (Press enter to continue): ",
+        ))
+        .with_initial_value(initial_value)
+        .prompt()
+    }
+
+    /// Prompt user to select an action: Copy or Execute
+    pub fn prompt_user_for_action(&self) -> Result<String, InquireError> {
+        Ok(Select::new(
+            &format_output("<bold>Action:</bold>"),
+            vec!["Copy", "Execute"],
+        )
+        .prompt()?
+        .to_owned())
+    }
+
     pub fn prompt_user_for_command_selection(
         &self,
         commands: Vec<Command>,
