@@ -28,7 +28,7 @@ pub enum ConfigReadError {
 }
 
 /// Configuration structure for reading/writing JSON
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 #[serde(default)]
 pub struct Config {
     pub cli_print_style: CliPrintStyle,
@@ -37,6 +37,7 @@ pub struct Config {
     pub param_string_length_max: u32,
     pub param_int_range_min: i32,
     pub param_int_range_max: i32,
+    pub application_theme: ApplicationTheme
 }
 
 impl Default for Config {
@@ -48,11 +49,20 @@ impl Default for Config {
             param_string_length_max: 10,
             param_int_range_min: 5,
             param_int_range_max: 10,
+            application_theme: ApplicationTheme::default()
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, Copy)]
+pub enum ApplicationTheme {
+    #[default]
+    System,
+    Dark,
+    Light,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, Copy)]
 pub enum CliPrintStyle {
     #[default]
     All,
