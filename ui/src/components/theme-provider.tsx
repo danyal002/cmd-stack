@@ -14,7 +14,7 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [settings, _] = useSettings();
 
-  useEffect(() => {
+  function applyTheme() {
     const root = window.document.documentElement;
 
     root.classList.remove('light', 'dark');
@@ -30,6 +30,22 @@ export function ThemeProvider({
     }
 
     root.classList.add(settings.application_theme.toLowerCase());
+  }
+
+  useEffect(() => {
+    applyTheme();
+  }, [settings.application_theme]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleChange = () => {
+      applyTheme();
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [settings.application_theme]);
 
   return <>{children}</>;
