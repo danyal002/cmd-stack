@@ -1,14 +1,14 @@
 mod args;
-mod command;
+mod handlers;
 pub mod outputs;
 pub mod utils;
 
 use args::{CmdStackArgs, Command};
 use clap::Parser;
-use command::{
-    add_command::HandleAddError, delete_command::HandleDeleteError,
-    search_command::HandleSearchError, update_command::HandleUpdateError,
-};
+use handlers::add::HandleAddError;
+use handlers::delete::HandleDeleteError;
+use handlers::search::HandleSearchError;
+use handlers::update::HandleUpdateError;
 use log::{error, LevelFilter, SetLoggerError};
 use log4rs::append::file::FileAppender;
 use log4rs::config::runtime::ConfigErrors;

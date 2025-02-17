@@ -1,4 +1,4 @@
-use crate::command::config_command::ConfigArgs;
+use crate::handlers::config::ConfigArgs;
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]

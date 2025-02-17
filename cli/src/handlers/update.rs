@@ -1,7 +1,7 @@
 use crate::{
     args::SearchArgs,
-    command::{
-        search_utils::{
+    handlers::{
+        cli_prompter::{
             check_search_args_exist, PromptUserForCommandSelectionError, SearchArgsUserInput,
         },
         CommandInputValidator,

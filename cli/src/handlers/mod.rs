@@ -1,11 +1,11 @@
-pub mod add_command;
-pub mod config_command;
-pub mod delete_command;
-pub mod export_command;
-pub mod import_command;
-pub mod search_command;
-pub mod search_utils;
-pub mod update_command;
+pub mod add;
+pub mod config;
+pub mod delete;
+pub mod export;
+pub mod import;
+pub mod search;
+pub mod cli_prompter;
+pub mod update;
 
 use inquire::{
     validator::{StringValidator, Validation},
