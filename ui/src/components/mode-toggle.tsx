@@ -1,4 +1,4 @@
-import { Moon, Sun, FolderDot } from 'lucide-react';
+import { FolderDot, Moon, Sun } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -36,15 +36,24 @@ export function ModeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" className="w-24">
           {settings.application_theme == ApplicationTheme.System && (
-            <FolderDot className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+            <>
+              <FolderDot />
+              <div className="ml-auto">System</div>
+            </>
           )}
           {settings.application_theme == ApplicationTheme.Light && (
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <>
+              <Sun />
+              <div className="ml-auto">Light</div>
+            </>
           )}
           {settings.application_theme == ApplicationTheme.Dark && (
-            <Moon className="h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <>
+              <Moon />
+              <div className="ml-auto">Dark</div>
+            </>
           )}
           <span className="sr-only">Toggle theme</span>
         </Button>
