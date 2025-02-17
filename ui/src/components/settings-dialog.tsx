@@ -4,12 +4,12 @@ import { Settings } from 'lucide-react';
 import { ModeToggle } from './mode-toggle';
 import { Nav } from './nav';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from './ui/dialog';
 import { Label } from './ui/label';
 

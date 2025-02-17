@@ -1,16 +1,38 @@
-import { FileSliders, Moon, Sun } from "lucide-react"
+import { Moon, Sun } from 'lucide-react';
 
-import { useTheme } from "@/components/theme-provider"
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from '@/components/ui/dropdown-menu';
+import { toast } from '@/hooks/use-toast';
+import { Theme } from '@/types/config';
+import { useSettings } from '@/use-command';
+import { invoke } from '@tauri-apps/api/core';
 
 export function ModeToggle() {
-  const { setTheme } = useTheme()
+  const [settings, refreshSettings] = useSettings();
+
+  function setTheme(theme: Theme) {
+    settings.theme = theme;
+
+    invoke('write_config', { config: settings })
+      .then((res) => {
+        console.log(res);
+        toast({
+          title: 'Settings updated ✅ ',
+        });
+        refreshSettings();
+      })
+      .catch((error) => {
+        console.log(error);
+        toast({
+          title: `${error} ❌`,
+        });
+      });
+  }
 
   return (
     <DropdownMenu>
@@ -22,15 +44,21 @@ export function ModeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer">
-          <Sun  />
+        <DropdownMenuItem
+          onClick={() => setTheme(Theme.Light)}
+          className="cursor-pointer"
+        >
+          <Sun />
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer">
+        <DropdownMenuItem
+          onClick={() => setTheme(Theme.Dark)}
+          className="cursor-pointer"
+        >
           <Moon />
           Dark
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

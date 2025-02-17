@@ -3,6 +3,7 @@ import { atomWithRefresh } from 'jotai/utils';
 import { invoke } from '@tauri-apps/api/core';
 
 import { Command } from './types/command';
+import { SettingsConfig } from './types/config';
 
 type Config = {
   selected: Command['id'] | null;
@@ -31,4 +32,14 @@ const commandsAtom = atomWithRefresh((get) => {
 
 export function useCommands() {
   return useAtom(commandsAtom);
+}
+
+const settingsAtom = atomWithRefresh((get) => {
+  return invoke<SettingsConfig>('read_config').then(
+    (r) => r,
+  );
+});
+
+export function useSettings() {
+  return useAtom(settingsAtom);
 }

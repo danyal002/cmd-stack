@@ -6,6 +6,7 @@ use logic::{
         AddCommandError, DeleteCommandError, ListCommandError, SearchCommandArgs,
         SearchCommandError, UpdateCommandError,
     },
+    config::{Config, ConfigWriteError},
     parameters::{parser::SerializableParameter, ParameterError},
     Logic, LogicInitError,
 };
@@ -33,6 +34,8 @@ pub enum UiError {
     UpdateCommand(#[from] UpdateCommandError),
     #[error("Failed to search command")]
     SearchCommand(#[from] SearchCommandError),
+    #[error("Failed to write config")]
+    ConfigWriteError(#[from] ConfigWriteError),
     #[error("Failed to obtain lock to complete the required action")]
     Race,
 }
@@ -157,6 +160,23 @@ fn search_commands(search: String, state: State<Ui>) -> Result<Vec<DisplayComman
     Err(UiError::Race)
 }
 
+#[tauri::command]
+fn read_config(state: State<Ui>) -> Result<Config, UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.config);
+    }
+    Err(UiError::Race)
+}
+
+#[tauri::command]
+fn write_config(config: Config, state: State<Ui>) -> Result<(), UiError> {
+    if let Ok(mut logic) = state.logic.write() {
+        logic.config = config;
+        return Ok(logic.config.write()?);
+    }
+    Err(UiError::Race)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let logic = Logic::try_default()
@@ -175,7 +195,9 @@ pub fn run() {
             replace_parameters,
             parse_parameters,
             update_command,
-            search_commands
+            search_commands,
+            read_config,
+            write_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
