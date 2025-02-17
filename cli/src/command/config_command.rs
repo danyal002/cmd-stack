@@ -39,7 +39,7 @@ pub enum ConfigArgs {
 #[derive(Debug, Args)]
 #[command(arg_required_else_help(true))]
 pub struct ThemeArgs {
-    /// The new print style
+    /// The theme
     #[clap(value_enum)]
     pub theme: Theme,
 }
