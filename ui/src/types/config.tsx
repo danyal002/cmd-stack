@@ -3,7 +3,7 @@ export enum CliPrintStyle {
     CommandsOnly = "CommandsOnly",
 };
 
-export enum Theme {
+export enum ApplicationTheme {
     Dark = "Dark",
     Light = "Light",
     System = "System"
@@ -16,5 +16,5 @@ export type SettingsConfig = {
     param_string_length_max: number,
     param_int_range_min: number,
     param_int_range_max: number,
-    theme: Theme
+    application_theme: ApplicationTheme
 };

@@ -37,7 +37,7 @@ pub struct Config {
     pub param_string_length_max: u32,
     pub param_int_range_min: i32,
     pub param_int_range_max: i32,
-    pub theme: Theme
+    pub application_theme: ApplicationTheme
 }
 
 impl Default for Config {
@@ -49,14 +49,15 @@ impl Default for Config {
             param_string_length_max: 10,
             param_int_range_min: 5,
             param_int_range_max: 10,
-            theme: Theme::default()
+            application_theme: ApplicationTheme::default()
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, Copy)]
-pub enum Theme {
+pub enum ApplicationTheme {
     #[default]
+    System,
     Dark,
     Light,
 }

@@ -32,21 +32,22 @@ pub enum ConfigArgs {
     /// Modify integer parameter min/max limits
     ParamIntRange(ParamIntRangeArgs),
 
-    /// Modify theme
-    Theme(ThemeArgs),
+    /// Modify application theme
+    ApplicationTheme(ApplicationThemeArgs),
 }
 
 #[derive(Debug, Args)]
 #[command(arg_required_else_help(true))]
-pub struct ThemeArgs {
+pub struct ApplicationThemeArgs {
     /// The theme
     #[clap(value_enum)]
-    pub theme: Theme,
+    pub theme: ApplicationTheme,
 }
 
 #[derive(Debug, Clone, ValueEnum, Serialize, Deserialize, Default)]
-pub enum Theme {
+pub enum ApplicationTheme {
     #[default]
+    System,
     Dark,
     Light,
 }
@@ -104,7 +105,7 @@ impl Cli {
     /// Handles the config modification command
     pub fn handle_config_command(&mut self, config_args: ConfigArgs) -> Result<(), ConfigError> {
         match config_args {
-            ConfigArgs::Theme(theme_args) => self.logic.config.theme = theme_args.theme.into(),
+            ConfigArgs::ApplicationTheme(theme_args) => self.logic.config.application_theme = theme_args.theme.into(),
             ConfigArgs::CliPrintStyle(cli_print_style_args) => {
                 self.logic.config.cli_print_style = cli_print_style_args.style.into()
             }
@@ -183,11 +184,12 @@ impl From<CliPrintStyle> for logic::config::CliPrintStyle {
     }
 }
 
-impl From<Theme> for logic::config::Theme {
-    fn from(item: Theme) -> Self {
+impl From<ApplicationTheme> for logic::config::ApplicationTheme {
+    fn from(item: ApplicationTheme) -> Self {
         match item {
-            Theme::Dark => Self::Dark,
-            Theme::Light => Self::Light,
+            ApplicationTheme::System => Self::System,
+            ApplicationTheme::Dark => Self::Dark,
+            ApplicationTheme::Light => Self::Light,
         }
     }
 }

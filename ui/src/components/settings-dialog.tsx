@@ -38,8 +38,8 @@ export function SettingsDialog({ isCollapsed }: SettingsDialogProps) {
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
             <div className="flex items-center">
-              <Label>Theme</Label>
-              <div className="m-2">
+              <Label>Application Theme</Label>
+              <div className="ml-auto">
                 <ModeToggle />
               </div>
             </div>

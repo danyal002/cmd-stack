@@ -1,15 +1,15 @@
-import { Theme } from '@/types/config';
+import { ApplicationTheme } from '@/types/config';
 import { useSettings } from '@/use-command';
 import { useEffect } from 'react';
 
 type ThemeProviderProps = {
   children: React.ReactNode;
-  defaultTheme?: Theme;
+  defaultTheme?: ApplicationTheme;
 };
 
 export function ThemeProvider({
   children,
-  defaultTheme = Theme.System,
+  defaultTheme = ApplicationTheme.System,
   ...props
 }: ThemeProviderProps) {
   const [settings, _] = useSettings();
@@ -19,7 +19,7 @@ export function ThemeProvider({
 
     root.classList.remove('light', 'dark');
 
-    if (settings.theme === Theme.System) {
+    if (settings.application_theme === ApplicationTheme.System) {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
         .matches
         ? 'dark'
@@ -29,8 +29,8 @@ export function ThemeProvider({
       return;
     }
 
-    root.classList.add(settings.theme.toLowerCase());
-  }, [settings.theme]);
+    root.classList.add(settings.application_theme.toLowerCase());
+  }, [settings.application_theme]);
 
   return <>{children}</>;
 }

@@ -8,19 +8,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { Theme } from '@/types/config';
+import { ApplicationTheme } from '@/types/config';
 import { useSettings } from '@/use-command';
 import { invoke } from '@tauri-apps/api/core';
 
 export function ModeToggle() {
   const [settings, refreshSettings] = useSettings();
 
-  function setTheme(theme: Theme) {
-    settings.theme = theme;
+  function setTheme(application_theme: ApplicationTheme) {
+    settings.application_theme = application_theme;
 
     invoke('write_config', { config: settings })
       .then((res) => {
-        console.log(res);
         toast({
           title: 'Settings updated ✅ ',
         });
@@ -45,15 +44,15 @@ export function ModeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => setTheme(Theme.Light)}
-          className="cursor-pointer"
+          onClick={() => setTheme(ApplicationTheme.Light)}
+          className="cursor-pointer hover:bg-accent"
         >
           <Sun />
           Light
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme(Theme.Dark)}
-          className="cursor-pointer"
+          onClick={() => setTheme(ApplicationTheme.Dark)}
+          className="cursor-pointer hover:bg-accent"
         >
           <Moon />
           Dark
