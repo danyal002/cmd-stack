@@ -71,7 +71,7 @@ impl Cli {
         initial_value: &str,
     ) -> Result<String, InquireError> {
         Text::new(&format_output(
-            "<bold>Edit</bold> (Press enter to continue): ",
+            "<bold>Edit</bold> <italics>(Press enter to continue)</italics><bold>:</bold> ",
         ))
         .with_initial_value(initial_value)
         .prompt()

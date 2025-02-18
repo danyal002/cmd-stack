@@ -4,6 +4,7 @@ use crate::{
         check_search_args_exist, copy_to_clipboard, CopyTextError,
         PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
+    outputs::spacing,
     Cli,
 };
 use inquire::InquireError;
@@ -52,6 +53,8 @@ impl Cli {
         let (text_to_copy, _) = self
             .logic
             .generate_parameters(user_selection.internal_command.command)?;
+
+        spacing();
 
         // Prompt the user to edit the generated command
         let user_edited_cmd = self.prompt_user_for_command_edit(&text_to_copy)?;
