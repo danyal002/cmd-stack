@@ -105,7 +105,9 @@ impl Cli {
     /// Handles the config modification command
     pub fn handle_config_command(&mut self, config_args: ConfigArgs) -> Result<(), ConfigError> {
         match config_args {
-            ConfigArgs::Theme(theme_args) => self.logic.config.application_theme = theme_args.theme.into(),
+            ConfigArgs::Theme(theme_args) => {
+                self.logic.config.application_theme = theme_args.theme.into()
+            }
             ConfigArgs::CliPrintStyle(cli_print_style_args) => {
                 self.logic.config.cli_print_style = cli_print_style_args.style.into()
             }

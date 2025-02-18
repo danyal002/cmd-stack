@@ -34,6 +34,9 @@ jobs:
             - name: Clippy
               run: cargo clippy --workspace --exclude ui --verbose -- -D warnings
 
+            - name: Formatter
+              run: cargo fmt --all -- --check
+
             - name: Test
               run: cargo test --workspace --exclude ui --verbose
 
