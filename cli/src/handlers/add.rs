@@ -1,6 +1,6 @@
 use crate::{
     args::AddArgs,
-    command::CommandInputValidator,
+    handlers::CommandInputValidator,
     outputs::{format_output, print_internal_command_table, spacing},
     utils::none_if_empty,
     Cli,
