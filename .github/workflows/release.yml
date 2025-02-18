@@ -81,86 +81,36 @@ on:
             - "*"
 
 jobs:
-    release-cli:
-        name: Release - ${{ matrix.platform.os_name }}
-        if: startsWith( github.ref, 'refs/tags/v' ) || github.ref == 'refs/tags/test-release'
-        strategy:
-            matrix:
-                platform:
-                    # - os_name: Linux-x86_64
-                    #   os: ubuntu-latest
-                    #   target: x86_64-unknown-linux-gnu
-                    #   bin: cmdstack
-                    #   name: cmdstack-Linux-x86_64.tar.gz
-                    #   cross: false
-                    #   cargo_command: cargo
+    release:
+        runs-on: ubuntu-latest
 
-                    - os_name: macOS-x86_64
-                      os: ubuntu-latest
-                      target: x86_64-apple-darwin
-                      bin: cmdstack
-                      name: cmdstack-Darwin-x86_64.tar.gz
-                      cross: true
-                      cargo_command: cross
-
-                    - os_name: macOS-aarch64
-                      os: ubuntu-latest
-                      target: aarch64-apple-darwin
-                      bin: cmdstack
-                      name: cmdstack-Darwin-aarch64.tar.gz
-                      cross: true
-                      cargo_command: cross
-
-        runs-on: ${{ matrix.platform.os }}
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
 
-            - name: Install Rust toolchain if not cross-compiling
+            - name: Set up Rust toolchain
               uses: dtolnay/rust-toolchain@stable
-              with:
-                  targets: ${{ matrix.platform.target }}
-              if: ${{ !matrix.platform.cross }}
 
-            - name: Install Cross for cross-compilation
+            # Ensure that Docker is installed and running so that cross can operate properly.
+            - name: Check Docker availability
+              run: docker info
+
+            - name: Install cross
               run: cargo install cross
-              if: matrix.platform.cross
 
-            - name: Build binary
-              run: ${{ matrix.platform.cargo_command }} build --release --target ${{ matrix.platform.target }}
+            - name: Build for macOS (x86_64)
+              working-directory: cli
+              run: cross build --release --target x86_64-apple-darwin
 
-            - name: Create Universal Binary (macOS only)
-              run: |
-                  lipo -create -output target/release/cmdstack-universal \
-                      target/x86_64-apple-darwin/release/cmdstack \
-                      target/aarch64-apple-darwin/release/cmdstack
-              if: matrix.platform.target == 'x86_64-apple-darwin'
+            - name: Build for macOS (aarch64)
+              working-directory: cli
+              run: cross build --release --target aarch64-apple-darwin
 
-            - name: Package as archive
-              shell: bash
-              run: |
-                  cd target/${{ matrix.platform.target }}/release
-                  tar czvf ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
-                  cd -
-
-            # - name: Publish release artifacts
-            #   uses: actions/upload-artifact@v3
-            #   with:
-            #       name: cmdstack-${{ matrix.platform.os_name }}
-            #       path: "cmdstack*"
-            #   if: github.ref == 'refs/tags/test-release'
-
-            # - name: Publish GitHub release
-            #   uses: softprops/action-gh-release@v1
-            #   with:
-            #       draft: true
-            #       files: "cmdstack*"
-            #       body_path: Changes.md
-            #   if: startsWith( github.ref, 'refs/tags/v' )
-            - name: Upload Release Assets
+            - name: Create GitHub Release and attach artifacts
               uses: ncipollo/release-action@v1
               with:
-                  artifacts: |
-                      target/release/cmdstack*
                   tag: ${{ github.ref_name }}
+                  artifacts: |
+                      cli/target/x86_64-apple-darwin/release/cli
+                      cli/target/aarch64-apple-darwin/release/cli
                   token: ${{ secrets.GITHUB_TOKEN }}
