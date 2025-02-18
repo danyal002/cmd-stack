@@ -7,9 +7,12 @@ use crate::{
     outputs::spacing,
     Cli,
 };
-use inquire::InquireError;
+use inquire::{InquireError, Text};
 use log::error;
-use logic::command::{SearchCommandArgs, SearchCommandError};
+use logic::{
+    command::{SearchCommandArgs, SearchCommandError},
+    parameters::parser::SerializableParameter,
+};
 use std::{os::unix::process::CommandExt, process::Command};
 use thiserror::Error;
 
@@ -49,10 +52,28 @@ impl Cli {
 
         let user_selection = self.prompt_user_for_command_selection(search_results)?;
 
-        // Generate parameters for the command
-        let (text_to_copy, _) = self
+        let (non_param_strings, parsed_params) = self
             .logic
-            .generate_parameters(user_selection.internal_command.command)?;
+            .parse_parameters(user_selection.internal_command.command)?;
+
+        // TODO: Display this to the user in a better way. If you have 3 blank parameters, you might lose track of which one you're on.
+        // One way to solve this problem would be to display the command to the user with those blanks filled in as we go.
+        // Another way would be that we start putting in numbers in the blank parameter like `aws s3 ls s3://@{0}/bucket/my-{1}-bucket`
+        // I think a combination of both would be a good solution
+        let blank_values: Vec<String> = parsed_params
+            .iter()
+            .enumerate()
+            .filter_map(|(i, param)| match param {
+                SerializableParameter::Blank => Some(
+                    Text::new(&format!("Enter value for blank parameter #{}:", i + 1)).prompt(),
+                ),
+                _ => None,
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let (text_to_copy, _) =
+            self.logic
+                .populate_parameters(non_param_strings, parsed_params, blank_values, None)?;
 
         spacing();
 

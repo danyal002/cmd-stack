@@ -18,6 +18,7 @@ impl Logic {
         &self,
         non_parameter_strs: Vec<String>,
         parameters: Vec<SerializableParameter>,
+        blank_parameter_values: Vec<String>,
         rng: Option<Box<dyn RandomNumberGenerator>>,
     ) -> Result<(String, Vec<String>), ParameterError> {
         let mut rng = if let Some(rng) = rng {
@@ -29,14 +30,34 @@ impl Logic {
         // Build the string by generating parameters
         let mut generated_result = String::new();
         let mut generated_parameters = Vec::new();
+        let mut blank_param_used_index = 0;
 
         for (i, other_string) in non_parameter_strs.iter().enumerate() {
             generated_result.push_str(other_string);
 
             if i < non_parameter_strs.len() - 1 {
-                let s = parameters[i].generate_random_value(rng.as_mut());
-                generated_result.push_str(&s);
-                generated_parameters.push(s);
+                let generated_value = match &parameters[i] {
+                    SerializableParameter::Blank => {
+                        if blank_param_used_index < blank_parameter_values.len() {
+                            let user_val = blank_parameter_values[blank_param_used_index].clone();
+                            blank_param_used_index += 1;
+                            user_val
+                        } else {
+                            let total_blank_params_needed = parameters
+                                .iter()
+                                .filter(|p| matches!(p, SerializableParameter::Blank))
+                                .count();
+                            return Err(ParameterError::MissingBlankParamValues(
+                                (blank_param_used_index + 1).to_string(),
+                                total_blank_params_needed.to_string(),
+                            ));
+                        }
+                    }
+                    _ => parameters[i].generate_random_value(rng.as_mut()),
+                };
+
+                generated_result.push_str(&generated_value);
+                generated_parameters.push(generated_value);
             }
         }
 
@@ -94,7 +115,7 @@ mod tests {
             SerializableParameter::Int(IntParameter::default()),
         ];
 
-        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, vec![], Some(rng));
         assert!(ret.is_ok());
 
         let (generated_string, generated_parameters) = ret.unwrap();
@@ -125,7 +146,7 @@ mod tests {
             SerializableParameter::Boolean(BooleanParameter {}),
         ];
 
-        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, vec![], Some(rng));
         assert!(ret.is_ok());
 
         let (generated_string, generated_parameters) = ret.unwrap();
@@ -150,7 +171,7 @@ mod tests {
         let non_parameter_strs = vec!["some string".to_string()];
         let parameters = vec![];
 
-        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, vec![], Some(rng));
         assert!(ret.is_ok());
 
         let (generated_string, generated_parameters) = ret.unwrap();
@@ -167,7 +188,7 @@ mod tests {
         let non_parameter_strs = vec![];
         let parameters = vec![];
 
-        let ret = logic.populate_parameters(non_parameter_strs, parameters, Some(rng));
+        let ret = logic.populate_parameters(non_parameter_strs, parameters, vec![], Some(rng));
         assert!(ret.is_ok());
 
         let (generated_string, generated_parameters) = ret.unwrap();

@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use super::{
-    boolean::BooleanParameter, int::IntParameter, populator::RandomNumberGenerator,
-    string::StringParameter, FromStrWithConfig, GenerateRandomValues, ParameterError,
+    blank::BlankParameter, boolean::BooleanParameter, int::IntParameter,
+    populator::RandomNumberGenerator, string::StringParameter, FromStrWithConfig,
+    GenerateRandomValues, ParameterError,
 };
 use crate::Logic;
 
@@ -14,6 +15,7 @@ pub enum SerializableParameter {
     Int(IntParameter),
     String(StringParameter),
     Boolean(BooleanParameter),
+    Blank,
 }
 
 impl GenerateRandomValues for SerializableParameter {
@@ -22,6 +24,7 @@ impl GenerateRandomValues for SerializableParameter {
             SerializableParameter::Int(param) => param.generate_random_value(rng),
             SerializableParameter::String(param) => param.generate_random_value(rng),
             SerializableParameter::Boolean(param) => param.generate_random_value(rng),
+            SerializableParameter::Blank => String::new(),
         }
     }
 }
@@ -60,6 +63,10 @@ impl Logic {
     }
 
     fn parse_parameter(&self, s: String) -> Result<SerializableParameter, ParameterError> {
+        if let Ok(_) = BlankParameter::from_str(&s) {
+            return Ok(SerializableParameter::Blank);
+        }
+
         if let Ok(string_param) = StringParameter::from_str(&s, &self.config) {
             return Ok(SerializableParameter::String(string_param));
         }

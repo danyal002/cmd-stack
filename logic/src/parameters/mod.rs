@@ -3,6 +3,7 @@ use thiserror::Error;
 
 use crate::config::Config;
 
+pub mod blank;
 pub mod boolean;
 pub mod int;
 pub mod parser;
@@ -27,4 +28,6 @@ pub enum ParameterError {
     InvalidRegex(String, String),
     #[error("Invalid (min,max): ({0},{1}) provided")]
     InvalidMinMax(String, String),
+    #[error("Failed to fill in blank parameters: {0} value(s) provided, needed {1} value(s)")]
+    MissingBlankParamValues(String, String),
 }

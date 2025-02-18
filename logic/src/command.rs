@@ -1,3 +1,5 @@
+use std::vec;
+
 use data::dal::{InsertCommandError, SelectAllCommandsError};
 use data::models::{Command, InternalCommand};
 use fuzzy_matcher::skim::SkimMatcherV2;
@@ -185,7 +187,8 @@ impl Logic {
         command: String,
     ) -> Result<(String, Vec<String>), ParameterError> {
         let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
-        self.populate_parameters(non_parameter_strs, parameters, None)
+        // TODO: fix the blank params
+        self.populate_parameters(non_parameter_strs, parameters, vec![], None)
     }
 }
 
