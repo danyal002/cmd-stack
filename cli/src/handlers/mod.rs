@@ -1,10 +1,10 @@
 pub mod add;
+pub mod cli_prompter;
 pub mod config;
 pub mod delete;
 pub mod export;
 pub mod import;
 pub mod search;
-pub mod cli_prompter;
 pub mod update;
 
 use inquire::{

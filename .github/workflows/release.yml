@@ -30,6 +30,9 @@ jobs:
             - name: Run Clippy
               run: cargo clippy --manifest-path cli/Cargo.toml -- -D warnings
 
+            - name: Formatter
+              run: cargo fmt --manifest-path cli/Cargo.toml -- --check
+
             - name: Run Tests
               run: cargo test --manifest-path cli/Cargo.toml
 
