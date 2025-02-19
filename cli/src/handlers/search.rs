@@ -4,11 +4,13 @@ use crate::{
         check_search_args_exist, copy_to_clipboard, CopyTextError,
         PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
+    outputs::spacing,
     Cli,
 };
 use inquire::InquireError;
 use log::error;
 use logic::command::{SearchCommandArgs, SearchCommandError};
+use std::{os::unix::process::CommandExt, process::Command};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -52,7 +54,24 @@ impl Cli {
             .logic
             .generate_parameters(user_selection.internal_command.command)?;
 
-        copy_to_clipboard(text_to_copy)?;
+        spacing();
+
+        // Prompt the user to edit the generated command
+        let user_edited_cmd = self.prompt_user_for_command_edit(&text_to_copy)?;
+
+        // Prompt the user for command action
+        let action = self.prompt_user_for_action()?;
+
+        if action == "Execute" {
+            // Note: using `.exec()` will shutdown our app and execute the command, therefore, we can't handle errors.
+            let _ = self.logic.update_command_last_used_prop(user_selection.id);
+            let _ = Command::new("sh")
+                .arg("-c")
+                .arg(user_edited_cmd.clone())
+                .exec();
+        }
+
+        copy_to_clipboard(user_edited_cmd)?;
 
         Ok(self
             .logic
