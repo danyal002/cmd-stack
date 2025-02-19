@@ -244,7 +244,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 <div className="p-4">
                   <div className="relative w-full">
                     <Textarea
-                      className="pr-16 bg-accent font-spacemono shadow resize-none"
+                      className="pr-16 bg-accent font-spacemono shadow resize-none overflow-y-hidden"
                       ref={(textarea) => {
                         if (textarea) {
                           textarea.style.height = '0px';
