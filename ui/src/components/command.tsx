@@ -56,10 +56,6 @@ export function MainCommandPage({
       )
     : commands;
 
-  const cmdListHeight = selectedTagId
-    ? 'h-[calc(100vh-154px)]'
-    : 'h-[calc(100vh-121px)]';
-
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
@@ -92,6 +88,7 @@ export function MainCommandPage({
           className={cn(
             isCollapsed &&
               'min-w-[50px] transition-all duration-300 ease-in-out',
+            'flex h-screen flex-col',
           )}
         >
           <div
@@ -145,7 +142,7 @@ export function MainCommandPage({
             />
           </div>
           {!isCollapsed && (
-            <ScrollArea className="h-[calc(100vh-235px)]">
+            <ScrollArea className="flex-1">
               <TagTree
                 commands={commands}
                 selectedTagId={selectedTagId}
@@ -154,13 +151,13 @@ export function MainCommandPage({
             </ScrollArea>
           )}
           <Separator />
-          <SettingsDialog isCollapsed={isCollapsed}/>
+          <SettingsDialog isCollapsed={isCollapsed} />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel
           defaultSize={defaultLayout[1]}
           minSize={30}
-          className="min-w-[290px]"
+          className="flex h-screen flex-col min-w-[290px]"
         >
           <div className="flex items-center pl-4 pr-2 py-2">
             <h1 className="text-xl font-bold">Commands</h1>
@@ -178,7 +175,7 @@ export function MainCommandPage({
               <Badge variant="secondary">{selectedTagId}</Badge>
             </div>
           )}
-          <ScrollArea className={cmdListHeight}>
+          <ScrollArea className="flex-1">
             <CommandList
               items={
                 favouriteFilter
