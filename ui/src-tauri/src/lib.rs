@@ -181,9 +181,7 @@ fn write_config(config: Config, state: State<Ui>) -> Result<(), UiError> {
 fn open_terminal(command: String) {
     std::process::Command::new("osascript")
         .arg("-e")
-        .arg(format!(
-            "tell application \"Terminal\" to activate"
-        ))
+        .arg(format!("tell application \"Terminal\" to activate"))
         .arg("-e")
         .arg(format!(
             "tell application \"System Events\" to keystroke \"{}\"",
