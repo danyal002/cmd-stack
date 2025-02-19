@@ -177,6 +177,30 @@ fn write_config(config: Config, state: State<Ui>) -> Result<(), UiError> {
     Err(UiError::Race)
 }
 
+#[tauri::command]
+fn open_terminal(command: String) {
+    std::process::Command::new("osascript")
+        .arg("-e")
+        .arg(format!(
+            "tell application \"Terminal\" to activate"
+        ))
+        .arg("-e")
+        .arg(format!(
+            "tell application \"System Events\" to keystroke \"{}\"",
+            command
+        ))
+        .spawn()
+        .unwrap();
+}
+
+#[tauri::command]
+fn update_command_last_used(command_id: i64, state: State<Ui>) -> Result<(), UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.update_command_last_used_prop(command_id)?);
+    }
+    Err(UiError::Race)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let logic = Logic::try_default()
@@ -197,7 +221,9 @@ pub fn run() {
             update_command,
             search_commands,
             read_config,
-            write_config
+            write_config,
+            update_command_last_used,
+            open_terminal
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
