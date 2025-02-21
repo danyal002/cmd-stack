@@ -62,6 +62,7 @@ impl Cli {
         let blank_param_values = if has_blank_params {
             Output::BlankParameter.print();
             let mut blank_param_num = 1;
+            // Prompt the user once for each blank parameter in the command
             let values = parsed_params
                 .iter()
                 .filter_map(|param| match param {

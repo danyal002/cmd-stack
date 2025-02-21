@@ -110,7 +110,7 @@ impl Cli {
         // Only display the command once the user makes a selection
         .with_formatter(&|i| {
             format_output(
-                &self.get_selected_command_string(&commands[i.index].internal_command.command),
+                &self.format_selected_command(&commands[i.index].internal_command.command),
             )
         })
         .with_page_size(self.logic.config.cli_display_limit as usize)
@@ -125,19 +125,20 @@ impl Cli {
         Ok(commands[selected_command.index].clone())
     }
 
-    fn get_selected_command_string(&self, command: &str) -> String {
+    /// Numbers blank parameters in the selected command
+    ///
+    /// ex. 'git commit \"@{} @{}\"' becomes 'git commit \"@{1} @{2}\"'
+    fn format_selected_command(&self, command: &str) -> String {
         let blank_param_regex = Regex::new(r"@\{\s*\}").unwrap();
         let mut blank_param_num = 1;
 
-        let command_with_placeholders =
-            blank_param_regex.replace_all(command, |_: &regex::Captures| {
-                let replacement =
-                    format!("<bold><italics>@{{{}}}</italics></bold>", blank_param_num);
-                blank_param_num += 1;
-                replacement
-            });
+        let formatted_command = blank_param_regex.replace_all(command, |_: &regex::Captures| {
+            let replacement = format!("<bold><italics>@{{{}}}</italics></bold>", blank_param_num);
+            blank_param_num += 1;
+            replacement
+        });
 
-        command_with_placeholders.to_string()
+        formatted_command.to_string()
     }
 
     /// Formats the commands for printing based on the user's preferred style.
