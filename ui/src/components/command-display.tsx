@@ -255,11 +255,12 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 <div className="p-4">
                   <div className="relative w-full">
                     <Textarea
-                      className="pr-16 bg-accent font-spacemono shadow resize-none overflow-y-hidden"
+                      className="min-h-0 max-h-[76px] py-[7px] pr-16 bg-accent font-spacemono shadow resize-none"
                       ref={(textarea) => {
                         if (textarea) {
                           textarea.style.height = '0px';
-                          textarea.style.height = textarea.scrollHeight + 'px';
+                          textarea.style.height =
+                            textarea.scrollHeight + 2 + 'px';
                         }
                       }}
                       value={generatedCommand}
