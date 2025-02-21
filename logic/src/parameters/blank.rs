@@ -5,7 +5,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct BlankParameter(String);
+pub struct BlankParameter;
 
 impl FromStr for BlankParameter {
     type Err = ParameterError;
@@ -17,8 +17,30 @@ impl FromStr for BlankParameter {
         })?;
 
         if re.is_match(s) {
-            return Ok(BlankParameter(String::new()));
+            return Ok(BlankParameter);
         }
         Err(ParameterError::InvalidParameter)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::parameters::blank::BlankParameter;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_from_str() {
+        let ret = BlankParameter::from_str("@{}");
+        assert!(ret.is_ok());
+
+        let ret = BlankParameter::from_str("@{         }");
+        assert!(ret.is_ok());
+    }
+
+    #[test]
+    fn test_from_str_errors() {
+        // Wrong type
+        let ret = BlankParameter::from_str("@{int}");
+        assert!(ret.is_err());
     }
 }
