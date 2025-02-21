@@ -1,5 +1,3 @@
-use std::vec;
-
 use data::dal::{InsertCommandError, SelectAllCommandsError};
 use data::models::{Command, InternalCommand};
 use fuzzy_matcher::skim::SkimMatcherV2;
@@ -185,10 +183,10 @@ impl Logic {
     pub async fn generate_parameters(
         &self,
         command: String,
+        blank_param_values: Vec<String>,
     ) -> Result<(String, Vec<String>), ParameterError> {
         let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
-        // TODO: fix the blank params
-        self.populate_parameters(non_parameter_strs, parameters, vec![], None)
+        self.populate_parameters(non_parameter_strs, parameters, blank_param_values, None)
     }
 }
 
@@ -535,8 +533,10 @@ mod tests {
         let commands = list_commands_result.unwrap();
         assert!(commands.len() == 1);
 
-        let generated_param_result =
-            logic.generate_parameters(commands.first().unwrap().internal_command.command.clone());
+        let generated_param_result = logic.generate_parameters(
+            commands.first().unwrap().internal_command.command.clone(),
+            vec![],
+        );
         assert!(generated_param_result.is_ok());
         let (generated_param, generated_parameters) = generated_param_result.unwrap();
         assert_ne!(generated_param, "echo @{int}");
