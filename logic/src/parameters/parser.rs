@@ -63,7 +63,7 @@ impl Logic {
     }
 
     fn parse_parameter(&self, s: String) -> Result<SerializableParameter, ParameterError> {
-        if let Ok(_) = BlankParameter::from_str(&s) {
+        if BlankParameter::from_str(&s).is_ok() {
             return Ok(SerializableParameter::Blank);
         }
 
@@ -105,25 +105,36 @@ mod tests {
     fn test_parse_parameters() {
         let logic = Logic::try_default().unwrap();
 
-        let ret = logic.parse_parameters("cmd @{boolean} @{int} @{string}".to_string());
+        let ret = logic.parse_parameters("cmd @{boolean} @{int} @{string} @{}".to_string());
         assert!(ret.is_ok());
         let (non_parameter_strings, parameters) = ret.unwrap();
-        assert_eq!(parameters.len(), 3);
+        assert_eq!(parameters.len(), 4);
         matches!(
             parameters.get(0).unwrap(),
             SerializableParameter::Boolean(_)
         );
         matches!(parameters.get(1).unwrap(), SerializableParameter::Int(_));
         matches!(parameters.get(2).unwrap(), SerializableParameter::String(_));
+        matches!(parameters.get(3).unwrap(), SerializableParameter::Blank);
         assert_eq!(
             non_parameter_strings,
             vec![
                 "cmd ".to_string(),
                 " ".to_string(),
                 " ".to_string(),
+                " ".to_string(),
                 "".to_string()
             ]
         );
+    }
+
+    #[test]
+    fn test_parse_parameter_blank() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{}".to_string());
+        assert!(ret.is_ok());
+        matches!(ret.unwrap(), SerializableParameter::Blank);
     }
 
     #[test]
