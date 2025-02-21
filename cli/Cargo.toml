@@ -22,3 +22,4 @@ termion = "4.0.2"
 lazy_static = "1.5.0"
 validator = { version = "0.20.0", features = ["derive"] }
 serde = "1.0.217"
+regex = "1.11.1"

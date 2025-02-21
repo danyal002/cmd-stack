@@ -9,6 +9,7 @@ use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
 use prettytable::{format, Cell, Row, Table};
+use regex::Regex;
 use termion::terminal_size;
 use thiserror::Error;
 
@@ -71,7 +72,7 @@ impl Cli {
         initial_value: &str,
     ) -> Result<String, InquireError> {
         Text::new(&format_output(
-            "<bold>Edit</bold> <italics>(Press enter to continue)</italics><bold>:</bold> ",
+            "<bold>Edit Command</bold> <italics>(Press enter to continue)</italics><bold>:</bold> ",
         ))
         .with_initial_value(initial_value)
         .prompt()
@@ -80,7 +81,7 @@ impl Cli {
     /// Prompt user to select an action: Copy or Execute
     pub fn prompt_user_for_action(&self) -> Result<String, InquireError> {
         Ok(Select::new(
-            &format_output("<bold>Action:</bold>"),
+            &format_output("<bold>Select Action:</bold>"),
             vec!["Copy", "Execute"],
         )
         .prompt()?
@@ -107,7 +108,11 @@ impl Cli {
             formatted_commands,
         )
         // Only display the command once the user makes a selection
-        .with_formatter(&|i| commands[i.index].internal_command.command.to_string())
+        .with_formatter(&|i| {
+            format_output(
+                &self.get_selected_command_string(&commands[i.index].internal_command.command),
+            )
+        })
         .with_page_size(self.logic.config.cli_display_limit as usize)
         .raw_prompt()
         {
@@ -118,6 +123,21 @@ impl Cli {
         };
 
         Ok(commands[selected_command.index].clone())
+    }
+
+    fn get_selected_command_string(&self, command: &str) -> String {
+        let blank_param_regex = Regex::new(r"@\{\s*\}").unwrap();
+        let mut blank_param_num = 1;
+
+        let command_with_placeholders =
+            blank_param_regex.replace_all(command, |_: &regex::Captures| {
+                let replacement =
+                    format!("<bold><italics>@{{{}}}</italics></bold>", blank_param_num);
+                blank_param_num += 1;
+                replacement
+            });
+
+        command_with_placeholders.to_string()
     }
 
     /// Formats the commands for printing based on the user's preferred style.

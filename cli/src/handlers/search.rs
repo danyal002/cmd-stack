@@ -4,7 +4,7 @@ use crate::{
         check_search_args_exist, copy_to_clipboard, CopyTextError,
         PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
-    outputs::spacing,
+    outputs::{format_output, spacing, Output},
     Cli,
 };
 use inquire::{InquireError, Text};
@@ -54,28 +54,38 @@ impl Cli {
 
         let (non_param_strings, parsed_params) = self
             .logic
-            .parse_parameters(user_selection.internal_command.command)?;
+            .parse_parameters(user_selection.internal_command.command.clone())?;
 
-        // TODO: Display this to the user in a better way. If you have 3 blank parameters, you might lose track of which one you're on.
-        // One way to solve this problem would be to display the command to the user with those blanks filled in as we go.
-        // Another way would be that we start putting in numbers in the blank parameter like `aws s3 ls s3://@{0}/bucket/my-{1}-bucket`
-        // I think a combination of both would be a good solution
-        let blank_values: Vec<String> = parsed_params
+        let has_blank_params = parsed_params
             .iter()
-            .enumerate()
-            .filter_map(|(i, param)| match param {
-                SerializableParameter::Blank => Some(
-                    Text::new(&format!("Enter value for blank parameter #{}:", i + 1)).prompt(),
-                ),
-                _ => None,
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+            .any(|item| matches!(item, SerializableParameter::Blank));
+        let blank_param_values = if has_blank_params {
+            Output::BlankParameter.print();
+            let mut blank_param_num = 1;
+            let values = parsed_params
+                .iter()
+                .filter_map(|param| match param {
+                    SerializableParameter::Blank => {
+                        let prompt_text = format!("<bold>Fill in @{{{}}}:</bold>", blank_param_num);
+                        blank_param_num += 1;
+                        Some(Text::new(&format_output(&prompt_text)).prompt())
+                    }
+                    _ => None,
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            spacing();
+            values
+        } else {
+            spacing();
+            vec![]
+        };
 
-        let (text_to_copy, _) =
-            self.logic
-                .populate_parameters(non_param_strings, parsed_params, blank_values, None)?;
-
-        spacing();
+        let (text_to_copy, _) = self.logic.populate_parameters(
+            non_param_strings,
+            parsed_params,
+            blank_param_values,
+            None,
+        )?;
 
         // Prompt the user to edit the generated command
         let user_edited_cmd = self.prompt_user_for_command_edit(&text_to_copy)?;
