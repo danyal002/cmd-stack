@@ -133,25 +133,36 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     }
   }
 
+  function onUseCommand() {
+    invoke('update_command_last_used', {
+      commandId: command?.id,
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
+
   function onCopy() {
     navigator.clipboard.writeText(generatedCommand);
     toast({
       title: 'Copied to clipboard ✅',
     });
 
-    invoke('update_command_last_used', {
-      commandId: command?.id,
-    });
+    onUseCommand();
   }
 
-  function onOpenTerminal() {
-    invoke('open_terminal', {
+  function onExecuteInTerminal() {
+    invoke('execute_in_terminal', {
       command: generatedCommand,
-    });
-
-    invoke('update_command_last_used', {
-      commandId: command?.id,
-    });
+    })
+      .then(() => {
+        onUseCommand();
+      })
+      .catch((error) => {
+        console.error(error);
+        toast({
+          title: `${error} ❌`,
+        });
+      });
   }
 
   const tagParts = command?.tag ? command.tag.split('/') : [];
@@ -276,13 +287,13 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                           size="icon"
                           type="button"
                           disabled={editing}
-                          onClick={onOpenTerminal}
+                          onClick={onExecuteInTerminal}
                           className="absolute right-8 top-0 m-2.5 h-4 w-4"
                         >
                           <SquareTerminal size={16} />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Open in terminal</TooltipContent>
+                      <TooltipContent>Execute in terminal</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
