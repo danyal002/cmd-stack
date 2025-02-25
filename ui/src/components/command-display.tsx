@@ -138,6 +138,9 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
       commandId: command?.id,
     }).catch((error) => {
       console.error(error);
+      toast({
+        title: `An error occurred whilst updating metadata. Please refer to logs. ❌`,
+      });
     });
   }
 
