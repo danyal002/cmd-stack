@@ -183,7 +183,7 @@ impl Cli {
 
     pub fn fill_blank_params(
         &self,
-        parsed_params: &Vec<SerializableParameter>,
+        parsed_params: &[SerializableParameter],
     ) -> Result<Vec<String>, PromptUserForCommandSelectionError> {
         let blank_param_values: Vec<String> = parsed_params
             .iter()
