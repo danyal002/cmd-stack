@@ -4,10 +4,10 @@ use crate::{
         check_search_args_exist, copy_to_clipboard, CopyTextError,
         PromptUserForCommandSelectionError, SearchArgsUserInput,
     },
-    outputs::{format_output, spacing, Output},
+    outputs::spacing,
     Cli,
 };
-use inquire::{InquireError, Text};
+use inquire::InquireError;
 use log::error;
 use logic::{
     command::{SearchCommandArgs, SearchCommandError},
@@ -60,25 +60,10 @@ impl Cli {
             .iter()
             .any(|item| matches!(item, SerializableParameter::Blank));
         let blank_param_values = if has_blank_params {
-            Output::BlankParameter.print();
-            let mut blank_param_num = 1;
-            // Prompt the user once for each blank parameter in the command
-            let values = parsed_params
-                .iter()
-                .filter_map(|param| match param {
-                    SerializableParameter::Blank => {
-                        let prompt_text = format!("<bold>Fill in @{{{}}}:</bold>", blank_param_num);
-                        blank_param_num += 1;
-                        Some(Text::new(&format_output(&prompt_text)).prompt())
-                    }
-                    _ => None,
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            spacing();
-            values
+            self.fill_blank_params(&parsed_params)?
         } else {
             spacing();
-            vec![]
+            Vec::new()
         };
 
         let (text_to_copy, _) = self.logic.populate_parameters(

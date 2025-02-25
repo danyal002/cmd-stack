@@ -143,7 +143,7 @@ mod tests {
             SerializableParameter::Int(IntParameter::default()),
             SerializableParameter::Int(IntParameter::default()),
             SerializableParameter::String(StringParameter::default()),
-            SerializableParameter::Boolean(BooleanParameter {}),
+            SerializableParameter::Boolean(BooleanParameter::default()),
         ];
 
         let ret = logic.populate_parameters(non_parameter_strs, parameters, vec![], Some(rng));
@@ -180,7 +180,7 @@ mod tests {
             SerializableParameter::Blank,
             SerializableParameter::Int(IntParameter::default()),
             SerializableParameter::Blank,
-            SerializableParameter::Boolean(BooleanParameter {}),
+            SerializableParameter::Boolean(BooleanParameter::default()),
             SerializableParameter::Blank,
         ];
         let blank_params_values = vec![
@@ -246,7 +246,30 @@ mod tests {
     }
 
     #[test]
-    fn test_populate_parameters_blank_missing() {
+    fn test_populate_parameters_too_many_blank_param_values() {
+        let logic = Logic::try_default().unwrap();
+
+        let rng = Box::new(MockRng::new(vec![2, 0]));
+
+        let non_parameter_strs = vec!["ls ".to_string(), "".to_string()];
+        let parameters = vec![SerializableParameter::Blank];
+        let blank_params_values = vec!["value1".to_string(), "value2".to_string()];
+
+        let ret = logic.populate_parameters(
+            non_parameter_strs,
+            parameters,
+            blank_params_values,
+            Some(rng),
+        );
+        assert!(ret.is_ok());
+
+        let (generated_string, generated_parameters) = ret.unwrap();
+        assert_eq!(generated_parameters, vec!["value1".to_string()]);
+        assert_eq!("ls value1", generated_string);
+    }
+
+    #[test]
+    fn test_populate_parameters_too_few_blank_param_values() {
         let logic = Logic::try_default().unwrap();
 
         let rng = Box::new(MockRng::new(vec![2, 0]));

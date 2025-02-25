@@ -6,6 +6,12 @@ use super::{populator::RandomNumberGenerator, GenerateRandomValues, ParameterErr
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BooleanParameter {}
 
+impl Default for BooleanParameter {
+    fn default() -> Self {
+        BooleanParameter {}
+    }
+}
+
 impl FromStr for BooleanParameter {
     type Err = ParameterError;
 

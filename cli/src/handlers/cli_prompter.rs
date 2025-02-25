@@ -1,6 +1,6 @@
 use crate::{
     args::SearchArgs,
-    outputs::{format_output, spacing},
+    outputs::{format_output, spacing, Output},
     utils::{none_if_empty, truncate_string},
     Cli,
 };
@@ -8,8 +8,8 @@ use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
+use logic::parameters::parser::SerializableParameter;
 use prettytable::{format, Cell, Row, Table};
-use regex::Regex;
 use termion::terminal_size;
 use thiserror::Error;
 
@@ -99,7 +99,7 @@ impl Cli {
         let (formatted_commands, columns) = self.format_commands_for_printing(&commands);
 
         spacing();
-        let selected_command = match Select::new(
+        let selected_command = Select::new(
             &format_output(
                 &("<bold>Select a command</bold> <italics>".to_owned()
                     + columns
@@ -110,35 +110,15 @@ impl Cli {
         // Only display the command once the user makes a selection
         .with_formatter(&|i| {
             format_output(
-                &self.format_selected_command(&commands[i.index].internal_command.command),
+                &self
+                    .logic
+                    .number_parameters(&commands[i.index].internal_command.command),
             )
         })
         .with_page_size(self.logic.config.cli_display_limit as usize)
-        .raw_prompt()
-        {
-            Ok(c) => c,
-            Err(e) => {
-                return Err(PromptUserForCommandSelectionError::Inquire(e));
-            }
-        };
+        .raw_prompt()?;
 
         Ok(commands[selected_command.index].clone())
-    }
-
-    /// Numbers blank parameters in the selected command
-    ///
-    /// ex. 'git commit \"@{} @{}\"' becomes 'git commit \"@{1} @{2}\"'
-    fn format_selected_command(&self, command: &str) -> String {
-        let blank_param_regex = Regex::new(r"@\{\s*\}").unwrap();
-        let mut blank_param_num = 1;
-
-        let formatted_command = blank_param_regex.replace_all(command, |_: &regex::Captures| {
-            let replacement = format!("<bold><italics>@{{{}}}</italics></bold>", blank_param_num);
-            blank_param_num += 1;
-            replacement
-        });
-
-        formatted_command.to_string()
     }
 
     /// Formats the commands for printing based on the user's preferred style.
@@ -199,6 +179,27 @@ impl Cli {
 
         let table_str = table.to_string();
         table_str.lines().map(|s| s.to_string()).collect()
+    }
+
+    pub fn fill_blank_params(
+        &self,
+        parsed_params: &Vec<SerializableParameter>,
+    ) -> Result<Vec<String>, PromptUserForCommandSelectionError> {
+        let blank_param_values: Vec<String> = parsed_params
+            .iter()
+            .enumerate()
+            .filter_map(|(index, param)| match param {
+                SerializableParameter::Blank => {
+                    if index == 0 {
+                        Output::BlankParameter.print();
+                    }
+                    let prompt_text = format!("<bold>Fill in @{{{}}}:</bold>", index + 1);
+                    Some(Text::new(&format_output(&prompt_text)).prompt())
+                }
+                _ => None,
+            })
+            .collect::<Result<_, _>>()?;
+        Ok(blank_param_values)
     }
 }
 

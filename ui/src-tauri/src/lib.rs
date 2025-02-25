@@ -132,7 +132,7 @@ fn parse_parameters(
 #[tauri::command]
 fn replace_parameters(command: String, state: State<Ui>) -> Result<(String, Vec<String>), UiError> {
     if let Ok(logic) = state.logic.write() {
-        return Ok(logic.generate_parameters(command, vec![])?);
+        return Ok(logic.generate_parameters(command, Vec::new())?);
     }
     Err(UiError::Race)
 }
