@@ -3,14 +3,8 @@ use std::str::FromStr;
 
 use super::{populator::RandomNumberGenerator, GenerateRandomValues, ParameterError};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct BooleanParameter {}
-
-impl Default for BooleanParameter {
-    fn default() -> Self {
-        BooleanParameter {}
-    }
-}
 
 impl FromStr for BooleanParameter {
     type Err = ParameterError;

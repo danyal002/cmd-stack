@@ -30,7 +30,7 @@ impl Logic {
         // Build the string by generating parameters
         let mut generated_result = String::new();
         let mut generated_parameters = Vec::new();
-        let mut blank_param_used_index = 0;
+        let mut blank_parameters_used_index = 0;
 
         for (i, other_string) in non_parameter_strs.iter().enumerate() {
             generated_result.push_str(other_string);
@@ -38,9 +38,10 @@ impl Logic {
             if i < non_parameter_strs.len() - 1 {
                 let generated_value = match &parameters[i] {
                     SerializableParameter::Blank => {
-                        if blank_param_used_index < blank_parameter_values.len() {
-                            let user_val = blank_parameter_values[blank_param_used_index].clone();
-                            blank_param_used_index += 1;
+                        if blank_parameters_used_index < blank_parameter_values.len() {
+                            let user_val =
+                                blank_parameter_values[blank_parameters_used_index].clone();
+                            blank_parameters_used_index += 1;
                             user_val
                         } else {
                             let total_blank_params_needed = parameters
@@ -48,7 +49,7 @@ impl Logic {
                                 .filter(|p| matches!(p, SerializableParameter::Blank))
                                 .count();
                             return Err(ParameterError::MissingBlankParamValues(
-                                (blank_param_used_index + 1).to_string(),
+                                blank_parameters_used_index.to_string(),
                                 total_blank_params_needed.to_string(),
                             ));
                         }
