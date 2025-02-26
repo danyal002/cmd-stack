@@ -1,6 +1,6 @@
 use crate::{
     args::SearchArgs,
-    outputs::{format_output, spacing},
+    outputs::{format_output, spacing, Output},
     utils::{none_if_empty, truncate_string},
     Cli,
 };
@@ -8,6 +8,7 @@ use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
 use log::error;
+use logic::parameters::parser::SerializableParameter;
 use prettytable::{format, Cell, Row, Table};
 use termion::terminal_size;
 use thiserror::Error;
@@ -71,7 +72,7 @@ impl Cli {
         initial_value: &str,
     ) -> Result<String, InquireError> {
         Text::new(&format_output(
-            "<bold>Edit</bold> <italics>(Press enter to continue)</italics><bold>:</bold> ",
+            "<bold>Edit Command</bold> <italics>(Press enter to continue)</italics><bold>:</bold> ",
         ))
         .with_initial_value(initial_value)
         .prompt()
@@ -80,7 +81,7 @@ impl Cli {
     /// Prompt user to select an action: Copy or Execute
     pub fn prompt_user_for_action(&self) -> Result<String, InquireError> {
         Ok(Select::new(
-            &format_output("<bold>Action:</bold>"),
+            &format_output("<bold>Select Action:</bold>"),
             vec!["Copy", "Execute"],
         )
         .prompt()?
@@ -98,7 +99,7 @@ impl Cli {
         let (formatted_commands, columns) = self.format_commands_for_printing(&commands);
 
         spacing();
-        let selected_command = match Select::new(
+        let selected_command = Select::new(
             &format_output(
                 &("<bold>Select a command</bold> <italics>".to_owned()
                     + columns
@@ -107,15 +108,15 @@ impl Cli {
             formatted_commands,
         )
         // Only display the command once the user makes a selection
-        .with_formatter(&|i| commands[i.index].internal_command.command.to_string())
+        .with_formatter(&|i| {
+            format_output(
+                &self
+                    .logic
+                    .index_parameters_for_display(&commands[i.index].internal_command.command),
+            )
+        })
         .with_page_size(self.logic.config.cli_display_limit as usize)
-        .raw_prompt()
-        {
-            Ok(c) => c,
-            Err(e) => {
-                return Err(PromptUserForCommandSelectionError::Inquire(e));
-            }
-        };
+        .raw_prompt()?;
 
         Ok(commands[selected_command.index].clone())
     }
@@ -178,6 +179,28 @@ impl Cli {
 
         let table_str = table.to_string();
         table_str.lines().map(|s| s.to_string()).collect()
+    }
+
+    pub fn fill_blank_params(
+        &self,
+        parsed_params: &[SerializableParameter],
+    ) -> Result<Vec<String>, PromptUserForCommandSelectionError> {
+        let blank_param_values: Vec<String> = parsed_params
+            .iter()
+            .enumerate()
+            .filter_map(|(index, param)| match param {
+                SerializableParameter::Blank => {
+                    if index == 0 {
+                        Output::BlankParameter.print();
+                    }
+                    let prompt_text = format!("<bold>Fill in @{{{}}}:</bold>", index + 1);
+                    Some(Text::new(&format_output(&prompt_text)).prompt())
+                }
+                _ => None,
+            })
+            .collect::<Result<_, _>>()?;
+        spacing();
+        Ok(blank_param_values)
     }
 }
 

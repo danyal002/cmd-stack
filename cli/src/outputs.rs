@@ -81,6 +81,7 @@ pub enum Output<'a> {
     ImportCommandsSuccess(u64, &'a Path),
     CommandCopiedToClipboard,
     ConfigUpdate,
+    BlankParameter,
 }
 
 impl fmt::Display for Output<'_> {
@@ -104,6 +105,7 @@ impl fmt::Display for Output<'_> {
                 "✅ <bold>Command copied to clipboard</bold>\n".to_string()
             }
             Output::ConfigUpdate => "✅ <bold>Config updated</bold>\n".to_string(),
+            Output::BlankParameter => "<bold>Fill in blank parameters:</bold>".to_string(),
         };
 
         write!(f, "{}", format_output(&message))

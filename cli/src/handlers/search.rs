@@ -9,7 +9,10 @@ use crate::{
 };
 use inquire::InquireError;
 use log::error;
-use logic::command::{SearchCommandArgs, SearchCommandError};
+use logic::{
+    command::{SearchCommandArgs, SearchCommandError},
+    parameters::parser::SerializableParameter,
+};
 use std::{os::unix::process::CommandExt, process::Command};
 use thiserror::Error;
 
@@ -49,12 +52,26 @@ impl Cli {
 
         let user_selection = self.prompt_user_for_command_selection(search_results)?;
 
-        // Generate parameters for the command
-        let (text_to_copy, _) = self
+        let (non_param_strings, parsed_params) = self
             .logic
-            .generate_parameters(user_selection.internal_command.command)?;
+            .parse_parameters(user_selection.internal_command.command.clone())?;
 
-        spacing();
+        let has_blank_params = parsed_params
+            .iter()
+            .any(|item| matches!(item, SerializableParameter::Blank));
+        let blank_param_values = if has_blank_params {
+            self.fill_blank_params(&parsed_params)?
+        } else {
+            spacing();
+            Vec::new()
+        };
+
+        let (text_to_copy, _) = self.logic.populate_parameters(
+            non_param_strings,
+            parsed_params,
+            blank_param_values,
+            None,
+        )?;
 
         // Prompt the user to edit the generated command
         let user_edited_cmd = self.prompt_user_for_command_edit(&text_to_copy)?;

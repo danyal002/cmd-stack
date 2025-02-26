@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use super::{
-    boolean::BooleanParameter, int::IntParameter, populator::RandomNumberGenerator,
-    string::StringParameter, FromStrWithConfig, GenerateRandomValues, ParameterError,
+    blank::BlankParameter, boolean::BooleanParameter, int::IntParameter,
+    populator::RandomNumberGenerator, string::StringParameter, FromStrWithConfig,
+    GenerateRandomValues, ParameterError,
 };
 use crate::Logic;
 
@@ -14,6 +15,7 @@ pub enum SerializableParameter {
     Int(IntParameter),
     String(StringParameter),
     Boolean(BooleanParameter),
+    Blank,
 }
 
 impl GenerateRandomValues for SerializableParameter {
@@ -22,6 +24,7 @@ impl GenerateRandomValues for SerializableParameter {
             SerializableParameter::Int(param) => param.generate_random_value(rng),
             SerializableParameter::String(param) => param.generate_random_value(rng),
             SerializableParameter::Boolean(param) => param.generate_random_value(rng),
+            SerializableParameter::Blank => String::new(),
         }
     }
 }
@@ -60,6 +63,10 @@ impl Logic {
     }
 
     fn parse_parameter(&self, s: String) -> Result<SerializableParameter, ParameterError> {
+        if BlankParameter::from_str(&s).is_ok() {
+            return Ok(SerializableParameter::Blank);
+        }
+
         if let Ok(string_param) = StringParameter::from_str(&s, &self.config) {
             return Ok(SerializableParameter::String(string_param));
         }
@@ -98,25 +105,36 @@ mod tests {
     fn test_parse_parameters() {
         let logic = Logic::try_default().unwrap();
 
-        let ret = logic.parse_parameters("cmd @{boolean} @{int} @{string}".to_string());
+        let ret = logic.parse_parameters("cmd @{boolean} @{int} @{string} @{}".to_string());
         assert!(ret.is_ok());
         let (non_parameter_strings, parameters) = ret.unwrap();
-        assert_eq!(parameters.len(), 3);
+        assert_eq!(parameters.len(), 4);
         matches!(
             parameters.get(0).unwrap(),
             SerializableParameter::Boolean(_)
         );
         matches!(parameters.get(1).unwrap(), SerializableParameter::Int(_));
         matches!(parameters.get(2).unwrap(), SerializableParameter::String(_));
+        matches!(parameters.get(3).unwrap(), SerializableParameter::Blank);
         assert_eq!(
             non_parameter_strings,
             vec![
                 "cmd ".to_string(),
                 " ".to_string(),
                 " ".to_string(),
+                " ".to_string(),
                 "".to_string()
             ]
         );
+    }
+
+    #[test]
+    fn test_parse_parameter_blank() {
+        let logic = Logic::try_default().unwrap();
+
+        let ret = logic.parse_parameter("@{}".to_string());
+        assert!(ret.is_ok());
+        matches!(ret.unwrap(), SerializableParameter::Blank);
     }
 
     #[test]
