@@ -38,6 +38,8 @@ pub enum UiError {
     ConfigWriteError(#[from] ConfigWriteError),
     #[error("Failed to obtain lock to complete the required action")]
     Race,
+    #[error("Failed to execute command in terminal")]
+    ExecuteCommand,
 }
 
 // we must manually implement serde::Serialize (https://github.com/tauri-apps/tauri/discussions/8805)
@@ -177,6 +179,27 @@ fn write_config(config: Config, state: State<Ui>) -> Result<(), UiError> {
     Err(UiError::Race)
 }
 
+#[tauri::command]
+fn execute_in_terminal(command: String) -> Result<(), UiError> {
+    std::process::Command::new("osascript")
+        .arg("-e")
+        .arg(format!(
+            "tell application \"Terminal\" to activate do script \"{}\" in window 1",
+            command
+        ))
+        .spawn()
+        .map_err(|_| UiError::ExecuteCommand)?;
+    Ok(())
+}
+
+#[tauri::command]
+fn update_command_last_used(command_id: i64, state: State<Ui>) -> Result<(), UiError> {
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.update_command_last_used_prop(command_id)?);
+    }
+    Err(UiError::Race)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let logic = Logic::try_default()
@@ -197,7 +220,9 @@ pub fn run() {
             update_command,
             search_commands,
             read_config,
-            write_config
+            write_config,
+            update_command_last_used,
+            execute_in_terminal
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -7,7 +7,13 @@ import { useCommands } from '@/use-command';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
 import format from 'date-fns/format';
-import { Copy, Pencil, RefreshCwIcon, Save } from 'lucide-react';
+import {
+  Copy,
+  Pencil,
+  RefreshCwIcon,
+  Save,
+  SquareTerminal,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -127,12 +133,39 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     }
   }
 
-  function onCopy(e: { preventDefault: () => void }) {
-    e.preventDefault();
+  function onUseCommand() {
+    invoke('update_command_last_used', {
+      commandId: command?.id,
+    }).catch((error) => {
+      console.error(error);
+      toast({
+        title: `An error occurred whilst updating metadata. Please refer to logs. ❌`,
+      });
+    });
+  }
+
+  function onCopy() {
     navigator.clipboard.writeText(generatedCommand);
     toast({
       title: 'Copied to clipboard ✅',
     });
+
+    onUseCommand();
+  }
+
+  function onExecuteInTerminal() {
+    invoke('execute_in_terminal', {
+      command: generatedCommand,
+    })
+      .then(() => {
+        onUseCommand();
+      })
+      .catch((error) => {
+        console.error(error);
+        toast({
+          title: `${error} ❌`,
+        });
+      });
   }
 
   const tagParts = command?.tag ? command.tag.split('/') : [];
@@ -222,7 +255,53 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
               </div>
               <Separator />
               <div className="flex flex-1 flex-col">
-                <ScrollArea className="h-[calc(100vh-180px)]">
+                <div className="p-4">
+                  <div className="relative w-full">
+                    <Textarea
+                      className="min-h-0 max-h-[76px] py-[7px] pr-16 bg-accent font-spacemono shadow resize-none"
+                      ref={(textarea) => {
+                        if (textarea) {
+                          textarea.style.height = '0px';
+                          textarea.style.height =
+                            textarea.scrollHeight + 2 + 'px';
+                        }
+                      }}
+                      value={generatedCommand}
+                      onChange={(e) => setGeneratedCommand(e.target.value)}
+                    />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          disabled={editing}
+                          onClick={onCopy}
+                          className="absolute right-0 top-0 m-2.5 h-4 w-4"
+                        >
+                          <Copy />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Copy command</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          disabled={editing}
+                          onClick={onExecuteInTerminal}
+                          className="absolute right-8 top-0 m-2.5 h-4 w-4"
+                        >
+                          <SquareTerminal size={16} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Execute in terminal</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+                <ScrollArea className="h-[calc(100vh-130px)]">
                   <div className="p-4">
                     <FormField
                       control={form.control}
@@ -317,32 +396,6 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                     )}
                   </div>
                 </ScrollArea>
-                <Separator className="mt-auto" />
-                <div className="px-4">
-                  <div className="flex items-center">
-                    <Label htmlFor="generated-command">Generated Command</Label>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          disabled={editing}
-                          onClick={onCopy}
-                        >
-                          <Copy size={12} />
-                        </Button>
-                      </TooltipTrigger>
-                    </Tooltip>
-                  </div>
-                  <div className="grid gap-4">
-                    <Textarea
-                      className="p-4 resize-none"
-                      value={generatedCommand}
-                      disabled={true}
-                    />
-                  </div>
-                </div>
               </div>
             </>
           ) : (
