@@ -192,7 +192,7 @@ impl Logic {
     /// Numbers blank parameters in the selected command
     ///
     /// ex. 'git commit \"@{} @{}\"' becomes 'git commit \"@{1} @{2}\"'
-    pub fn number_parameters(&self, command: &str) -> String {
+    pub fn index_parameters_for_display(&self, command: &str) -> String {
         let blank_param_regex = Regex::new(r"@\{\s*\}").unwrap();
         let mut blank_param_num = 1;
 
@@ -551,7 +551,7 @@ mod tests {
 
         let generated_param_result = logic.generate_parameters(
             commands.first().unwrap().internal_command.command.clone(),
-            vec![],
+            Vec::new(),
         );
         assert!(generated_param_result.is_ok());
         let (generated_param, generated_parameters) = generated_param_result.unwrap();

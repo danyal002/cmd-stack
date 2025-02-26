@@ -112,7 +112,7 @@ impl Cli {
             format_output(
                 &self
                     .logic
-                    .number_parameters(&commands[i.index].internal_command.command),
+                    .index_parameters_for_display(&commands[i.index].internal_command.command),
             )
         })
         .with_page_size(self.logic.config.cli_display_limit as usize)
@@ -199,6 +199,7 @@ impl Cli {
                 _ => None,
             })
             .collect::<Result<_, _>>()?;
+        spacing();
         Ok(blank_param_values)
     }
 }
