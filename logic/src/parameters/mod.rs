@@ -30,4 +30,6 @@ pub enum ParameterError {
     InvalidMinMax(String, String),
     #[error("Failed to fill in blank parameters: {0} value(s) provided, needed {1} value(s)")]
     MissingBlankParamValues(String, String),
+    #[error("Failed to fill in parameters: {0} value(s) provided, needed {1} value(s)")]
+    MissingParamValues(String, String),
 }

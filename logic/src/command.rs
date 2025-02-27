@@ -199,7 +199,10 @@ impl Logic {
         let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
 
         if parameters.len() != all_values.len() {
-            return Err(ParameterError::InvalidParameter);
+            return Err(ParameterError::MissingParamValues(
+                all_values.len().to_string(),
+                parameters.len().to_string(),
+            ));
         }
 
         Ok(interleave(non_parameter_strs, all_values)
@@ -591,13 +594,14 @@ mod tests {
         assert!(dal.is_ok());
         let logic = Logic::new(dal.unwrap()).unwrap();
 
-        let ret = logic.replace_parameters("echo @{} @{int}".to_string(), vec![]);
+        let ret = logic.replace_parameters("echo @{} @{int}".to_string(), vec!["a".to_string()]);
         assert!(ret.is_err());
 
         let ret = logic.replace_parameters(
             "echo @{} @{int}".to_string(),
             vec!["a".to_string(), "b".to_string()],
         );
+        assert!(ret.is_ok());
         assert_eq!("echo a b", ret.unwrap());
     }
 }
