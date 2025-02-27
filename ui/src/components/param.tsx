@@ -4,13 +4,12 @@ import { Label } from './ui/label';
 
 interface ParamProps {
   parameter: Parameter;
-  index: Number;
   generatedValue: string;
 }
 
-export function Param({ parameter, index, generatedValue }: ParamProps) {
+export function Param({ parameter, generatedValue }: ParamProps) {
   return (
-    <div key={index.toString()} className="text-sm">
+    <div className="text-sm">
       <Label>
         {parameter.type}{' '}
         {(parameter.type == ParameterType.String ||

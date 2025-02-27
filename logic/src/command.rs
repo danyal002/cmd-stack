@@ -2,6 +2,7 @@ use data::dal::{InsertCommandError, SelectAllCommandsError};
 use data::models::{Command, InternalCommand};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
+use itertools::interleave;
 use regex::Regex;
 use thiserror::Error;
 
@@ -187,6 +188,23 @@ impl Logic {
     ) -> Result<(String, Vec<String>), ParameterError> {
         let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
         self.populate_parameters(non_parameter_strs, parameters, blank_param_values, None)
+    }
+
+    /// Handles the replacement of parameters for a command
+    pub fn replace_parameters(
+        &self,
+        command: String,
+        all_values: Vec<String>,
+    ) -> Result<String, ParameterError> {
+        let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
+
+        if parameters.len() != all_values.len() {
+            return Err(ParameterError::InvalidParameter);
+        }
+
+        Ok(interleave(non_parameter_strs, all_values)
+            .collect::<Vec<String>>()
+            .join(""))
     }
 
     /// Numbers blank parameters in the selected command
