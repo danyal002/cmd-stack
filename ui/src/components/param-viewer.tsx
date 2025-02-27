@@ -21,10 +21,13 @@ export function ParamViewer({
       <div className="p-4">
         {parameters.map((parameter, index) => {
           if (parameter.type == ParameterType.Blank) {
-            let blankIndex = parameters.filter((p, i) => p.type == ParameterType.Blank && i < index).length;
+            let blankIndex = parameters
+              .slice(0, index)
+              .filter((p) => p.type == ParameterType.Blank).length;
 
             return (
               <BlankParam
+                key={index}
                 setBlankParam={setBlankParam}
                 blankIndex={blankIndex}
                 blankParamValue={blankParamValues[blankIndex]}
@@ -33,10 +36,9 @@ export function ParamViewer({
           } else {
             return (
               <Param
+                key={index}
                 parameter={parameter}
-                generatedValue={
-                  index < generatedValues.length ? generatedValues[index] : ''
-                }
+                generatedValue={generatedValues[index] ?? ''}
               />
             );
           }

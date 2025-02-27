@@ -23,7 +23,7 @@ export function BlankParam({
       <Input
         autoCapitalize="off"
         autoCorrect="off"
-        disabled={false}
+        placeholder="Fill in blank parameter"
         value={blankParamValue}
         onChange={onChange}
       />

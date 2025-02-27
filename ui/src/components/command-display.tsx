@@ -113,9 +113,11 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
       })
         .then((res) => {
           const parameters = res[1];
-          const numberOfBlankParameters = parameters.filter(p => p.type == ParameterType.Blank).length;
+          const numberOfBlankParameters = parameters.filter(
+            (p) => p.type == ParameterType.Blank,
+          ).length;
 
-          setBlankParamValues(new Array(numberOfBlankParameters).fill(""));
+          setBlankParamValues(Array(numberOfBlankParameters).fill(''));
           setParameters(res[1]);
         })
         .catch((error) => console.error(error));
@@ -128,7 +130,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
       const blanks = parameters.filter(
         (p) => p.type == ParameterType.Blank,
       ).length;
-      const blankParamValues: string[] = new Array(blanks).fill('');
+      const blankParamValues: string[] = Array(blanks).fill('');
 
       invoke<[string, string[]]>('generate_parameters', {
         command: command.command,
@@ -146,14 +148,12 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
   useEffect(() => {
     if (command && generatedValues.length == parameters.length) {
       // Replace blank parameters
-      let allValues : string[] = parameters.map((p, index) => {
-        if (p.type == ParameterType.Blank) {
-          let blankIndex = parameters.filter((p, i) => p.type == ParameterType.Blank && i < index).length;
-          return blankParamValues[blankIndex];
-        } else {
-          return generatedValues[index];
-        }
-      });
+      let blankIndex = 0;
+      const allValues: string[] = parameters.map((p, index) =>
+        p.type === ParameterType.Blank
+          ? blankParamValues[blankIndex++]
+          : generatedValues[index],
+      );
 
       invoke<string>('replace_parameters', {
         command: command.command,

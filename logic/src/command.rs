@@ -194,18 +194,18 @@ impl Logic {
     pub fn replace_parameters(
         &self,
         command: String,
-        all_values: Vec<String>,
+        param_values: Vec<String>,
     ) -> Result<String, ParameterError> {
         let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
 
-        if parameters.len() != all_values.len() {
+        if parameters.len() != param_values.len() {
             return Err(ParameterError::MissingParamValues(
-                all_values.len().to_string(),
+                param_values.len().to_string(),
                 parameters.len().to_string(),
             ));
         }
 
-        Ok(interleave(non_parameter_strs, all_values)
+        Ok(interleave(non_parameter_strs, param_values)
             .collect::<Vec<String>>()
             .join(""))
     }
