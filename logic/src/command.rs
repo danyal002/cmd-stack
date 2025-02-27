@@ -576,4 +576,28 @@ mod tests {
         assert_ne!(generated_param, "echo @{int}");
         assert_eq!(generated_parameters.len(), 1);
     }
+
+    #[test]
+    fn test_replace_parameters() {
+        let tmp_dir_result = TempDir::new();
+        assert!(tmp_dir_result.is_ok());
+
+        let path = tmp_dir_result
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .into_owned();
+        let dal = SqliteDal::new_with_custom_path(path);
+        assert!(dal.is_ok());
+        let logic = Logic::new(dal.unwrap()).unwrap();
+
+        let ret = logic.replace_parameters("echo @{} @{int}".to_string(), vec![]);
+        assert!(ret.is_err());
+
+        let ret = logic.replace_parameters(
+            "echo @{} @{int}".to_string(),
+            vec!["a".to_string(), "b".to_string()],
+        );
+        assert_eq!("echo a b", ret.unwrap());
+    }
 }

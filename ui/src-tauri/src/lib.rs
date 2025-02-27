@@ -132,7 +132,11 @@ fn parse_parameters(
 }
 
 #[tauri::command]
-fn generate_parameters(command: String, blank_param_values : Vec<String>, state: State<Ui>) -> Result<(String, Vec<String>), UiError> {
+fn generate_parameters(
+    command: String,
+    blank_param_values: Vec<String>,
+    state: State<Ui>,
+) -> Result<(String, Vec<String>), UiError> {
     if let Ok(logic) = state.logic.write() {
         return Ok(logic.generate_parameters(command, blank_param_values)?);
     }
@@ -140,7 +144,11 @@ fn generate_parameters(command: String, blank_param_values : Vec<String>, state:
 }
 
 #[tauri::command]
-fn replace_parameters(command: String, all_values : Vec<String>, state: State<Ui>) -> Result<String, UiError> {
+fn replace_parameters(
+    command: String,
+    all_values: Vec<String>,
+    state: State<Ui>,
+) -> Result<String, UiError> {
     if let Ok(logic) = state.logic.write() {
         return Ok(logic.replace_parameters(command, all_values)?);
     }
