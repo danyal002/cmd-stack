@@ -146,11 +146,11 @@ fn generate_parameters(
 #[tauri::command]
 fn replace_parameters(
     command: String,
-    all_values: Vec<String>,
+    param_values: Vec<String>,
     state: State<Ui>,
 ) -> Result<String, UiError> {
     if let Ok(logic) = state.logic.write() {
-        return Ok(logic.replace_parameters(command, all_values)?);
+        return Ok(logic.replace_parameters(command, param_values)?);
     }
     Err(UiError::Race)
 }

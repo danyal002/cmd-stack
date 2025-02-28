@@ -149,7 +149,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     if (command && generatedValues.length == parameters.length) {
       // Replace blank parameters
       let blankIndex = 0;
-      const allValues: string[] = parameters.map((p, index) =>
+      const paramValues: string[] = parameters.map((p, index) =>
         p.type === ParameterType.Blank
           ? blankParamValues[blankIndex++]
           : generatedValues[index],
@@ -157,7 +157,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
 
       invoke<string>('replace_parameters', {
         command: command.command,
-        allValues: allValues,
+        paramValues: paramValues,
       })
         .then((res) => {
           let generatedCommand = res;
