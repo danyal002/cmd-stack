@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { Command } from '@/types/command';
-import { Parameter } from '@/types/parameter';
+import { Parameter, ParameterType } from '@/types/parameter';
 import { useCommands } from '@/use-command';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
@@ -84,12 +84,26 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
       });
   }
 
+  function setBlankParam(index: number, value: string) {
+    // https://react.dev/learn/updating-arrays-in-state#replacing-items-in-an-array
+    let newBlankParamValues = blankParamValues.map((v, i) => {
+      if (i == index) {
+        return value;
+      } else {
+        return v;
+      }
+    });
+
+    setBlankParamValues(newBlankParamValues);
+  }
+
   const [parameterRefreshNumber, setParameterRefreshNumber] =
     useState<number>(0);
 
   const [generatedCommand, setGeneratedCommand] = useState<string>('');
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [generatedValues, setGeneratedValues] = useState<string[]>([]);
+  const [blankParamValues, setBlankParamValues] = useState<string[]>([]);
 
   // This effect handles parsing the parameters
   useEffect(() => {
@@ -98,6 +112,12 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
         command: command.command,
       })
         .then((res) => {
+          const parameters = res[1];
+          const numberOfBlankParameters = parameters.filter(
+            (p) => p.type == ParameterType.Blank,
+          ).length;
+
+          setBlankParamValues(Array(numberOfBlankParameters).fill(''));
           setParameters(res[1]);
         })
         .catch((error) => console.error(error));
@@ -107,16 +127,45 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
   // This effect handles generating parameters
   useEffect(() => {
     if (command) {
-      invoke<[string, string[]]>('replace_parameters', {
+      const blanks = parameters.filter(
+        (p) => p.type == ParameterType.Blank,
+      ).length;
+      const blankParamValues: string[] = Array(blanks).fill('');
+
+      invoke<[string, string[]]>('generate_parameters', {
         command: command.command,
+        blankParamValues: blankParamValues,
       })
         .then((res) => {
-          setGeneratedCommand(res[0]);
-          setGeneratedValues(res[1]);
+          const generatedValues = res[1];
+          setGeneratedValues(generatedValues);
         })
         .catch((error) => console.error(error));
     }
-  }, [command, parameterRefreshNumber]);
+  }, [parameters, parameterRefreshNumber]);
+
+  // This effect handles updating the generated command based on user editing
+  useEffect(() => {
+    if (command && generatedValues.length == parameters.length) {
+      // Replace blank parameters
+      let blankIndex = 0;
+      const paramValues: string[] = parameters.map((p, index) =>
+        p.type === ParameterType.Blank
+          ? blankParamValues[blankIndex++]
+          : generatedValues[index],
+      );
+
+      invoke<string>('replace_parameters', {
+        command: command.command,
+        paramValues: paramValues,
+      })
+        .then((res) => {
+          let generatedCommand = res;
+          setGeneratedCommand(generatedCommand);
+        })
+        .catch((error) => console.error(error));
+    }
+  }, [generatedValues, blankParamValues]);
 
   // This effect handles getting out of the editing state if we switch commands
   useEffect(() => {
@@ -391,6 +440,8 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                         <ParamViewer
                           parameters={parameters}
                           generatedValues={generatedValues}
+                          blankParamValues={blankParamValues}
+                          setBlankParam={setBlankParam}
                         />
                       </>
                     )}

@@ -2,6 +2,7 @@ use data::dal::{InsertCommandError, SelectAllCommandsError};
 use data::models::{Command, InternalCommand};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
+use itertools::interleave;
 use regex::Regex;
 use thiserror::Error;
 
@@ -187,6 +188,26 @@ impl Logic {
     ) -> Result<(String, Vec<String>), ParameterError> {
         let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
         self.populate_parameters(non_parameter_strs, parameters, blank_param_values, None)
+    }
+
+    /// Handles the replacement of parameters for a command
+    pub fn replace_parameters(
+        &self,
+        command: String,
+        param_values: Vec<String>,
+    ) -> Result<String, ParameterError> {
+        let (non_parameter_strs, parameters) = self.parse_parameters(command)?;
+
+        if parameters.len() != param_values.len() {
+            return Err(ParameterError::MissingParamValues(
+                param_values.len().to_string(),
+                parameters.len().to_string(),
+            ));
+        }
+
+        Ok(interleave(non_parameter_strs, param_values)
+            .collect::<Vec<String>>()
+            .join(""))
     }
 
     /// Numbers blank parameters in the selected command
@@ -557,5 +578,30 @@ mod tests {
         let (generated_param, generated_parameters) = generated_param_result.unwrap();
         assert_ne!(generated_param, "echo @{int}");
         assert_eq!(generated_parameters.len(), 1);
+    }
+
+    #[test]
+    fn test_replace_parameters() {
+        let tmp_dir_result = TempDir::new();
+        assert!(tmp_dir_result.is_ok());
+
+        let path = tmp_dir_result
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .into_owned();
+        let dal = SqliteDal::new_with_custom_path(path);
+        assert!(dal.is_ok());
+        let logic = Logic::new(dal.unwrap()).unwrap();
+
+        let ret = logic.replace_parameters("echo @{} @{int}".to_string(), vec!["a".to_string()]);
+        assert!(ret.is_err());
+
+        let ret = logic.replace_parameters(
+            "echo @{} @{int}".to_string(),
+            vec!["a".to_string(), "b".to_string()],
+        );
+        assert!(ret.is_ok());
+        assert_eq!("echo a b", ret.unwrap());
     }
 }

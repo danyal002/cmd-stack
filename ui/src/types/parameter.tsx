@@ -1,7 +1,8 @@
 export enum ParameterType {
     String = "String",
     Int = "Int",
-    Boolean = "Boolean"
+    Boolean = "Boolean",
+    Blank = "Blank"
 };
 
 export type Parameter = {
