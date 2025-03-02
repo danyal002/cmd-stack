@@ -185,15 +185,14 @@ impl Cli {
         &self,
         parsed_params: &[SerializableParameter],
     ) -> Result<Vec<String>, PromptUserForCommandSelectionError> {
+        Output::BlankParameter.print();
+        let mut blank_index = 0;
         let blank_param_values: Vec<String> = parsed_params
             .iter()
-            .enumerate()
-            .filter_map(|(index, param)| match param {
+            .filter_map(|param| match param {
                 SerializableParameter::Blank => {
-                    if index == 0 {
-                        Output::BlankParameter.print();
-                    }
-                    let prompt_text = format!("<bold>Fill in @{{{}}}:</bold>", index + 1);
+                    let prompt_text = format!("<bold>Fill in @{{{}}}:</bold>", blank_index + 1);
+                    blank_index += 1;
                     Some(Text::new(&format_output(&prompt_text)).prompt())
                 }
                 _ => None,
