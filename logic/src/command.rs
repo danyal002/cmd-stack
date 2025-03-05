@@ -221,7 +221,7 @@ impl Logic {
         let mut other_strs = Vec::new();
         let mut last_end = 0;
 
-        for mat in blank_param_regex.find_iter(&command) {
+        for mat in blank_param_regex.find_iter(command) {
             indexed_blank_params.push(format!("@{{{}}}", blank_param_num));
             blank_param_num += 1;
 
