@@ -7,19 +7,13 @@ import { useCommands } from '@/use-command';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
 import format from 'date-fns/format';
-import {
-  Copy,
-  Pencil,
-  RefreshCwIcon,
-  Save,
-  SquareTerminal,
-} from 'lucide-react';
+import { Pencil, RefreshCwIcon, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { ParamViewer } from './param-viewer';
-import { RemoveDialog } from './remove-dialog';
-import { Checkbox } from './ui/checkbox';
+import { RemoveDialog } from '../remove-dialog';
+import { Checkbox } from '../ui/checkbox';
 import {
   Form,
   FormControl,
@@ -27,15 +21,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { ScrollArea } from './ui/scroll-area';
-import { Badge } from './ui/badge';
+} from '../ui/form';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { ScrollArea } from '../ui/scroll-area';
+import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, set } from 'date-fns';
+import { UseCommandBox } from './use-command-box';
 
 interface CommandDisplayProps {
   command: Command | null;
@@ -104,6 +98,17 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [generatedValues, setGeneratedValues] = useState<string[]>([]);
   const [blankParamValues, setBlankParamValues] = useState<string[]>([]);
+  const [indexedCommand, setIndexedCommand] = useState('');
+
+  useEffect(() => {
+    if (command) {
+      invoke<string>('index_blank_parameters', { command: command.command })
+        .then((res) => {
+          setIndexedCommand(res);
+        })
+        .catch((error) => console.error(error));
+    }
+  }, [command]);
 
   // This effect handles parsing the parameters
   useEffect(() => {
@@ -182,47 +187,12 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     }
   }
 
-  function onUseCommand() {
-    invoke('update_command_last_used', {
-      commandId: command?.id,
-    }).catch((error) => {
-      console.error(error);
-      toast({
-        title: `An error occurred whilst updating metadata. Please refer to logs. ❌`,
-      });
-    });
-  }
-
-  function onCopy() {
-    navigator.clipboard.writeText(generatedCommand);
-    toast({
-      title: 'Copied to clipboard ✅',
-    });
-
-    onUseCommand();
-  }
-
-  function onExecuteInTerminal() {
-    invoke('execute_in_terminal', {
-      command: generatedCommand,
-    })
-      .then(() => {
-        onUseCommand();
-      })
-      .catch((error) => {
-        console.error(error);
-        toast({
-          title: `${error} ❌`,
-        });
-      });
-  }
-
   const tagParts = command?.tag ? command.tag.split('/') : [];
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-        <div className="flex h-full flex-col">
+        <div className="flex h-screen flex-col">
           {command ? (
             <>
               <div className="flex items-center p-2">
@@ -303,89 +273,117 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 <RemoveDialog command={command} />
               </div>
               <Separator />
-              <div className="flex flex-1 flex-col">
-                <div className="p-4">
-                  <div className="relative w-full">
-                    <Textarea
-                      className="min-h-0 max-h-[76px] py-[7px] pr-16 bg-accent font-spacemono shadow resize-none"
-                      ref={(textarea) => {
-                        if (textarea) {
-                          textarea.style.height = '0px';
-                          textarea.style.height =
-                            textarea.scrollHeight + 2 + 'px';
-                        }
-                      }}
-                      value={generatedCommand}
-                      onChange={(e) => setGeneratedCommand(e.target.value)}
-                    />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          disabled={editing}
-                          onClick={onCopy}
-                          className="absolute right-0 top-0 m-2.5 h-4 w-4"
-                        >
-                          <Copy />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Copy command</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          disabled={editing}
-                          onClick={onExecuteInTerminal}
-                          className="absolute right-8 top-0 m-2.5 h-4 w-4"
-                        >
-                          <SquareTerminal size={16} />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Execute in terminal</TooltipContent>
-                    </Tooltip>
-                  </div>
+              <div className="flex flex-1 overflow-hidden flex-col">
+                <div className="p-4 pb-0">
+                  <UseCommandBox
+                    command={generatedCommand}
+                    commandId={command.id}
+                    onChangeCommand={(e) => setGeneratedCommand(e.target.value)}
+                    disabled={editing}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="command"
+                    render={({ field }) => {
+                      const {
+                        ref: fieldRef,
+                        value: fieldValue,
+                        ...rest
+                      } = field;
+                      return (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              className="min-h-0 py-[7px] font-spacemono border-none resize-none shadow-none"
+                              ref={(textarea) => {
+                                fieldRef(textarea);
+                                if (textarea) {
+                                  textarea.style.height = '0px';
+                                  textarea.style.height =
+                                    textarea.scrollHeight + 2 + 'px';
+                                }
+                              }}
+                              value={editing ? fieldValue : indexedCommand}
+                              {...rest}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
                 </div>
-                <ScrollArea className="h-[calc(100vh-130px)]">
+                <ScrollArea className="flex-1">
                   <div className="p-4">
-                    <FormField
-                      control={form.control}
-                      name="command"
-                      render={({ field }) => (
-                        <FormItem className="mb-4">
-                          <FormLabel>Command</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              className="resize-none"
-                              placeholder=""
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="note"
-                      render={({ field }) => (
-                        <FormItem className="mb-4">
-                          <FormLabel>Note</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              className="resize-none"
-                              placeholder=""
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {editing ? (
+                      <FormField
+                        control={form.control}
+                        name="note"
+                        render={({ field }) => {
+                          const { ref: fieldRef, ...rest } = field;
+                          return (
+                            <FormItem className="mb-4">
+                              <FormControl>
+                                <Textarea
+                                  className="min-h-0 resize-none"
+                                  placeholder="Add a note"
+                                  ref={(textarea) => {
+                                    fieldRef(textarea);
+                                    if (textarea) {
+                                      textarea.style.height = '0px';
+                                      textarea.style.height =
+                                        textarea.scrollHeight + 2 + 'px';
+                                    }
+                                  }}
+                                  {...rest}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ) : command.note ? (
+                      <div className="whitespace-pre-wrap text-sm mb-2">
+                        {command.note}
+                      </div>
+                    ) : (
+                      <div
+                        className="text-sm mb-2 underline cursor-pointer w-fit"
+                        onClick={() => setEditing(true)}
+                      >
+                        + Add a note
+                      </div>
+                    )}
+                    {parameters.length > 0 && !editing && (
+                      <>
+                        <div className="flex items-center">
+                          <Label htmlFor="parameters">Parameters</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={onParameterRefresh}
+                              >
+                                <RefreshCwIcon size={12} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Regenerate Parameters
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <ParamViewer
+                          parameters={parameters}
+                          generatedValues={generatedValues}
+                          blankParamValues={blankParamValues}
+                          setBlankParam={setBlankParam}
+                        />
+                      </>
+                    )}
+                    {/* Intentionally commented out for now
                     <FormField
                       control={form.control}
                       name="tag"
@@ -418,33 +416,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                           </div>
                         </FormItem>
                       )}
-                    />
-                    {parameters.length > 0 && (
-                      <>
-                        <Separator className="mt-auto" />
-                        <div className="flex items-center">
-                          <Label htmlFor="parameters">Parameters</Label>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                type="button"
-                                onClick={onParameterRefresh}
-                              >
-                                <RefreshCwIcon size={12} />
-                              </Button>
-                            </TooltipTrigger>
-                          </Tooltip>
-                        </div>
-                        <ParamViewer
-                          parameters={parameters}
-                          generatedValues={generatedValues}
-                          blankParamValues={blankParamValues}
-                          setBlankParam={setBlankParam}
-                        />
-                      </>
-                    )}
+                    /> */}
                   </div>
                 </ScrollArea>
               </div>
