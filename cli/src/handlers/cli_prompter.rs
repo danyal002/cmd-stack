@@ -7,6 +7,7 @@ use crate::{
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use data::models::Command;
 use inquire::{InquireError, Select, Text};
+use itertools::interleave;
 use log::error;
 use logic::parameters::parser::SerializableParameter;
 use prettytable::{format, Cell, Row, Table};
@@ -109,11 +110,21 @@ impl Cli {
         )
         // Only display the command once the user makes a selection
         .with_formatter(&|i| {
-            format_output(
-                &self
-                    .logic
-                    .index_parameters_for_display(&commands[i.index].internal_command.command),
-            )
+            let (other_strs, indexed_blank_params) =
+                self.logic.index_parameters_for_display(&commands[i.index].internal_command.command);
+
+            let styled_indexed_blank_params = indexed_blank_params
+                .into_iter()
+                .map(|indexed_blank_param| {
+                    format!("<bold><italics>{}</italics></bold>", indexed_blank_param)
+                })
+                .collect::<Vec<String>>();
+
+            let formatted_command: String = interleave(other_strs, styled_indexed_blank_params)
+                .collect::<Vec<String>>()
+                .join("");
+
+            format_output(&formatted_command)
         })
         .with_page_size(self.logic.config.cli_display_limit as usize)
         .raw_prompt()?;

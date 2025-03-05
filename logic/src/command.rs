@@ -213,17 +213,29 @@ impl Logic {
     /// Numbers blank parameters in the selected command
     ///
     /// ex. 'git commit \"@{} @{}\"' becomes 'git commit \"@{1} @{2}\"'
-    pub fn index_parameters_for_display(&self, command: &str) -> String {
+    pub fn index_parameters_for_display(&self, command: &str) -> (Vec<String>, Vec<String>) {
         let blank_param_regex = Regex::new(r"@\{\s*\}").unwrap();
         let mut blank_param_num = 1;
 
-        let formatted_command = blank_param_regex.replace_all(command, |_: &regex::Captures| {
-            let replacement = format!("<bold><italics>@{{{}}}</italics></bold>", blank_param_num);
-            blank_param_num += 1;
-            replacement
-        });
+        let mut indexed_blank_params = Vec::new();
+        let mut other_strs = Vec::new();
+        let mut last_end = 0;
 
-        formatted_command.to_string()
+        for mat in blank_param_regex.find_iter(&command) {
+            indexed_blank_params.push(format!("@{{{}}}", blank_param_num));
+            blank_param_num += 1;
+
+            other_strs.push(command[last_end..mat.start()].to_string());
+            last_end = mat.end();
+        }
+
+        if last_end < command.len() {
+            other_strs.push(command[last_end..].to_string());
+        } else {
+            other_strs.push("".to_string());
+        }
+
+        (other_strs, indexed_blank_params)
     }
 }
 
