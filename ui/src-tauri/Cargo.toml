@@ -26,3 +26,4 @@ serde_json = "1"
 logic = { path = "../../logic" }
 data = { path = "../../data" } 
 thiserror = "1.0"
+itertools = "0.14.0"

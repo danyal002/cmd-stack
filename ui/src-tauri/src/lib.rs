@@ -1,6 +1,7 @@
 use std::sync::RwLock;
 
 use data::models::{Command, InternalCommand};
+use itertools::interleave;
 use logic::{
     command::{
         AddCommandError, DeleteCommandError, ListCommandError, SearchCommandArgs,
@@ -156,6 +157,23 @@ fn replace_parameters(
 }
 
 #[tauri::command]
+fn index_blank_parameters(
+    command: String,
+    state: State<Ui>,
+) -> Result<String, UiError> {
+    if let Ok(logic) = state.logic.write() {
+        let (other_strs, indexed_blank_params) =
+                logic.index_parameters_for_display(&command);
+
+        let formatted_command: String = interleave(other_strs, indexed_blank_params)
+            .collect::<Vec<String>>()
+            .join("");
+        return Ok(formatted_command);
+    }
+    Err(UiError::Race)
+}
+
+#[tauri::command]
 fn search_commands(search: String, state: State<Ui>) -> Result<Vec<DisplayCommand>, UiError> {
     if let Ok(logic) = state.logic.write() {
         let commands = logic
@@ -234,6 +252,7 @@ pub fn run() {
             generate_parameters,
             replace_parameters,
             parse_parameters,
+            index_blank_parameters,
             update_command,
             search_commands,
             read_config,
