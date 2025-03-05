@@ -110,8 +110,9 @@ impl Cli {
         )
         // Only display the command once the user makes a selection
         .with_formatter(&|i| {
-            let (other_strs, indexed_blank_params) =
-                self.logic.index_parameters_for_display(&commands[i.index].internal_command.command);
+            let (other_strs, indexed_blank_params) = self
+                .logic
+                .index_parameters_for_display(&commands[i.index].internal_command.command);
 
             let styled_indexed_blank_params = indexed_blank_params
                 .into_iter()
