@@ -38,7 +38,7 @@ pub fn check_search_args_exist(command: &Option<String>, tag: &Option<String>) -
 pub enum PromptUserForCommandSelectionError {
     #[error("Cannot select on empty list of commands")]
     NoCommandsProvided,
-    #[error("Failed to render")]
+    #[error("Failed to render: {0}")]
     Inquire(#[from] InquireError),
 }
 
@@ -205,18 +205,19 @@ impl Cli {
 
 #[derive(Error, Debug)]
 pub enum CopyTextError {
-    #[error("Failed to initialize the clipboard")]
-    ClipboardInit,
-    #[error("Failed to copy text to clipboard")]
-    Copy,
+    #[error("Failed to initialize the clipboard: {0}")]
+    ClipboardInit(String),
+    #[error("Failed to copy text to clipboard: {0}")]
+    Copy(String),
 }
 
 pub fn copy_to_clipboard(text_to_copy: String) -> Result<(), CopyTextError> {
-    let mut clipboard = ClipboardContext::new().map_err(|_| CopyTextError::ClipboardInit)?;
+    let mut clipboard =
+        ClipboardContext::new().map_err(|e| CopyTextError::ClipboardInit(e.to_string()))?;
 
     clipboard
         .set_contents(text_to_copy.clone())
-        .map_err(|_| CopyTextError::Copy)?;
+        .map_err(|e| CopyTextError::Copy(e.to_string()))?;
 
     Ok(())
 }

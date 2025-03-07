@@ -5,7 +5,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum HandleExportError {
-    #[error("Failed to export commands")]
+    #[error("Failed to export commands: {0}")]
     LogicExport(#[from] logic::import_export::ExportError),
 }
 

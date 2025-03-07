@@ -12,15 +12,15 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum HandleDeleteError {
-    #[error("Failed to get user input")]
+    #[error("Failed to get user input: {0}")]
     Inquire(#[from] InquireError),
     #[error("No commands found")]
     NoCommandsFound,
-    #[error("Failed to search for command")]
+    #[error("Failed to search for command: {0}")]
     Search(#[from] SearchCommandError),
-    #[error("Failed to select a command")]
+    #[error("Failed to select a command: {0}")]
     SelectCommand(#[from] PromptUserForCommandSelectionError),
-    #[error("Failed to delete command")]
+    #[error("Failed to delete command: {0}")]
     LogicDelete(#[from] logic::command::DeleteCommandError),
 }
 

@@ -19,16 +19,16 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 enum LoggerInitializationError {
-    #[error("Could not get the log file path")]
+    #[error("Could not get the log file path: {0}")]
     LogPath(String),
 
-    #[error("Could not create the log file")]
+    #[error("Could not create the log file: {0}")]
     CreatingLogFile(#[from] std::io::Error),
 
-    #[error("Could not create config")]
+    #[error("Could not create config: {0}")]
     CreatingLogConfig(#[from] ConfigErrors),
 
-    #[error("Could not initialize logger")]
+    #[error("Could not initialize logger: {0}")]
     InitializingLogger(#[from] SetLoggerError),
 }
 

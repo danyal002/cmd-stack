@@ -13,11 +13,11 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum HandleAddError {
-    #[error("Failed to get user input")]
+    #[error("Failed to get user input: {0}")]
     Inquire(#[from] InquireError),
     #[error("Missing field: {0}")]
     MissingField(String),
-    #[error("Failed to initialize logic")]
+    #[error("Failed to initialize logic: {0}")]
     LogicAdd(#[from] logic::command::AddCommandError),
 }
 
