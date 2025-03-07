@@ -214,7 +214,7 @@ impl SqliteDal {
 
     pub async fn delete_command(&self, command_id: i64) -> Result<(), DeleteCommandError> {
         let query = Query::delete()
-            .from_table(sqlite::TestCmd::Table)
+            .from_table(sqlite::Command::Table)
             .and_where(Expr::col(sqlite::Command::Id).eq(command_id))
             .to_string(SqliteQueryBuilder);
 

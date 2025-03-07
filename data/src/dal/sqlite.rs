@@ -115,15 +115,3 @@ pub enum Command {
     LastUsed,
     Favourite,
 }
-
-#[derive(Iden)]
-/// Command Table Schema
-pub enum TestCmd {
-    Table,
-    Id,
-    Command,
-    Tag,
-    Note,
-    LastUsed,
-    Favourite,
-}
