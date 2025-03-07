@@ -11,7 +11,7 @@ pub enum ConfigWriteError {
     ConfigPath,
     #[error("Failed to write config to file: {0}")]
     Io(#[from] io::Error),
-    #[error("Failed to deserialize config file")]
+    #[error("Failed to deserialize config file: {0}")]
     Deserialize(#[from] serde_json::Error),
 }
 
@@ -23,7 +23,7 @@ pub enum ConfigReadError {
     ConfigPath,
     #[error("Failed to read from config file: {0}")]
     Io(#[from] io::Error),
-    #[error("Failed to serialize config file")]
+    #[error("Failed to serialize config file: {0}")]
     Serialize(#[from] serde_json::Error),
 }
 
