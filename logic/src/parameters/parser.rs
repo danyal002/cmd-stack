@@ -4,8 +4,8 @@ use std::str::FromStr;
 
 use super::{
     blank::BlankParameter, boolean::BooleanParameter, int::IntParameter,
-    populator::RandomNumberGenerator, string::StringParameter, FromStrWithConfig,
-    GenerateRandomValues, ParameterError,
+    populator::RandomNumberGenerator, string::StringParameter, uuid::UuidParameter,
+    FromStrWithConfig, GenerateRandomValues, ParameterError,
 };
 use crate::Logic;
 
@@ -16,6 +16,7 @@ pub enum SerializableParameter {
     String(StringParameter),
     Boolean(BooleanParameter),
     Blank,
+    Uuid(UuidParameter),
 }
 
 impl GenerateRandomValues for SerializableParameter {
@@ -24,6 +25,7 @@ impl GenerateRandomValues for SerializableParameter {
             SerializableParameter::Int(param) => param.generate_random_value(rng),
             SerializableParameter::String(param) => param.generate_random_value(rng),
             SerializableParameter::Boolean(param) => param.generate_random_value(rng),
+            SerializableParameter::Uuid(param) => param.generate_random_value(),
             SerializableParameter::Blank => String::new(),
         }
     }
@@ -77,6 +79,10 @@ impl Logic {
 
         if let Ok(bool_param) = BooleanParameter::from_str(&s) {
             return Ok(SerializableParameter::Boolean(bool_param));
+        }
+
+        if let Ok(uuid_param) = UuidParameter::from_str(&s) {
+            return Ok(SerializableParameter::Uuid(uuid_param));
         }
 
         Err(ParameterError::InvalidParameter)
