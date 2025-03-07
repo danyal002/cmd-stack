@@ -41,6 +41,7 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
         // Set up environment logger
         env_logger::Builder::new()
             .filter(None, LevelFilter::Info)
+            .format(|buf, record| {})
             .init();
     } else {
         // Log file path: $HOME/.config/cmdstack/cmdstack.log
@@ -78,8 +79,9 @@ pub struct Cli {
 }
 
 fn main() {
-    let _ = initialize_logger().map_err(|_| {
+    let _ = initialize_logger().map_err(|e| {
         ErrorOutput::Logger.print();
+        println!("{:?}", e);
         std::process::exit(1);
     });
 
