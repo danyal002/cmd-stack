@@ -41,7 +41,6 @@ fn initialize_logger() -> Result<(), LoggerInitializationError> {
         // Set up environment logger
         env_logger::Builder::new()
             .filter(None, LevelFilter::Info)
-            .format(|buf, record| {})
             .init();
     } else {
         // Log file path: $HOME/.config/cmdstack/cmdstack.log
