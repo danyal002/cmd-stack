@@ -34,7 +34,7 @@ export function useCommands() {
   return useAtom(commandsAtom);
 }
 
-const settingsAtom = atomWithRefresh((get) => {
+const settingsAtom = atomWithRefresh((_get) => {
   return invoke<SettingsConfig>('read_config').then(
     (r) => r,
   );
