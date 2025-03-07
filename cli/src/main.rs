@@ -84,8 +84,11 @@ fn main() {
         std::process::exit(1);
     });
 
-    // TODO: Instead of panicking, show a user-friendly error, log and quit.
-    let logic = Logic::try_default().map_err(|e| panic!("{}", e)).unwrap();
+    let logic = Logic::try_default().unwrap_or_else(|e| {
+        ErrorOutput::Logic.print();
+        println!("{:?}", e);
+        std::process::exit(1);
+    });
     let mut cli = Cli { logic };
 
     // Configure inquire
