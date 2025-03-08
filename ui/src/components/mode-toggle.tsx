@@ -20,6 +20,7 @@ export function ModeToggle() {
 
     invoke('write_config', { config: settings })
       .then((res) => {
+        console.log(res);
         toast({
           title: 'Settings updated ✅ ',
         });
