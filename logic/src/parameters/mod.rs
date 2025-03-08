@@ -9,6 +9,7 @@ pub mod int;
 pub mod parser;
 pub mod populator;
 pub mod string;
+pub mod uuid;
 
 pub trait FromStrWithConfig: Sized {
     fn from_str(s: &str, config: &Config) -> Result<Self, ParameterError>;

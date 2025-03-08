@@ -19,3 +19,4 @@ sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-native-tls"] }
 regex = "1.11.1"
 dirs = "6.0.0"
 itertools = "0.14.0"
+uuid = { version = "1", features = ["v4", "serde"] }
