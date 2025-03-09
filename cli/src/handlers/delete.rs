@@ -14,7 +14,7 @@ use thiserror::Error;
 pub enum HandleDeleteError {
     #[error("Failed to get user input: {0}")]
     Inquire(#[from] InquireError),
-    #[error("No commands found")]
+    #[error("No commands found matching query")]
     NoCommandsFound,
     #[error("Failed to search for command: {0}")]
     Search(#[from] SearchCommandError),

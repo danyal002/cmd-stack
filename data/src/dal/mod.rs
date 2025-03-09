@@ -6,7 +6,7 @@ use thiserror::Error;
 pub enum InsertCommandError {
     #[error("Failed to get the unix timestamp: {0}")]
     UnixTimestamp(#[from] std::time::SystemTimeError),
-    #[error("Expected rows to be affected by the operation but none were affected")]
+    #[error("Expected rows to be affected after insertion but none were affected")]
     NoRowsAffected,
     #[error("Failed to execute SQL query: {0}")]
     Query(#[from] sqlx::Error),
@@ -18,7 +18,7 @@ pub enum InsertCommandError {
 pub enum UpdateCommandError {
     #[error("Failed to get the unix timestamp: {0}")]
     UnixTimestamp(#[from] std::time::SystemTimeError),
-    #[error("Expected rows to be affected by the operation but none were affected")]
+    #[error("Expected rows to be affected after update but none were affected")]
     NoRowsAffected,
     #[error("Failed to execute SQL query: {0}")]
     Query(#[from] sqlx::Error),
@@ -26,7 +26,7 @@ pub enum UpdateCommandError {
 
 #[derive(Error, Debug)]
 pub enum DeleteCommandError {
-    #[error("Expected rows to be affected by the operation but none were affected")]
+    #[error("Expected rows to be affected after deletion but none were affected")]
     NoRowsAffected,
     #[error("Failed to execute SQL query: {0}")]
     Query(#[from] sqlx::Error),

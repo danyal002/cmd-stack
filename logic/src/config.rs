@@ -7,8 +7,8 @@ use thiserror::Error;
 pub enum ConfigWriteError {
     #[error("Invalid value provided: {0}")]
     InvalidValue(String),
-    #[error("Failed to locate config directory")]
-    ConfigPath,
+    #[error("Failed to locate default config directory")]
+    DefaultConfigDirectory,
     #[error("Failed to write config to file: {0}")]
     Io(#[from] io::Error),
     #[error("Failed to deserialize config file: {0}")]
@@ -19,8 +19,8 @@ pub enum ConfigWriteError {
 pub enum ConfigReadError {
     #[error("Invalid value provided: {0}")]
     InvalidValue(String),
-    #[error("Failed to locate config directory")]
-    ConfigPath,
+    #[error("Failed to locate default config directory")]
+    DefaultConfigDirectory,
     #[error("Failed to read from config file: {0}")]
     Io(#[from] io::Error),
     #[error("Failed to serialize config file: {0}")]
@@ -71,7 +71,8 @@ pub enum CliPrintStyle {
 
 impl Config {
     pub fn read() -> Result<Config, ConfigReadError> {
-        let config_path = Config::default_config_file_path()?.ok_or(ConfigReadError::ConfigPath)?;
+        let config_path =
+            Config::default_config_file_path()?.ok_or(ConfigReadError::DefaultConfigDirectory)?;
         let config_content = fs::read_to_string(&config_path).unwrap_or_else(|_| "{}".to_string());
         let config: Config =
             serde_json::from_str(&config_content).map_err(ConfigReadError::Serialize)?;
@@ -81,7 +82,7 @@ impl Config {
 
     pub fn write(&self) -> Result<(), ConfigWriteError> {
         let config_path =
-            Config::default_config_file_path()?.ok_or(ConfigWriteError::ConfigPath)?;
+            Config::default_config_file_path()?.ok_or(ConfigWriteError::DefaultConfigDirectory)?;
         let config_file_content =
             serde_json::to_string_pretty(self).map_err(ConfigWriteError::Deserialize)?;
 
@@ -91,7 +92,13 @@ impl Config {
     fn default_config_file_path() -> Result<Option<PathBuf>, io::Error> {
         if let Some(mut path) = dirs::config_dir() {
             path.push("cmdstack");
-            fs::create_dir_all(path.as_path())?;
+            // If we fail to create the directory, return an error with the path
+            if let Err(e) = fs::create_dir_all(&path) {
+                return Err(io::Error::new(
+                    e.kind(),
+                    format!("Failed to create config directory: {}", path.display()),
+                ));
+            }
             path.push("config.json");
 
             return Ok(Some(path));

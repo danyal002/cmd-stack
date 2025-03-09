@@ -35,10 +35,6 @@ pub enum ImportError {
     Read(String),
     #[error("Failed to insert commands to the database: {0}")]
     Database(#[from] InsertCommandError),
-    #[error("File not found at specified path")]
-    InvalidFilePath,
-    #[error("Specified file does not have the correct extension")]
-    IncorrectFileExtension,
 }
 
 impl Logic {

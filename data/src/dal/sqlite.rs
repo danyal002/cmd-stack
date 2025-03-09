@@ -10,9 +10,6 @@ pub enum SqliteDbConnectionError {
     #[error("Could not get the database path: {0}")]
     DbPath(String),
 
-    #[error("Could not create the database file: {0}")]
-    CreatingDatabase(#[source] std::io::Error),
-
     #[error("Could not create sqlite options: {0}")]
     SqliteOptionsInitialization(#[source] sqlx::Error),
 
