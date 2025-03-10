@@ -32,6 +32,8 @@ pub enum HandleSearchError {
     LogicParam(#[from] logic::parameters::ParameterError),
     #[error("Failed to update command: {0}")]
     LogicUpdate(#[from] logic::command::UpdateCommandError),
+    #[error("Failed to execute command in terminal: {0}")]
+    ExecuteCommandInTerminal(String),
 }
 
 impl Cli {
@@ -80,15 +82,17 @@ impl Cli {
         let action = self.prompt_user_for_action()?;
 
         if action == "Execute" {
-            // Note: using `.exec()` will shutdown our app and execute the command, therefore, we can't handle errors.
             let _ = self.logic.update_command_last_used_prop(user_selection.id);
-            let _ = Command::new("sh")
-                .arg("-c")
-                .arg(user_edited_cmd.clone())
-                .exec();
+            // Note: using `.exec()` will shutdown our app and execute the command if successful.
+            return Err(HandleSearchError::ExecuteCommandInTerminal(
+                Command::new("sh")
+                    .args(["-c", &user_edited_cmd])
+                    .exec()
+                    .to_string(),
+            ));
+        } else {
+            copy_to_clipboard(user_edited_cmd)?;
         }
-
-        copy_to_clipboard(user_edited_cmd)?;
 
         Ok(self
             .logic

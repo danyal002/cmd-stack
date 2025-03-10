@@ -6,7 +6,7 @@ use logic::{
         AddCommandError, DeleteCommandError, ListCommandError, SearchCommandArgs,
         SearchCommandError, UpdateCommandError,
     },
-    config::{Config, ConfigWriteError},
+    config::{Config, ConfigWriteError, UiDefaultTerminal},
     parameters::{parser::SerializableParameter, ParameterError},
     Logic, LogicInitError,
 };
@@ -196,15 +196,38 @@ fn write_config(config: Config, state: State<Ui>) -> Result<(), UiError> {
 }
 
 #[tauri::command]
-fn execute_in_terminal(command: String) -> Result<(), UiError> {
-    std::process::Command::new("osascript")
-        .arg("-e")
-        .arg(format!(
-            "tell application \"Terminal\" to activate do script \"{}\" in window 1",
-            command
-        ))
-        .spawn()
-        .map_err(|_| UiError::ExecuteCommand)?;
+fn execute_in_terminal(command: String, state: State<Ui>) -> Result<(), UiError> {
+    let mut cmd = std::process::Command::new("osascript");
+    if let Ok(logic) = state.logic.read() {
+        match logic.config.default_terminal {
+            UiDefaultTerminal::Terminal => {
+                cmd.args([
+                    "-e",
+                    &format!(
+                        "tell application \"Terminal\" to activate do script \"{}\" in window 1",
+                        command
+                    ),
+                ]);
+            }
+            UiDefaultTerminal::Iterm => {
+                cmd.args([
+                    "-e",
+                    "tell application \"iTerm\"",
+                    "-e",
+                    "tell current session of current window",
+                    "-e",
+                    &format!("write text \"{}\"", command),
+                    "-e",
+                    "end tell",
+                    "-e",
+                    "activate",
+                    "-e",
+                    "end tell",
+                ]);
+            }
+        }
+    }
+    cmd.spawn().map_err(|_| UiError::ExecuteCommand)?;
     Ok(())
 }
 
