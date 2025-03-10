@@ -7,7 +7,14 @@ import { useCommands } from '@/use-command';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
 import format from 'date-fns/format';
-import { Pencil, RefreshCwIcon, Save } from 'lucide-react';
+import {
+  Copy,
+  Pencil,
+  RefreshCwIcon,
+  Save,
+  SquareTerminal,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -187,6 +194,46 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     }
   }
 
+  function onUseCommand() {
+    invoke('update_command_last_used', {
+      commandId: command?.id,
+    }).catch((error) => {
+      console.error(error);
+      toast({
+        title: `An error occurred whilst updating metadata. Please refer to logs. ❌`,
+      });
+    });
+  }
+
+  function onCopy() {
+    navigator.clipboard.writeText(generatedCommand);
+    toast({
+      title: 'Copied to clipboard ✅',
+    });
+
+    onUseCommand();
+  }
+
+  function onCancelEdit() {
+    setEditing(false);
+    form.reset();
+  }
+
+  function onExecuteInTerminal() {
+    invoke('execute_in_terminal', {
+      command: generatedCommand,
+    })
+      .then(() => {
+        onUseCommand();
+      })
+      .catch((error) => {
+        console.error(error);
+        toast({
+          title: `${error} ❌`,
+        });
+      });
+  }
+
   const tagParts = command?.tag ? command.tag.split('/') : [];
 
   return (
@@ -260,15 +307,26 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                   </Tooltip>
                 )}
                 {editing && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" type="submit" size="icon">
-                        <Save className="h-4 w-4" />
-                        <span className="sr-only">Save command</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Save command</TooltipContent>
-                  </Tooltip>
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" type="submit" size="icon">
+                          <Save className="h-4 w-4" />
+                          <span className="sr-only">Save command</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Save command</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" type="button" size="icon" onClick={onCancelEdit}>
+                          <X className="h-4 w-4" />
+                          <span className="sr-only">Cancel editing</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Cancel editing</TooltipContent>
+                    </Tooltip>
+                  </>
                 )}
                 <RemoveDialog command={command} />
               </div>
