@@ -275,12 +275,15 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
               <Separator />
               <div className="flex flex-1 overflow-hidden flex-col">
                 <div className="p-4 pb-0">
-                  <UseCommandBox
-                    command={generatedCommand}
-                    commandId={command.id}
-                    onChangeCommand={(e) => setGeneratedCommand(e.target.value)}
-                    disabled={editing}
-                  />
+                  {!editing && (
+                    <UseCommandBox
+                      command={generatedCommand}
+                      commandId={command.id}
+                      onChangeCommand={(e) =>
+                        setGeneratedCommand(e.target.value)
+                      }
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="command"
@@ -294,7 +297,10 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                         <FormItem>
                           <FormControl>
                             <Textarea
-                              className="min-h-0 py-[7px] font-spacemono border-none resize-none shadow-none"
+                              className={cn(
+                                !editing && 'border-none shadow-none',
+                                'min-h-0 py-[7px] font-robotomono resize-none',
+                              )}
                               ref={(textarea) => {
                                 fieldRef(textarea);
                                 if (textarea) {
@@ -315,46 +321,6 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 </div>
                 <ScrollArea className="flex-1">
                   <div className="p-4">
-                    {editing ? (
-                      <FormField
-                        control={form.control}
-                        name="note"
-                        render={({ field }) => {
-                          const { ref: fieldRef, ...rest } = field;
-                          return (
-                            <FormItem className="mb-4">
-                              <FormControl>
-                                <Textarea
-                                  className="min-h-0 resize-none"
-                                  placeholder="Add a note"
-                                  ref={(textarea) => {
-                                    fieldRef(textarea);
-                                    if (textarea) {
-                                      textarea.style.height = '0px';
-                                      textarea.style.height =
-                                        textarea.scrollHeight + 2 + 'px';
-                                    }
-                                  }}
-                                  {...rest}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    ) : command.note ? (
-                      <div className="whitespace-pre-wrap text-sm mb-2">
-                        {command.note}
-                      </div>
-                    ) : (
-                      <div
-                        className="text-sm mb-2 underline cursor-pointer w-fit"
-                        onClick={() => setEditing(true)}
-                      >
-                        + Add a note
-                      </div>
-                    )}
                     {parameters.length > 0 && !editing && (
                       <>
                         <div className="flex items-center">
@@ -383,6 +349,46 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                         />
                       </>
                     )}
+                    <FormField
+                      control={form.control}
+                      name="note"
+                      render={({ field }) => {
+                        const { ref: fieldRef, ...rest } = field;
+                        return (
+                          <FormItem className="mb-4">
+                            <FormLabel>Note</FormLabel>
+                            {command.note || editing ? (
+                              <FormControl>
+                                <Textarea
+                                  className={cn(
+                                    !editing && 'border-none shadow-none',
+                                    'min-h-0 resize-none disabled:opacity-100 disabled:cursor-default',
+                                  )}
+                                  placeholder="Add a note"
+                                  ref={(textarea) => {
+                                    fieldRef(textarea);
+                                    if (textarea) {
+                                      textarea.style.height = '0px';
+                                      textarea.style.height =
+                                        textarea.scrollHeight + 2 + 'px';
+                                    }
+                                  }}
+                                  {...rest}
+                                />
+                              </FormControl>
+                            ) : (
+                              <div
+                                className="ml-4 text-sm underline cursor-pointer w-fit"
+                                onClick={() => setEditing(true)}
+                              >
+                                + Add a note
+                              </div>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
+                    />
                     {/* Intentionally commented out for now
                     <FormField
                       control={form.control}
@@ -394,26 +400,6 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                             <Input placeholder="" {...field} />
                           </FormControl>
                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="favourite"
-                      render={({ field }) => (
-                        <FormItem className="mb-4">
-                          <div className="flex items-center">
-                            <FormLabel className="mr-2">Favourite</FormLabel>
-                            <FormControl>
-                              <Checkbox
-                                // Not sure why I need the disabled flag for a Checkbox but not Input
-                                disabled={!editing}
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
                         </FormItem>
                       )}
                     /> */}
