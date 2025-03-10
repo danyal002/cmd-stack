@@ -13,9 +13,9 @@
     "windows": [
       {
         "title": "CmdStack",
-        "width": 1000,
-        "height": 600,
-        "minWidth": 800,
+        "width": 1440,
+        "height": 810,
+        "minWidth": 850,
         "minHeight": 600
       }
     ],
