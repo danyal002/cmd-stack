@@ -128,6 +128,7 @@ pub enum ErrorOutput {
     Export,
     Import,
     Logger,
+    Logic,
     Config,
 }
 
@@ -142,6 +143,7 @@ impl fmt::Display for ErrorOutput {
             ErrorOutput::Export => "Failed to export stack",
             ErrorOutput::Import => "Failed to import stack",
             ErrorOutput::Logger => "Failed to initialize the logger",
+            ErrorOutput::Logic => "Failed to initialize the logic crate",
             ErrorOutput::Config => "Failed to update the config",
         };
 

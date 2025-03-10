@@ -13,9 +13,9 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum LogicInitError {
-    #[error("Failed to initalize the database connection")]
+    #[error("Failed to initalize the database connection: {0}")]
     Database(#[from] SqliteDbConnectionError),
-    #[error("Failed to read from config file")]
+    #[error("Failed to read from config file: {0}")]
     Config(#[from] ConfigReadError),
 }
 

@@ -11,45 +11,39 @@ use crate::Logic;
 
 #[derive(Error, Debug)]
 pub enum AddCommandError {
-    #[error("Invalid user input")]
-    InvalidInput,
-    #[error("Failed to add command")]
+    #[error("Empty user input")]
+    EmptyInput,
+    #[error("Failed to add command: {0}")]
     Database(#[from] InsertCommandError),
-    #[error("Failed validate parameters")]
+    #[error("Failed to validate parameters: {0}")]
     Parameter(#[from] ParameterError),
 }
 
 #[derive(Error, Debug)]
 pub enum UpdateCommandError {
-    #[error("Invalid user input")]
-    InvalidInput,
-    #[error("Failed to update command")]
+    #[error("Empty user input")]
+    EmptyInput,
+    #[error("Failed to update command: {0}")]
     Database(#[from] data::dal::UpdateCommandError),
-    #[error("Failed validate parameters")]
+    #[error("Failed to validate parameters: {0}")]
     Parameter(#[from] ParameterError),
 }
 
 #[derive(Error, Debug)]
 pub enum SearchCommandError {
-    #[error("Invalid user input")]
-    InvalidInput,
-    #[error("Failed to select commands")]
+    #[error("Failed to select commands: {0}")]
     Database(#[from] SelectAllCommandsError),
 }
 
 #[derive(Error, Debug)]
 pub enum ListCommandError {
-    #[error("Invalid user input")]
-    InvalidInput,
-    #[error("Failed to list commands")]
+    #[error("Failed to list commands: {0}")]
     Database(#[from] SelectAllCommandsError),
 }
 
 #[derive(Error, Debug)]
 pub enum DeleteCommandError {
-    #[error("Invalid user input")]
-    InvalidInput,
-    #[error("Failed to delete command")]
+    #[error("Failed to delete command: {0}")]
     Database(#[from] data::dal::DeleteCommandError),
 }
 
@@ -66,7 +60,7 @@ impl Logic {
     /// Handles the addition of a command
     pub async fn add_command(&self, command: InternalCommand) -> Result<(), AddCommandError> {
         if command.command.trim().is_empty() {
-            return Err(AddCommandError::InvalidInput);
+            return Err(AddCommandError::EmptyInput);
         }
 
         self.parse_parameters(command.command.clone())?;
@@ -160,7 +154,7 @@ impl Logic {
         new_command_props: InternalCommand,
     ) -> Result<(), UpdateCommandError> {
         if new_command_props.command.trim().is_empty() {
-            return Err(UpdateCommandError::InvalidInput);
+            return Err(UpdateCommandError::EmptyInput);
         }
 
         self.parse_parameters(new_command_props.command.clone())?;

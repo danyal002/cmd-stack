@@ -7,19 +7,16 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SqliteDbConnectionError {
-    #[error("Could not get the database path")]
+    #[error("Could not get the database path: {0}")]
     DbPath(String),
 
-    #[error("Could not create the database file")]
-    CreatingDatabase(#[source] std::io::Error),
-
-    #[error("Could not create sqlite options")]
+    #[error("Could not create sqlite options: {0}")]
     SqliteOptionsInitialization(#[source] sqlx::Error),
 
-    #[error("Could not connect to the file")]
+    #[error("Could not connect to the file: {0}")]
     PoolInitialization(#[source] sqlx::Error),
 
-    #[error("Could not create command table")]
+    #[error("Could not create command table: {0}")]
     Command(#[source] sqlx::Error),
 }
 

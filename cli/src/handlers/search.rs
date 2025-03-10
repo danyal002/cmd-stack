@@ -18,19 +18,19 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum HandleSearchError {
-    #[error("Failed to get user input")]
+    #[error("Failed to get user input: {0}")]
     Inquire(#[from] InquireError),
     #[error("No command found")]
     NoCommandFound,
-    #[error("Failed to search for command")]
+    #[error("Failed to search for command: {0}")]
     Search(#[from] SearchCommandError),
-    #[error("Failed to select a command")]
+    #[error("Failed to select a command: {0}")]
     SelectCommand(#[from] PromptUserForCommandSelectionError),
-    #[error("Failed to copy command")]
+    #[error("Failed to copy command: {0}")]
     Copy(#[from] CopyTextError),
-    #[error("Failed to generate parameters")]
+    #[error("Failed to generate parameters: {0}")]
     LogicParam(#[from] logic::parameters::ParameterError),
-    #[error("Failed to update command")]
+    #[error("Failed to update command: {0}")]
     LogicUpdate(#[from] logic::command::UpdateCommandError),
 }
 

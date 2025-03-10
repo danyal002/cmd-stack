@@ -7,8 +7,6 @@ use crate::Cli;
 
 #[derive(Debug, Error)]
 pub enum ConfigError {
-    #[error("Unknown property provided")]
-    UnknownProperty,
     #[error("Invalid value provided: {0}")]
     InvalidValue(String),
     #[error("Failed to read config: {0}")]

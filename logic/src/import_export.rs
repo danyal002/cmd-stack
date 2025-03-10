@@ -19,11 +19,11 @@ struct ImportExportFormat {
 
 #[derive(Error, Debug)]
 pub enum ExportError {
-    #[error("Failed to serialize commands")]
+    #[error("Failed to serialize commands: {0}")]
     Deserialize(#[from] serde_json::Error),
-    #[error("Failed to write commands to file")]
+    #[error("Failed to write commands to file: {0}")]
     Write(String),
-    #[error("Failed to fetch commands from the database")]
+    #[error("Failed to fetch commands from the database: {0}")]
     Database(#[from] SelectAllCommandsError),
 }
 
@@ -31,14 +31,10 @@ pub enum ExportError {
 pub enum ImportError {
     #[error("Failed to deserialize commands: {0}")]
     Serialize(#[from] serde_json::Error),
-    #[error("Failed to read commands from file")]
+    #[error("Failed to read commands from file: {0}")]
     Read(String),
-    #[error("Failed to insert commands to the database")]
+    #[error("Failed to insert commands to the database: {0}")]
     Database(#[from] InsertCommandError),
-    #[error("File not found at specified path")]
-    InvalidFilePath,
-    #[error("Specified file does not have the correct extension")]
-    IncorrectFileExtension,
 }
 
 impl Logic {
