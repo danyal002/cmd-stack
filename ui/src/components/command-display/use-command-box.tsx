@@ -6,14 +6,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { toast } from '@/hooks/use-toast';
 
 interface UseCommandBoxProps {
-  disabled: boolean;
   command: string;
   commandId: string;
   onChangeCommand: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
 export function UseCommandBox({
-  disabled,
   command,
   commandId,
   onChangeCommand,
@@ -56,8 +54,7 @@ export function UseCommandBox({
   return (
     <div className="relative w-full">
       <Textarea
-        disabled={disabled}
-        className="min-h-0 max-h-[76px] py-[7px] pr-16 bg-accent font-spacemono shadow resize-none"
+        className="min-h-0 max-h-[76px] py-[7px] pr-16 bg-accent font-robotomono shadow resize-none"
         ref={(textarea) => {
           if (textarea) {
             textarea.style.height = '0px';
@@ -73,7 +70,6 @@ export function UseCommandBox({
             variant="ghost"
             size="icon"
             type="button"
-            disabled={disabled}
             onClick={onCopy}
             className="absolute right-0 top-0 m-2.5 h-4 w-4"
           >
@@ -88,7 +84,6 @@ export function UseCommandBox({
             variant="ghost"
             size="icon"
             type="button"
-            disabled={disabled}
             onClick={onExecuteInTerminal}
             className="absolute right-8 top-0 m-2.5 h-4 w-4"
           >
