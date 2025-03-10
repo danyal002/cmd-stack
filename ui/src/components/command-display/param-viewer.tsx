@@ -16,7 +16,7 @@ export function ParamViewer({
   setBlankParam,
 }: ParamViewerProps) {
   return (
-    <div className="p-4 space-y-4 rounded-md border">
+    <div className="py-2 px-4 space-y-4 rounded-md border mb-4">
       {parameters.map((parameter, index) => {
         if (parameter.type == ParameterType.Blank) {
           let blankIndex = parameters
@@ -52,18 +52,16 @@ interface ParamProps {
 
 function Param({ parameter, generatedValue }: ParamProps) {
   return (
-    <div className="text-sm flex justify-between items-center">
-      <Label className="font-normal">
+    <div className="text-sm flex items-center">
+      <Label className="font-normal w-[200px]">
         {parameter.type}{' '}
         {(parameter.type == ParameterType.String ||
           parameter.type == ParameterType.Int) &&
           `(Min: ${parameter.data.min.toString()}, Max: ${parameter.data.max.toString()})`}
       </Label>
-      <Input
-        disabled={true}
-        value={generatedValue}
-        className="w-auto disabled:opacity-100 font-spacemono border-none shadow-none font-bold"
-      />
+      <Label className="pl-3 py-[11px] flex-1 font-robotomono font-bold overflow-auto">
+        {generatedValue}
+      </Label>
     </div>
   );
 }
@@ -85,15 +83,17 @@ function BlankParam({
   }
 
   return (
-    <div className="text-sm flex justify-between items-center">
-      <Label className="font-normal">{`Blank @{${blankIndex + 1}}`}</Label>
+    <div className="text-sm flex items-center">
+      <Label className="font-normal w-[200px]">{`Blank @{${
+        blankIndex + 1
+      }}`}</Label>
       <Input
         autoCapitalize="off"
         autoCorrect="off"
         placeholder="Fill in"
         value={blankParamValue}
         onChange={onChange}
-        className="w-auto font-spacemono placeholder:font-sans"
+        className="flex-1 font-robotomono placeholder:font-sans"
       />
     </div>
   );
