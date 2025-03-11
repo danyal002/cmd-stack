@@ -54,7 +54,7 @@ export default {
         },
       },
       fontFamily: {
-        spacemono: ['Space Mono', 'monospace'],
+        robotomono: ['Roboto Mono', 'monospace'],
       },
     },
   },

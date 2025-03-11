@@ -1,7 +1,7 @@
 'use client';
 
 import { cmdStackIcon, cmdStackIconWithText } from '@/components/cmdStackIcon';
-import { CommandDisplay } from '@/components/command-display';
+import { CommandDisplay } from '@/components/command-display/command-display';
 import { CommandList } from '@/components/command-list';
 import { Nav } from '@/components/nav';
 import { TagTree } from '@/components/tag-tree';
