@@ -191,44 +191,9 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     }
   }
 
-  function onUseCommand() {
-    invoke('update_command_last_used', {
-      commandId: command?.id,
-    }).catch((error) => {
-      console.error(error);
-      toast({
-        title: `An error occurred whilst updating metadata. Please refer to logs. ❌`,
-      });
-    });
-  }
-
-  function onCopy() {
-    navigator.clipboard.writeText(generatedCommand);
-    toast({
-      title: 'Copied to clipboard ✅',
-    });
-
-    onUseCommand();
-  }
-
   function onCancelEdit() {
     setEditing(false);
     form.reset();
-  }
-
-  function onExecuteInTerminal() {
-    invoke('execute_in_terminal', {
-      command: generatedCommand,
-    })
-      .then(() => {
-        onUseCommand();
-      })
-      .catch((error) => {
-        console.error(error);
-        toast({
-          title: `${error} ❌`,
-        });
-      });
   }
 
   const tagParts = command?.tag ? command.tag.split('/') : [];
