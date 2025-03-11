@@ -1,26 +1,25 @@
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import { Command } from '@/types/command';
 import { Parameter, ParameterType } from '@/types/parameter';
 import { useCommands } from '@/use-command';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
+import { formatDistanceToNow } from 'date-fns';
 import format from 'date-fns/format';
 import {
-  Copy,
   Pencil,
   RefreshCwIcon,
   Save,
-  SquareTerminal,
-  X,
+  X
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { ParamViewer } from './param-viewer';
 import { RemoveDialog } from '../remove-dialog';
-import { Checkbox } from '../ui/checkbox';
+import { Badge } from '../ui/badge';
 import {
   Form,
   FormControl,
@@ -30,12 +29,10 @@ import {
   FormMessage,
 } from '../ui/form';
 import { Label } from '../ui/label';
+import { ScrollArea } from '../ui/scroll-area';
 import { Textarea } from '../ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { ScrollArea } from '../ui/scroll-area';
-import { Badge } from '../ui/badge';
-import { cn } from '@/lib/utils';
-import { formatDistanceToNow, set } from 'date-fns';
+import { ParamViewer } from './param-viewer';
 import { UseCommandBox } from './use-command-box';
 
 interface CommandDisplayProps {
@@ -319,7 +316,12 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" type="button" size="icon" onClick={onCancelEdit}>
+                        <Button
+                          variant="ghost"
+                          type="button"
+                          size="icon"
+                          onClick={onCancelEdit}
+                        >
                           <X className="h-4 w-4" />
                           <span className="sr-only">Cancel editing</span>
                         </Button>
