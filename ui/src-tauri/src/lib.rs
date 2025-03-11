@@ -158,7 +158,7 @@ fn replace_parameters(
 
 #[tauri::command]
 fn index_blank_parameters(command: String, state: State<Ui>) -> Result<String, UiError> {
-    if let Ok(logic) = state.logic.write() {
+    if let Ok(logic) = state.logic.read() {
         let (other_strs, indexed_blank_params) = logic.index_parameters_for_display(&command);
 
         let formatted_command: String = interleave(other_strs, indexed_blank_params)
