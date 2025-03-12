@@ -9,12 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDistanceToNow } from 'date-fns';
 import format from 'date-fns/format';
-import {
-  Pencil,
-  RefreshCwIcon,
-  Save,
-  X
-} from 'lucide-react';
+import { Pencil, RefreshCwIcon, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -34,6 +29,7 @@ import { Textarea } from '../ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { ParamViewer } from './param-viewer';
 import { UseCommandBox } from './use-command-box';
+import { Input } from '../ui/input';
 
 interface CommandDisplayProps {
   command: Command | null;
@@ -206,8 +202,21 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
             <>
               <div className="flex items-center p-2">
                 <div className="flex items-center gap-2">
-                  <div className="pl-2 font-semibold">
-                    {command.tag &&
+                  <div className="pl-2">
+                    {editing ? (
+                      <FormField
+                        control={form.control}
+                        name="tag"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="Add a tag" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ) : command.tag ? (
                       tagParts.map((tag, index) => (
                         <>
                           <Badge
@@ -230,7 +239,15 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                             </span>
                           )}
                         </>
-                      ))}
+                      ))
+                    ) : (
+                      <div
+                        className="text-sm underline cursor-pointer w-fit"
+                        onClick={() => setEditing(true)}
+                      >
+                        + Add a tag
+                      </div>
+                    )}
                   </div>
                 </div>
                 {command.last_used && (
@@ -414,20 +431,6 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                         );
                       }}
                     />
-                    {/* Intentionally commented out for now
-                    <FormField
-                      control={form.control}
-                      name="tag"
-                      render={({ field }) => (
-                        <FormItem className="mb-4">
-                          <FormLabel>Tag</FormLabel>
-                          <FormControl>
-                            <Input placeholder="" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    /> */}
                   </div>
                 </ScrollArea>
               </div>
