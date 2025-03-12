@@ -38,6 +38,7 @@ pub struct Config {
     pub param_int_range_min: i32,
     pub param_int_range_max: i32,
     pub application_theme: ApplicationTheme,
+    pub default_terminal: UiDefaultTerminal,
 }
 
 impl Default for Config {
@@ -50,6 +51,7 @@ impl Default for Config {
             param_int_range_min: 5,
             param_int_range_max: 10,
             application_theme: ApplicationTheme::default(),
+            default_terminal: UiDefaultTerminal::default(),
         }
     }
 }
@@ -67,6 +69,13 @@ pub enum CliPrintStyle {
     #[default]
     All,
     CommandsOnly,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, Copy, PartialEq)]
+pub enum UiDefaultTerminal {
+    Iterm,
+    #[default]
+    Terminal,
 }
 
 impl Config {

@@ -32,6 +32,9 @@ pub enum ConfigArgs {
 
     /// Modify application theme
     Theme(ApplicationThemeArgs),
+
+    /// Modify default terminal used in the UI to execute commands in
+    UiDefaultTerminal(UiDefaultTerminalArgs),
 }
 
 #[derive(Debug, Args)]
@@ -66,11 +69,24 @@ pub struct CliDisplayLimitArgs {
     pub value: u32,
 }
 
+#[derive(Debug, Args)]
+#[command(arg_required_else_help(true))]
+pub struct UiDefaultTerminalArgs {
+    pub terminal_name: UiDefaultTerminal,
+}
+
 #[derive(Debug, Clone, ValueEnum, Serialize, Deserialize, Default)]
 pub enum CliPrintStyle {
     #[default]
     All,
     CommandsOnly,
+}
+
+#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize, Default)]
+pub enum UiDefaultTerminal {
+    Iterm,
+    #[default]
+    Terminal,
 }
 
 #[derive(Debug, Args, Validate)]
@@ -137,9 +153,9 @@ impl Cli {
 
                 if min > max {
                     return Err(ConfigError::InvalidValue(format!(
-                        "param-string-length-min ({}) cannot be greater than param-string-length-max ({})",
-                        min, max
-                    )));
+                                "param-string-length-min ({}) cannot be greater than param-string-length-max ({})",
+                                min, max
+                            )));
                 }
 
                 self.logic.config.param_string_length_min = min;
@@ -170,6 +186,9 @@ impl Cli {
                 self.logic.config.param_int_range_min = min;
                 self.logic.config.param_int_range_max = max;
             }
+            ConfigArgs::UiDefaultTerminal(ui_default_terminal_args) => {
+                self.logic.config.default_terminal = ui_default_terminal_args.terminal_name.into();
+            }
         }
         Ok(self.logic.config.write()?)
     }
@@ -190,6 +209,15 @@ impl From<ApplicationTheme> for logic::config::ApplicationTheme {
             ApplicationTheme::System => Self::System,
             ApplicationTheme::Dark => Self::Dark,
             ApplicationTheme::Light => Self::Light,
+        }
+    }
+}
+
+impl From<UiDefaultTerminal> for logic::config::UiDefaultTerminal {
+    fn from(item: UiDefaultTerminal) -> Self {
+        match item {
+            UiDefaultTerminal::Iterm => Self::Iterm,
+            UiDefaultTerminal::Terminal => Self::Terminal,
         }
     }
 }

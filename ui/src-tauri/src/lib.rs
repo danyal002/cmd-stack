@@ -7,7 +7,7 @@ use logic::{
         AddCommandError, DeleteCommandError, ListCommandError, SearchCommandArgs,
         SearchCommandError, UpdateCommandError,
     },
-    config::{Config, ConfigWriteError},
+    config::{Config, ConfigReadError, ConfigWriteError, UiDefaultTerminal},
     parameters::{parser::SerializableParameter, ParameterError},
     Logic, LogicInitError,
 };
@@ -36,7 +36,9 @@ pub enum UiError {
     #[error("Failed to search command")]
     SearchCommand(#[from] SearchCommandError),
     #[error("Failed to write config")]
-    ConfigWriteError(#[from] ConfigWriteError),
+    WriteConfig(#[from] ConfigWriteError),
+    #[error("Failed to read config")]
+    ReadConfig(#[from] ConfigReadError),
     #[error("Failed to obtain lock to complete the required action")]
     Race,
     #[error("Failed to execute command in terminal")]
@@ -194,7 +196,8 @@ fn search_commands(search: String, state: State<Ui>) -> Result<Vec<DisplayComman
 
 #[tauri::command]
 fn read_config(state: State<Ui>) -> Result<Config, UiError> {
-    if let Ok(logic) = state.logic.write() {
+    if let Ok(mut logic) = state.logic.write() {
+        logic.config = Config::read()?;
         return Ok(logic.config);
     }
     Err(UiError::Race)
@@ -210,15 +213,38 @@ fn write_config(config: Config, state: State<Ui>) -> Result<(), UiError> {
 }
 
 #[tauri::command]
-fn execute_in_terminal(command: String) -> Result<(), UiError> {
-    std::process::Command::new("osascript")
-        .arg("-e")
-        .arg(format!(
-            "tell application \"Terminal\" to activate do script \"{}\" in window 1",
-            command
-        ))
-        .spawn()
-        .map_err(|_| UiError::ExecuteCommand)?;
+fn execute_in_terminal(command: String, state: State<Ui>) -> Result<(), UiError> {
+    let mut cmd = std::process::Command::new("osascript");
+    if let Ok(logic) = state.logic.read() {
+        match logic.config.default_terminal {
+            UiDefaultTerminal::Terminal => {
+                cmd.args([
+                    "-e",
+                    &format!(
+                        "tell application \"Terminal\" to activate do script \"{}\" in window 1",
+                        command
+                    ),
+                ]);
+            }
+            UiDefaultTerminal::Iterm => {
+                cmd.args([
+                    "-e",
+                    "tell application \"iTerm\"",
+                    "-e",
+                    "tell current session of current window",
+                    "-e",
+                    &format!("write text \"{}\"", command),
+                    "-e",
+                    "end tell",
+                    "-e",
+                    "activate",
+                    "-e",
+                    "end tell",
+                ]);
+            }
+        }
+    }
+    cmd.spawn().map_err(|_| UiError::ExecuteCommand)?;
     Ok(())
 }
 
