@@ -1,20 +1,26 @@
 export enum CliPrintStyle {
-    All = "All",
-    CommandsOnly = "CommandsOnly",
-};
+  All = 'All',
+  CommandsOnly = 'CommandsOnly',
+}
 
 export enum ApplicationTheme {
-    Dark = "Dark",
-    Light = "Light",
-    System = "System"
-};
+  Dark = 'Dark',
+  Light = 'Light',
+  System = 'System',
+}
+
+export enum DefaultTerminal {
+  Iterm = 'Iterm',
+  Terminal = 'Terminal',
+}
 
 export type SettingsConfig = {
-    cli_print_style: CliPrintStyle,
-    cli_display_limit: number,
-    param_string_length_min: number,
-    param_string_length_max: number,
-    param_int_range_min: number,
-    param_int_range_max: number,
-    application_theme: ApplicationTheme
+  cli_print_style: CliPrintStyle;
+  cli_display_limit: number;
+  param_string_length_min: number;
+  param_string_length_max: number;
+  param_int_range_min: number;
+  param_int_range_max: number;
+  application_theme: ApplicationTheme;
+  default_terminal: DefaultTerminal;
 };

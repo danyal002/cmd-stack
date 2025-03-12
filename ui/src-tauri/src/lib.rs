@@ -6,7 +6,7 @@ use logic::{
         AddCommandError, DeleteCommandError, ListCommandError, SearchCommandArgs,
         SearchCommandError, UpdateCommandError,
     },
-    config::{Config, ConfigWriteError, UiDefaultTerminal},
+    config::{Config, ConfigReadError, ConfigWriteError, UiDefaultTerminal},
     parameters::{parser::SerializableParameter, ParameterError},
     Logic, LogicInitError,
 };
@@ -35,7 +35,9 @@ pub enum UiError {
     #[error("Failed to search command")]
     SearchCommand(#[from] SearchCommandError),
     #[error("Failed to write config")]
-    ConfigWriteError(#[from] ConfigWriteError),
+    WriteConfig(#[from] ConfigWriteError),
+    #[error("Failed to read config")]
+    ReadConfig(#[from] ConfigReadError),
     #[error("Failed to obtain lock to complete the required action")]
     Race,
     #[error("Failed to execute command in terminal")]
@@ -180,7 +182,8 @@ fn search_commands(search: String, state: State<Ui>) -> Result<Vec<DisplayComman
 
 #[tauri::command]
 fn read_config(state: State<Ui>) -> Result<Config, UiError> {
-    if let Ok(logic) = state.logic.write() {
+    if let Ok(mut logic) = state.logic.write() {
+        logic.config = Config::read()?;
         return Ok(logic.config);
     }
     Err(UiError::Race)
