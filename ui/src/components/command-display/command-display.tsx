@@ -420,7 +420,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                               </FormControl>
                             ) : (
                               <div
-                                className="ml-4 text-sm underline cursor-pointer w-fit"
+                                className="text-sm underline cursor-pointer w-fit"
                                 onClick={() => setEditing(true)}
                               >
                                 + Add a note
