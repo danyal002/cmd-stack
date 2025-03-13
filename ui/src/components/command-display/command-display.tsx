@@ -10,7 +10,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { formatDistanceToNow } from 'date-fns';
 import format from 'date-fns/format';
 import { Pencil, RefreshCwIcon, Save, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { RemoveDialog } from '../remove-dialog';
@@ -45,11 +45,14 @@ const FormSchema = z.object({
 });
 
 export function CommandDisplay({ command }: CommandDisplayProps) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState({
+    note: false,
+    tag: false,
+    command: false,
+  });
   const [, refreshCommands] = useCommands();
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    disabled: !editing,
     resolver: zodResolver(FormSchema),
     values: {
       command: command ? command.command : '',
@@ -58,6 +61,10 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
       favourite: command ? command.favourite : false,
     },
   });
+
+  const tagRef = useRef<HTMLInputElement | null>(null);
+  const noteRef = useRef<HTMLTextAreaElement | null>(null);
+  const commandRef = useRef<HTMLTextAreaElement | null>(null);
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     invoke('update_command', { commandId: command?.id, command: data })
@@ -68,7 +75,11 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
         });
 
         refreshCommands();
-        setEditing(false);
+        setEditing({
+          note: false,
+          tag: false,
+          command: false,
+        });
       })
       .catch((error) => {
         console.log(error);
@@ -98,7 +109,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [generatedValues, setGeneratedValues] = useState<string[]>([]);
   const [blankParamValues, setBlankParamValues] = useState<string[]>([]);
-  const [indexedCommand, setIndexedCommand] = useState('');
+  const [indexedCommand, setIndexedCommand] = useState<string>('');
 
   useEffect(() => {
     if (command) {
@@ -174,8 +185,23 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
 
   // This effect handles getting out of the editing state if we switch commands
   useEffect(() => {
-    setEditing(false);
+    setEditing({
+      note: false,
+      tag: false,
+      command: false,
+    });
   }, [command]);
+
+  // This effect handles focusing the correct input when we edit anything
+  useEffect(() => {
+    if (editing.command) {
+      commandRef.current!.focus();
+    } else if (editing.tag) {
+      tagRef.current!.focus();
+    } else if (editing.note) {
+      noteRef.current!.focus();
+    }
+  }, [editing]);
 
   function onParameterRefresh() {
     setParameterRefreshNumber(parameterRefreshNumber + 1);
@@ -183,12 +209,20 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
 
   function onEditing() {
     if (command) {
-      setEditing(true);
+      setEditing({
+        note: true,
+        tag: true,
+        command: true,
+      });
     }
   }
 
   function onCancelEdit() {
-    setEditing(false);
+    setEditing({
+      note: false,
+      tag: false,
+      command: false,
+    });
     form.reset();
   }
 
@@ -203,18 +237,28 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
               <div className="flex items-center p-2">
                 <div className="flex items-center gap-2">
                   <div className="pl-2">
-                    {editing ? (
+                    {editing.tag ? (
                       <FormField
                         control={form.control}
                         name="tag"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input placeholder="Add a tag" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const { ref: fieldRef, ...rest } = field;
+                          return (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  placeholder="Add a tag"
+                                  {...rest}
+                                  ref={(input) => {
+                                    fieldRef(input);
+                                    tagRef.current = input;
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                     ) : command.tag ? (
                       tagParts.map((tag, index) => (
@@ -243,7 +287,12 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                     ) : (
                       <div
                         className="text-sm underline cursor-pointer w-fit"
-                        onClick={() => setEditing(true)}
+                        onClick={() =>
+                          setEditing({
+                            ...editing,
+                            tag: true,
+                          })
+                        }
                       >
                         + Add a tag
                       </div>
@@ -269,7 +318,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                   </Tooltip>
                 )}
                 <Separator orientation="vertical" className="mx-2 h-6" />
-                {!editing && (
+                {!(editing.command || editing.tag || editing.note) ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -284,8 +333,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                     </TooltipTrigger>
                     <TooltipContent>Edit command</TooltipContent>
                   </Tooltip>
-                )}
-                {editing && (
+                ) : (
                   <>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -317,7 +365,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
               <Separator />
               <div className="flex flex-1 overflow-hidden flex-col">
                 <div className="p-4 pb-0">
-                  {!editing && (
+                  {!editing.command && (
                     <UseCommandBox
                       command={generatedCommand}
                       commandId={command.id}
@@ -340,18 +388,22 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                           <FormControl>
                             <Textarea
                               className={cn(
-                                !editing && 'border-none shadow-none',
+                                !editing.command && 'border-none shadow-none',
                                 'min-h-0 py-[7px] font-robotomono resize-none',
                               )}
                               ref={(textarea) => {
                                 fieldRef(textarea);
+                                commandRef.current = textarea;
                                 if (textarea) {
                                   textarea.style.height = '0px';
                                   textarea.style.height =
                                     textarea.scrollHeight + 2 + 'px';
                                 }
                               }}
-                              value={editing ? fieldValue : indexedCommand}
+                              value={
+                                editing.command ? fieldValue : indexedCommand
+                              }
+                              disabled={!editing.command}
                               {...rest}
                             />
                           </FormControl>
@@ -363,7 +415,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                 </div>
                 <ScrollArea className="flex-1">
                   <div className="p-4">
-                    {parameters.length > 0 && !editing && (
+                    {parameters.length > 0 && !editing.command && (
                       <>
                         <div className="flex items-center">
                           <Label htmlFor="parameters">Parameters</Label>
@@ -399,29 +451,36 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                         return (
                           <FormItem className="mb-4">
                             <FormLabel>Note</FormLabel>
-                            {command.note || editing ? (
+                            {command.note || editing.note ? (
                               <FormControl>
                                 <Textarea
                                   className={cn(
-                                    !editing && 'border-none shadow-none',
+                                    !editing.note && 'border-none shadow-none',
                                     'min-h-0 resize-none disabled:opacity-100 disabled:cursor-default',
                                   )}
                                   placeholder="Add a note"
                                   ref={(textarea) => {
                                     fieldRef(textarea);
+                                    noteRef.current = textarea;
                                     if (textarea) {
                                       textarea.style.height = '0px';
                                       textarea.style.height =
                                         textarea.scrollHeight + 2 + 'px';
                                     }
                                   }}
+                                  disabled={!editing.note}
                                   {...rest}
                                 />
                               </FormControl>
                             ) : (
                               <div
                                 className="text-sm underline cursor-pointer w-fit"
-                                onClick={() => setEditing(true)}
+                                onClick={() =>
+                                  setEditing({
+                                    ...editing,
+                                    note: true,
+                                  })
+                                }
                               >
                                 + Add a note
                               </div>
