@@ -8,7 +8,7 @@ type ThemeProviderProps = {
 };
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [settings, _] = useSettings();
+  const [settings] = useSettings();
 
   function applyTheme() {
     const root = window.document.documentElement;

@@ -4,6 +4,7 @@ import { Textarea } from '../ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from '@/hooks/use-toast';
+import { useSettings } from '@/use-command';
 
 interface UseCommandBoxProps {
   command: string;
@@ -16,6 +17,8 @@ export function UseCommandBox({
   commandId,
   onChangeCommand,
 }: UseCommandBoxProps) {
+  const [settings] = useSettings();
+
   function onUseCommand() {
     invoke('update_command_last_used', {
       commandId,
@@ -90,7 +93,7 @@ export function UseCommandBox({
             <SquareTerminal size={16} />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Execute in terminal</TooltipContent>
+        <TooltipContent>Execute in {settings.default_terminal}</TooltipContent>
       </Tooltip>
     </div>
   );
