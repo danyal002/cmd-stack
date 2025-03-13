@@ -1,4 +1,4 @@
-import { FolderDot, Moon, Sun } from 'lucide-react';
+import { DollarSign, SquareTerminal } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -8,15 +8,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { ApplicationTheme } from '@/types/config';
+import { DefaultTerminal } from '@/types/config';
 import { useSettings } from '@/use-command';
 import { invoke } from '@tauri-apps/api/core';
 
-export function ModeToggle() {
+export function TerminalToggle() {
   const [settings, refreshSettings] = useSettings();
 
-  function setTheme(application_theme: ApplicationTheme) {
-    settings.application_theme = application_theme;
+  function setTerminal(terminal: DefaultTerminal) {
+    settings.default_terminal = terminal;
 
     invoke('write_config', { config: settings })
       .then((res) => {
@@ -38,48 +38,35 @@ export function ModeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="w-24">
-          {settings.application_theme == ApplicationTheme.System && (
+          {settings.default_terminal == DefaultTerminal.Terminal && (
             <>
-              <FolderDot />
-              <div className="ml-auto">System</div>
+              <SquareTerminal />
+              <div className="ml-auto">Terminal</div>
             </>
           )}
-          {settings.application_theme == ApplicationTheme.Light && (
+          {settings.default_terminal == DefaultTerminal.Iterm && (
             <>
-              <Sun />
-              <div className="ml-auto">Light</div>
+              <DollarSign />
+              <div className="ml-auto">iTerm</div>
             </>
           )}
-          {settings.application_theme == ApplicationTheme.Dark && (
-            <>
-              <Moon />
-              <div className="ml-auto">Dark</div>
-            </>
-          )}
-          <span className="sr-only">Toggle theme</span>
+          <span className="sr-only">Toggle default terminal</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => setTheme(ApplicationTheme.System)}
+          onClick={() => setTerminal(DefaultTerminal.Terminal)}
           className="cursor-pointer hover:bg-accent"
         >
-          <FolderDot />
-          System
+          <SquareTerminal />
+          Terminal
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme(ApplicationTheme.Light)}
+          onClick={() => setTerminal(DefaultTerminal.Iterm)}
           className="cursor-pointer hover:bg-accent"
         >
-          <Sun />
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme(ApplicationTheme.Dark)}
-          className="cursor-pointer hover:bg-accent"
-        >
-          <Moon />
-          Dark
+          <DollarSign />
+          iTerm
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

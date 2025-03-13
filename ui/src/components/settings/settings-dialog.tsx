@@ -3,8 +3,8 @@
 import { useSettings } from '@/use-command';
 import { Settings } from 'lucide-react';
 import { startTransition, Suspense } from 'react';
-import { ModeToggle } from './mode-toggle';
-import { Nav } from './nav';
+import { ThemeToggle } from './theme-toggle';
+import { Nav } from '../nav';
 import {
   Dialog,
   DialogContent,
@@ -12,8 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './ui/dialog';
-import { Label } from './ui/label';
+} from '../ui/dialog';
+import { Label } from '../ui/label';
+import { TerminalToggle } from './terminal-toggle';
 
 interface SettingsDialogProps {
   isCollapsed: boolean;
@@ -47,11 +48,17 @@ export function SettingsDialog({ isCollapsed }: SettingsDialogProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="pt-4 space-y-4">
               <div className="flex items-center">
                 <Label>Application Theme</Label>
                 <div className="ml-auto">
-                  <ModeToggle />
+                  <ThemeToggle />
+                </div>
+              </div>
+              <div className="flex items-center">
+                <Label>Default Terminal</Label>
+                <div className="ml-auto">
+                  <TerminalToggle />
                 </div>
               </div>
             </DialogDescription>

@@ -12,7 +12,7 @@ import { File, ListFilter, Star, Tags } from 'lucide-react';
 import { useState } from 'react';
 import { AddDialog } from './add-dialog';
 import { SearchForm } from './search-form';
-import { SettingsDialog } from './settings-dialog';
+import { SettingsDialog } from './settings/settings-dialog';
 import { Badge } from './ui/badge';
 import {
   ResizableHandle,
