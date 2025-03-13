@@ -192,16 +192,18 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
     });
   }, [command]);
 
-  // This effect handles focusing the correct input when we edit anything
+  // These effects handles focusing the correct input when we edit anything
   useEffect(() => {
-    if (editing.command) {
-      commandRef.current!.focus();
-    } else if (editing.tag) {
-      tagRef.current!.focus();
-    } else if (editing.note) {
-      noteRef.current!.focus();
-    }
-  }, [editing]);
+    if (editing.command) commandRef.current!.focus();
+  }, [editing.command]);
+
+  useEffect(() => {
+    if (editing.tag && !editing.command) tagRef.current!.focus();
+  }, [editing.tag]);
+
+  useEffect(() => {
+    if (editing.note && !editing.command) noteRef.current!.focus();
+  }, [editing.note]);
 
   function onParameterRefresh() {
     setParameterRefreshNumber(parameterRefreshNumber + 1);
