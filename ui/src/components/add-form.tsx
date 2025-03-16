@@ -80,6 +80,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
               <FormControl>
                 <Input
                   placeholder="INSERT INTO users VALUES (@{string[5,10]}, @{int});"
+                  className="font-robotomono"
                   {...field}
                 />
               </FormControl>

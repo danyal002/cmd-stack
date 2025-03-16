@@ -391,7 +391,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                             <Textarea
                               className={cn(
                                 !editing.command && 'border-none shadow-none',
-                                'min-h-0 py-[7px] font-robotomono resize-none',
+                                'min-h-0 py-[7px] font-robotomono resize-none disabled:cursor-auto',
                               )}
                               ref={(textarea) => {
                                 fieldRef(textarea);
@@ -419,23 +419,28 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                   <div className="p-4">
                     {parameters.length > 0 && !editing.command && (
                       <>
-                        <div className="flex items-center">
+                        <div className="flex items-center h-9">
                           <Label htmlFor="parameters">Parameters</Label>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                type="button"
-                                onClick={onParameterRefresh}
-                              >
-                                <RefreshCwIcon size={12} />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Regenerate Parameters
-                            </TooltipContent>
-                          </Tooltip>
+                          {/* Only allow regenerating parameters if there are non-blank parameters */}
+                          {parameters.some(
+                            (p) => p.type !== ParameterType.Blank,
+                          ) && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  type="button"
+                                  onClick={onParameterRefresh}
+                                >
+                                  <RefreshCwIcon size={12} />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Regenerate Parameters
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                         <ParamViewer
                           parameters={parameters}
