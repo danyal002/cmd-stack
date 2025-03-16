@@ -70,6 +70,15 @@ impl Logic {
         Ok(())
     }
 
+    fn get_search_threshold(&self, search: String) -> i64 {
+        match search.len() {
+            1 => 5,
+            2 => 10,
+            3 => 20,
+            _ => 50,
+        }
+    }
+
     #[tokio::main]
     /// Handles the search for a command
     pub async fn search_command(
@@ -87,9 +96,6 @@ impl Logic {
         let filtered_commands: Vec<Command> = commands
             .into_iter()
             .filter(|command| {
-                // The minimum threshold for a match to be considered valid
-                let min_threshold = 50; // TODO: Adjust this threshold
-
                 // All commands if there is no filter
                 if params.command.is_none() && params.tag.is_none() {
                     return true;
@@ -97,7 +103,7 @@ impl Logic {
 
                 let command_match = match &params.command {
                     Some(c) => match matcher.fuzzy_match(&command.internal_command.command, c) {
-                        Some(r) => r > min_threshold,
+                        Some(r) => r > self.get_search_threshold(c.to_string()),
                         None => false,
                     },
                     None => false,
@@ -106,7 +112,7 @@ impl Logic {
                 let tag_match = match &params.tag {
                     Some(t) => match &command.internal_command.tag {
                         Some(tag) => match matcher.fuzzy_match(tag, t) {
-                            Some(r) => r > min_threshold,
+                            Some(r) => r > self.get_search_threshold(t.to_string()),
                             None => false,
                         },
                         None => false,
