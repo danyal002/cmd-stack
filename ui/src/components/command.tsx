@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { Command } from '@/types/command';
 import { useCommand } from '@/use-command';
 import { File, ListFilter, Star, Tags } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AddDialog } from './add-dialog';
 import { SearchForm } from './search-form';
 import { SettingsDialog } from './settings/settings-dialog';
@@ -50,11 +50,15 @@ export function MainCommandPage({
     setSelectedTagId(undefined);
   };
 
+  const sortedCommands = useMemo(() => {
+    return [...commands].sort((a, b) => (a.last_used > b.last_used ? -1 : 1));
+  }, [commands]);
+
   const tagFilteredCommands = selectedTagId
-    ? commands.filter(
+    ? sortedCommands.filter(
         (command) => command.tag && command.tag.startsWith(selectedTagId),
       )
-    : commands;
+    : sortedCommands;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -160,7 +164,7 @@ export function MainCommandPage({
           className="flex h-screen flex-col min-w-[290px]"
         >
           <div className="flex items-center pl-4 pr-2 py-2">
-            <h1 className="text-xl font-bold">Commands</h1>
+            <h1 className="text-xl font-bold cursor-default">Commands</h1>
             <div className="ml-auto">
               <AddDialog />
             </div>

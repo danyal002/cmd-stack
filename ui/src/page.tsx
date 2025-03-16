@@ -10,7 +10,7 @@ export default function CommandPage() {
 
   return (
     <>
-      <div className="hidden flex-col md:flex">
+      <div className="hidden flex-col md:flex select-none">
         <MainCommandPage
           commands={commands ? commands : []}
           defaultLayout={defaultLayout}
