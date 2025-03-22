@@ -2,6 +2,8 @@
 
 `cmdstack` is a command management tool designed to help developers avoid the hassle of maintaining scattered notepad files or random text files full of command stashes. It provides a unified CLI and GUI experience to store, manage, and execute your favorite command line snippets with ease. Currently available on Mac, `cmdstack` streamlines your command line workflow and ensures that you never lose those brilliant command ideas.
 
+![UI+Terminal](https://github.com/user-attachments/assets/8f724c83-8e98-4d65-b146-587d27152817)
+
 ## Features
 
 - **Easy Storage:** Keep your command snippets organized in one place.
