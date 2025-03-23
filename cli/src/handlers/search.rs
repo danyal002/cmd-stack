@@ -51,6 +51,9 @@ impl Cli {
             order_by_recently_used: args.order_by_recently_used,
             favourites_only: args.favourite,
         })?;
+        if search_results.is_empty() {
+            return Err(HandleSearchError::NoCommandFound);
+        }
 
         let user_selection = self.prompt_user_for_command_selection(search_results)?;
 
