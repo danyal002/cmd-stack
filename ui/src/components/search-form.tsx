@@ -15,15 +15,26 @@ export function SearchForm({}: SearchFormProps) {
 
     // avoid blocking the UI, this will trigger a refresh on the commands
     startTransition(() => {
-        setSearch(input);
-    })
+      setSearch(input);
+    });
   }
+
+  const checkKeyDown = (e: { key: string; preventDefault: () => void }) => {
+    if (e.key === 'Enter') e.preventDefault();
+  };
 
   return (
     <form>
       <div className="relative">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input autoCapitalize='off' autoCorrect='off' onChange={onChange} placeholder="Search" className="pl-8" />
+        <Input
+          autoCapitalize="off"
+          autoCorrect="off"
+          onChange={onChange}
+          placeholder="Search"
+          className="pl-8"
+          onKeyDown={checkKeyDown}
+        />
       </div>
     </form>
   );
