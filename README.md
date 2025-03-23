@@ -151,9 +151,16 @@ The two gifs show an example of updating and deleting a command respectively.
 
 ![](./media/cmdstack-delete-cli.gif)
 
-## Contributing
+## How to Contribute
 
-CmdStack is open-source and welcomes contributions from the community.
+CmdStack is open-source and welcomes contributions from the community!
+
+Here's how you can get involved:
+- **Request a new feature:** Use GitHub issues and label your issue with [`feature-request`](https://github.com/danyal002/cmd-stack/labels/feature-request). Please search existing feature requests before making a new one.
+- **Report a bug:** Use GitHub issues and label your issue with [`bug`](https://github.com/danyal002/cmd-stack/labels/bug). Please search existing bug reports before making a new one.
+- **Write code:** Please do your dev work on a fork of this repository. Once finished, create a PR containing a detailed description of the changes (including screenshots, if possible).
+
+As always, please be respectful in your communication.
 
 ## License 
 
