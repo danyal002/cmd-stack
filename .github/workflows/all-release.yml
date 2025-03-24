@@ -3,7 +3,7 @@ name: "macOS Release Pipeline"
 on:
     push:
         tags:
-            - "app-v*"
+            - "v1.*"
 
 jobs:
     build-cli:
@@ -56,17 +56,17 @@ jobs:
             - name: Build CLI Binary for ${{ matrix.cli_target }}
               run: |
                   cargo build --release --target ${{ matrix.cli_target }}
-                  cp ../target/${{ matrix.cli_target }}/release/cmdstack ./cmdstack-cli-${{ matrix.cli_target }}
+                  cp ../target/${{ matrix.cli_target }}/release/cmdstack ./cmdstack
 
             - name: Code Sign CLI Binary
               env:
                   APPLE_SIGNING_IDENTITY: ${{ steps.cli_cert.outputs.cert_id }}
               run: |
-                  codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp --options runtime cmdstack-cli-${{ matrix.cli_target }}
+                  codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp --options runtime cmdstack
 
             - name: Zip the CLI Binary
               run: |
-                  zip cmdstack-cli-${{ matrix.cli_target }}.zip cmdstack-cli-${{ matrix.cli_target }}
+                  zip cmdstack-cli-${{ matrix.cli_target }}-${{ github.ref_name }}.zip cmdstack
 
             - name: Notarize CLI Artifact (ZIP)
               env:
@@ -74,13 +74,13 @@ jobs:
                   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
                   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
               run: |
-                  xcrun notarytool submit cmdstack-cli-${{ matrix.cli_target }}.zip --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+                  xcrun notarytool submit cmdstack-cli-${{ matrix.cli_target }}-${{ github.ref_name }}.zip --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
 
             - name: Upload CLI Artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: cli-${{ matrix.cli_target }}
-                  path: ${{ github.workspace }}/cli/cmdstack-cli-${{ matrix.cli_target }}.zip
+                  name: cli-${{ matrix.cli_target }}-${{ github.ref_name }}
+                  path: ${{ github.workspace }}/cli/cmdstack-cli-${{ matrix.cli_target }}-${{ github.ref_name }}.zip
                   if-no-files-found: error
 
     build-tauri:
@@ -153,13 +153,13 @@ jobs:
             - name: Copy DMG Artifact to Artifacts Folder
               run: |
                   mkdir -p artifacts
-                  cp ../target/universal-apple-darwin/release/bundle/dmg/*.dmg artifacts/
+                  cp ../target/universal-apple-darwin/release/bundle/dmg/*.dmg artifacts/CmdStack-${{ github.ref_name }}.dmg
 
             - name: Upload Tauri Artifact (DMG)
               uses: actions/upload-artifact@v4
               with:
-                  name: tauri-dmg
-                  path: ${{ github.workspace }}/ui/artifacts/*.dmg
+                  name: CmdStack-Desktop
+                  path: ${{ github.workspace }}/ui/artifacts/CmdStack-${{ github.ref_name }}.dmg
                   if-no-files-found: error
 
     create-release:
@@ -171,26 +171,26 @@ jobs:
             - name: Download CLI Artifact (x86_64)
               uses: actions/download-artifact@v4
               with:
-                  name: cli-x86_64-apple-darwin
+                  name: cli-x86_64-apple-darwin-${{ github.ref_name }}
                   path: artifacts/cli_x86
 
             - name: Download CLI Artifact (aarch64)
               uses: actions/download-artifact@v4
               with:
-                  name: cli-aarch64-apple-darwin
+                  name: cli-aarch64-apple-darwin-${{ github.ref_name }}
                   path: artifacts/cli_aarch64
 
             - name: Download Tauri Artifact
               uses: actions/download-artifact@v4
               with:
-                  name: tauri-dmg
+                  name: CmdStack-Desktop-${{ github.ref_name }}
                   path: artifacts/tauri
 
             - name: Create Draft Release and Attach Artifacts
               uses: ncipollo/release-action@v1
               with:
-                  tag: "app-v${{ env.PACKAGE_VERSION }}"
-                  name: "Desktop App v${{ env.PACKAGE_VERSION }}"
+                  tag: "${{ github.ref_name }}"
+                  name: "${{ github.ref_name }}"
                   draft: true
                   artifacts: "artifacts/cli_x86/*,artifacts/cli_aarch64/*,artifacts/tauri/*.dmg"
-                  body: "Take a look at the assets to download and install this app."
+                  body: ""
