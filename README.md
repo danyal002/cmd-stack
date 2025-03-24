@@ -155,14 +155,14 @@ The two gifs show an example of updating and deleting a command respectively.
 
 ## Installation
 
-### Latest Release
-
 You can always find the latest release on our [Releases Page](https://github.com/danyal002/cmd-stack/releases/latest). The release assets include:
 
+-   **GUI App:** A universal DMG named `CmdStack-GUI_<tag>.dmg`
 -   **CLI App:** Two builds are available depending on your CPU architecture:
     -   `cmdstack-cli-x86_64-apple-darwin_<tag>.zip`
     -   `cmdstack-cli-aarch64-apple-darwin_<tag>.zip`
--   **GUI App:** A universal DMG named `CmdStack-GUI_<tag>.dmg`
+
+### GUI Installation
 
 Installing the GUI is as simple opening the DMG and following the instructions to install.
 
@@ -216,6 +216,7 @@ echo "Installation complete! Make sure /usr/local/bin is in your PATH."
 ```
 
 **Usage:**  
+
 Make the script executable and run it from your terminal:
 
 ```bash
