@@ -100,11 +100,11 @@ Options:
 
 You can specify the command you wish to save directly in the CLI command along with any desired options:
 
-![](./media/cmdstack-add-cli-cmd.gif)
+![](./resources/cmdstack-add-cli-cmd.gif)
 
 Alternatively, if you wish to add a command interactively, you can simply type `cmdstack add` and fill out the prompts:
 
-![](./media/cmdstack-add-cli-form.gif)
+![](./resources/cmdstack-add-cli-form.gif)
 
 #### Searching for a Command
 
@@ -139,9 +139,9 @@ Once you have populated every blank parameter, you will be presented with the fo
 
 The following gifs show two examples of searching for the same command. The first gif uses CLI arguments while the second uses the search parameter prompts.
 
-![](./media/cmdstack-search-cli-cmd.gif)
+![](./resources/cmdstack-search-cli-cmd.gif)
 
-![](./media/cmdstack-search-cli-form.gif)
+![](./resources/cmdstack-search-cli-form.gif)
 
 #### Updating and Deleting Commands
 
@@ -149,9 +149,9 @@ The `update` and `delete` commands are built on top of the `search` command. Thu
 
 The two gifs show an example of updating and deleting a command respectively.
 
-![](./media/cmdstack-update-cli.gif)
+![](./resources/cmdstack-update-cli.gif)
 
-![](./media/cmdstack-delete-cli.gif)
+![](./resources/cmdstack-delete-cli.gif)
 
 ## Installation
 
