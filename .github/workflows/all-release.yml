@@ -64,7 +64,7 @@ jobs:
               run: |
                   codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp --options runtime cmdstack-cli-${{ matrix.cli_target }}
 
-            - name: Zip the CLI Binary (Initial)
+            - name: Zip the CLI Binary
               run: |
                   zip cmdstack-cli-${{ matrix.cli_target }}.zip cmdstack-cli-${{ matrix.cli_target }}
 
@@ -75,21 +75,6 @@ jobs:
                   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
               run: |
                   xcrun notarytool submit cmdstack-cli-${{ matrix.cli_target }}.zip --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
-
-            # New Steps for Stapling:
-            - name: Unzip Notarized Archive
-              run: |
-                  unzip cmdstack-cli-${{ matrix.cli_target }}.zip -d notarized_${{ matrix.cli_target }}
-
-            - name: Staple the CLI Binary
-              run: |
-                  xcrun stapler staple notarized_${{ matrix.cli_target }}/cmdstack-cli-${{ matrix.cli_target }}
-
-            - name: Re-Zip the Stapled CLI Binary
-              run: |
-                  cd notarized_${{ matrix.cli_target }}
-                  zip -r ../cmdstack-cli-${{ matrix.cli_target }}.final.zip *
-                  cd ..
 
             - name: Upload CLI Artifact
               uses: actions/upload-artifact@v4
