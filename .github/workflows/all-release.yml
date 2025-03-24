@@ -1,0 +1,177 @@
+name: "macOS Release Pipeline"
+
+on:
+    push:
+        tags:
+            - "app-v*"
+
+jobs:
+    build-cli:
+        runs-on: macos-latest
+        defaults:
+            run:
+                working-directory: cli
+        strategy:
+            matrix:
+                cli_target: ["x86_64-apple-darwin", "aarch64-apple-darwin"]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Rust for CLI Target
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: ${{ matrix.cli_target }}
+
+            - name: Import Apple Developer Certificate for CLI
+              env:
+                  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+                  APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+                  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+              run: |
+                  echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+                  security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+                  security default-keychain -s build.keychain
+                  security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+                  security set-keychain-settings -t 3600 -u build.keychain
+                  security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+                  security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+                  security find-identity -v -p codesigning build.keychain
+
+            - name: Verify CLI Certificate
+              id: cli_cert
+              run: |
+                  CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application")
+                  CERT_ID=$(echo "$CERT_INFO" | awk -F'"' '{print $2}')
+                  echo "Using CLI certificate: $CERT_ID"
+                  echo "::set-output name=cert_id::$CERT_ID"
+
+            - name: Build CLI Binary for ${{ matrix.cli_target }}
+              run: |
+                  cargo build --release --target ${{ matrix.cli_target }}
+                  cp ../target/${{ matrix.cli_target }}/release/cmdstack ./cmdstack-cli-${{ matrix.cli_target }}
+
+            - name: Code Sign CLI Binary
+              env:
+                  APPLE_SIGNING_IDENTITY: ${{ steps.cli_cert.outputs.cert_id }}
+              run: |
+                  codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp --options runtime cmdstack-cli-${{ matrix.cli_target }}
+
+            - name: Notarize CLI Binary
+              env:
+                  APPLE_ID: ${{ secrets.APPLE_ID }}
+                  APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+              run: |
+                  xcrun notarytool submit cmdstack-cli-${{ matrix.cli_target }} --apple-id "$APPLE_ID" --password "$APPLE_ID_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+
+            - name: Upload CLI Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: cli-${{ matrix.cli_target }}
+                  path: cmdstack-cli-${{ matrix.cli_target }}
+
+    build-tauri:
+        runs-on: macos-latest
+        defaults:
+            run:
+                working-directory: ui
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node for UI
+              uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+
+            - name: Install Rust for UI
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+
+            - name: Install Frontend Dependencies
+              run: yarn install
+
+            - name: Import Apple Developer Certificate for UI
+              env:
+                  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+                  APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+                  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+              run: |
+                  echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+                  security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+                  security default-keychain -s build.keychain
+                  security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+                  security set-keychain-settings -t 3600 -u build.keychain
+                  security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+                  security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+                  security find-identity -v -p codesigning build.keychain
+
+            - name: Verify UI Certificate
+              run: |
+                  CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application")
+                  CERT_ID=$(echo "$CERT_INFO" | awk -F'"' '{print $2}')
+                  echo "Using UI certificate: $CERT_ID"
+                  echo "CERT_ID=$CERT_ID" >> $GITHUB_ENV
+
+            - name: Build Tauri UI
+              uses: tauri-apps/tauri-action@v0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  APPLE_ID: ${{ secrets.APPLE_ID }}
+                  APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+                  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+                  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+                  APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+                  APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
+              with:
+                  args: "--target universal-apple-darwin"
+
+            - name: Upload Tauri Artifact (DMG)
+              uses: actions/upload-artifact@v4
+              # Adjusted path: from the ui folder, the DMG is in ../target/universal-apple-darwin/release/bundle/dmg/
+              with:
+                  name: tauri-dmg
+                  path: ../target/universal-apple-darwin/release/bundle/dmg/*.dmg
+
+    create-release:
+        runs-on: macos-latest
+        needs: [build-cli, build-tauri]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node for Release
+              uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+
+            - name: Get Version
+              run: echo "PACKAGE_VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
+
+            - name: Download CLI Artifact (x86_64)
+              uses: actions/download-artifact@v4
+              with:
+                  name: cli-x86_64-apple-darwin
+                  path: artifacts/cli_x86
+
+            - name: Download CLI Artifact (aarch64)
+              uses: actions/download-artifact@v4
+              with:
+                  name: cli-aarch64-apple-darwin
+                  path: artifacts/cli_aarch64
+
+            - name: Download Tauri Artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: tauri-dmg
+                  path: artifacts/tauri
+
+            - name: Create Draft Release and Attach Artifacts
+              uses: ncipollo/release-action@v1
+              with:
+                  tag: "app-v${{ env.PACKAGE_VERSION }}"
+                  name: "Desktop App v${{ env.PACKAGE_VERSION }}"
+                  draft: true
+                  # Attach all downloaded artifacts using comma-separated glob patterns.
+                  artifacts: "artifacts/cli_x86/*,artifacts/cli_aarch64/*,artifacts/tauri/*.dmg"
+                  body: "Take a look at the assets to download and install this app."
