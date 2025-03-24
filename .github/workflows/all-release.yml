@@ -64,7 +64,7 @@ jobs:
               run: |
                   codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp --options runtime cmdstack-cli-${{ matrix.cli_target }}
 
-            - name: Zip the CLI Binary
+            - name: Zip the CLI Binary (Initial)
               run: |
                   zip cmdstack-cli-${{ matrix.cli_target }}.zip cmdstack-cli-${{ matrix.cli_target }}
 
@@ -75,6 +75,21 @@ jobs:
                   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
               run: |
                   xcrun notarytool submit cmdstack-cli-${{ matrix.cli_target }}.zip --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+
+            # New Steps for Stapling:
+            - name: Unzip Notarized Archive
+              run: |
+                  unzip cmdstack-cli-${{ matrix.cli_target }}.zip -d notarized_${{ matrix.cli_target }}
+
+            - name: Staple the CLI Binary
+              run: |
+                  xcrun stapler staple notarized_${{ matrix.cli_target }}/cmdstack-cli-${{ matrix.cli_target }}
+
+            - name: Re-Zip the Stapled CLI Binary
+              run: |
+                  cd notarized_${{ matrix.cli_target }}
+                  zip -r ../cmdstack-cli-${{ matrix.cli_target }}.final.zip *
+                  cd ..
 
             - name: Upload CLI Artifact
               uses: actions/upload-artifact@v4
@@ -168,16 +183,6 @@ jobs:
         permissions:
             contents: write
         steps:
-            - uses: actions/checkout@v4
-
-            - name: Setup Node for Release
-              uses: actions/setup-node@v4
-              with:
-                  node-version: lts/*
-
-            - name: Get Version
-              run: echo "PACKAGE_VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
-
             - name: Download CLI Artifact (x86_64)
               uses: actions/download-artifact@v4
               with:
