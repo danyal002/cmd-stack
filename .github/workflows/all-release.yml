@@ -17,6 +17,14 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - name: Cache Cargo registry and build files
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
             - name: Install Rust for CLI Target
               uses: dtolnay/rust-toolchain@stable
               with:
@@ -56,19 +64,24 @@ jobs:
               run: |
                   codesign --sign "$APPLE_SIGNING_IDENTITY" --timestamp --options runtime cmdstack-cli-${{ matrix.cli_target }}
 
-            - name: Notarize CLI Binary
+            - name: Zip the CLI Binary
+              run: |
+                  zip cmdstack-cli-${{ matrix.cli_target }}.zip cmdstack-cli-${{ matrix.cli_target }}
+
+            - name: Notarize CLI Artifact (ZIP)
               env:
                   APPLE_ID: ${{ secrets.APPLE_ID }}
-                  APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+                  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
                   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
               run: |
-                  xcrun notarytool submit cmdstack-cli-${{ matrix.cli_target }} --apple-id "$APPLE_ID" --password "$APPLE_ID_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+                  xcrun notarytool submit cmdstack-cli-${{ matrix.cli_target }}.zip --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
 
             - name: Upload CLI Artifact
               uses: actions/upload-artifact@v4
               with:
                   name: cli-${{ matrix.cli_target }}
-                  path: cmdstack-cli-${{ matrix.cli_target }}
+                  path: ${{ github.workspace }}/cli/cmdstack-cli-${{ matrix.cli_target }}.zip
+                  if-no-files-found: error
 
     build-tauri:
         runs-on: macos-latest
@@ -82,6 +95,16 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: lts/*
+                  cache-dependency-path: "ui/yarn.lock"
+                  cache: "yarn"
+
+            - name: Cache Cargo registry and build files
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
             - name: Install Rust for UI
               uses: dtolnay/rust-toolchain@stable
@@ -127,16 +150,23 @@ jobs:
               with:
                   args: "--target universal-apple-darwin"
 
+            - name: Copy DMG Artifact to Artifacts Folder
+              run: |
+                  mkdir -p artifacts
+                  cp ../target/universal-apple-darwin/release/bundle/dmg/*.dmg artifacts/
+
             - name: Upload Tauri Artifact (DMG)
               uses: actions/upload-artifact@v4
-              # Adjusted path: from the ui folder, the DMG is in ../target/universal-apple-darwin/release/bundle/dmg/
               with:
                   name: tauri-dmg
-                  path: ../target/universal-apple-darwin/release/bundle/dmg/*.dmg
+                  path: ${{ github.workspace }}/ui/artifacts/*.dmg
+                  if-no-files-found: error
 
     create-release:
         runs-on: macos-latest
         needs: [build-cli, build-tauri]
+        permissions:
+            contents: write
         steps:
             - uses: actions/checkout@v4
 
@@ -172,6 +202,5 @@ jobs:
                   tag: "app-v${{ env.PACKAGE_VERSION }}"
                   name: "Desktop App v${{ env.PACKAGE_VERSION }}"
                   draft: true
-                  # Attach all downloaded artifacts using comma-separated glob patterns.
                   artifacts: "artifacts/cli_x86/*,artifacts/cli_aarch64/*,artifacts/tauri/*.dmg"
                   body: "Take a look at the assets to download and install this app."
