@@ -1,0 +1,40 @@
+name: Build & Test
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    test-cli:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Cache Cargo registry and build artifacts
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      target
+                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+            - name: Set up Rust toolchain
+              uses: dtolnay/rust-toolchain@stable
+
+            - name: Build
+              run: cargo build --workspace --exclude ui --verbose
+
+            - name: Clippy
+              run: cargo clippy --workspace --exclude ui --verbose -- -D warnings
+
+            - name: Formatter
+              run: cargo fmt --all -- --check
+
+            - name: Test
+              run: cargo test --workspace --exclude ui --verbose

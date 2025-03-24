@@ -32,26 +32,6 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "macOS": {
-      "signingIdentity": "3D63DA98EFD326DF3CC8CD4F54A80AC68C797FE2",
-      "dmg": {
-        "appPosition": {
-          "x": 180,
-          "y": 170
-        },
-        "applicationFolderPosition": {
-          "x": 480,
-          "y": 170
-        },
-        "windowSize": {
-          "height": 400,
-          "width": 660
-        }
-      },
-      "files": {},
-      "hardenedRuntime": true,
-      "minimumSystemVersion": "10.13"
-    }
+    ]
   }
 }
