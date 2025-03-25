@@ -110,6 +110,7 @@ export function MainCommandPage({
             isCollapsed={isCollapsed}
             links={[
               {
+                id: 'commands-nav',
                 title: 'Commands',
                 label: tagFilteredCommands.length.toString(),
                 icon: File,
@@ -119,6 +120,7 @@ export function MainCommandPage({
                 },
               },
               {
+                id: 'favourites-nav',
                 title: 'Favourites',
                 label: tagFilteredCommands
                   .filter((item) => item.favourite)

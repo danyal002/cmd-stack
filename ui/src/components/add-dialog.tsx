@@ -20,7 +20,7 @@ export function AddDialog({}: AddDialogProps) {
       <DialogTrigger>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" type="button" size="icon">
+            <Button variant="ghost" type="button" size="icon" id="add-command">
               <Plus className="h-4 w-4" />
               <span className="sr-only">Add command</span>
             </Button>
