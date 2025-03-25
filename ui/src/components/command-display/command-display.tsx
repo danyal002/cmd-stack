@@ -255,6 +255,8 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                                     fieldRef(input);
                                     tagRef.current = input;
                                   }}
+                                  autoCapitalize="off"
+                                  autoCorrect="off"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -406,6 +408,8 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
                                 editing.command ? fieldValue : indexedCommand
                               }
                               disabled={!editing.command}
+                              autoCapitalize="off"
+                              autoCorrect="off"
                               {...rest}
                             />
                           </FormControl>

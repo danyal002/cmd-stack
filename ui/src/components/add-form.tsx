@@ -81,6 +81,8 @@ export function AddForm({ onSuccess }: AddFormProps) {
                 <Input
                   placeholder="INSERT INTO users VALUES (@{string[5,10]}, @{int});"
                   className="font-robotomono"
+                  autoCapitalize="off"
+                  autoCorrect="off"
                   {...field}
                 />
               </FormControl>
@@ -96,7 +98,12 @@ export function AddForm({ onSuccess }: AddFormProps) {
             <FormItem>
               <FormLabel>Tag</FormLabel>
               <FormControl>
-                <Input placeholder="SQL/INSERT" {...field} />
+                <Input
+                  placeholder="SQL/INSERT"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 This is your tag for the command.

@@ -66,6 +66,8 @@ export function UseCommandBox({
         }}
         value={command}
         onChange={onChangeCommand}
+        autoCapitalize="off"
+        autoCorrect="off"
       />
       <Tooltip>
         <TooltipTrigger asChild>
