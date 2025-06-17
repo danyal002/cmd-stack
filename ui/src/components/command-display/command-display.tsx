@@ -71,7 +71,7 @@ export function CommandDisplay({ command }: CommandDisplayProps) {
       .then((res) => {
         console.log(res);
         toast({
-          title: 'Command updated ✅ ',
+          title: 'Command updated ✅',
         });
 
         refreshCommands();

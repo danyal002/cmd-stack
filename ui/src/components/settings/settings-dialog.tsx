@@ -15,13 +15,14 @@ import {
 } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { TerminalToggle } from './terminal-toggle';
+import { ExportButton, ImportButton } from './import-export';
 
 interface SettingsDialogProps {
   isCollapsed: boolean;
 }
 
 export function SettingsDialog({ isCollapsed }: SettingsDialogProps) {
-  const [_, refreshSettings] = useSettings();
+  const [, refreshSettings] = useSettings();
 
   function onDialogClick() {
     startTransition(() => {
@@ -59,6 +60,18 @@ export function SettingsDialog({ isCollapsed }: SettingsDialogProps) {
                 <Label>Default Terminal</Label>
                 <div className="ml-auto">
                   <TerminalToggle />
+                </div>
+              </div>
+              <div className="flex items-center">
+                <Label>Import CmdStack</Label>
+                <div className="ml-auto">
+                  <ImportButton />
+                </div>
+              </div>
+              <div className="flex items-center">
+                <Label>Export CmdStack</Label>
+                <div className="ml-auto">
+                  <ExportButton />
                 </div>
               </div>
             </DialogDescription>
