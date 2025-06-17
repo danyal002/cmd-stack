@@ -28,3 +28,4 @@ data = { path = "../../data" }
 thiserror = "1.0"
 itertools = "0.14.0"
 deranged = "=0.4.0"
+tauri-plugin-dialog = "2"
