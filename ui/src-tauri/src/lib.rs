@@ -8,6 +8,7 @@ use logic::{
         SearchCommandError, UpdateCommandError,
     },
     config::{Config, ConfigReadError, ConfigWriteError, UiDefaultTerminal},
+    import_export::{ExportError, ImportError},
     parameters::{parser::SerializableParameter, ParameterError},
     Logic, LogicInitError,
 };
@@ -43,6 +44,10 @@ pub enum UiError {
     Race,
     #[error("Failed to execute command in terminal")]
     ExecuteCommand,
+    #[error("Failed to import data")]
+    ImportData(#[from] ImportError),
+    #[error("Failed to export data")]
+    ExportData(#[from] ExportError),
 }
 
 // we must manually implement serde::Serialize (https://github.com/tauri-apps/tauri/discussions/8805)
@@ -256,6 +261,26 @@ fn update_command_last_used(command_id: i64, state: State<Ui>) -> Result<(), UiE
     Err(UiError::Race)
 }
 
+#[tauri::command]
+fn import_data(path: String, state: State<Ui>) -> Result<u64, UiError> {
+    let path = std::path::Path::new(&path);
+
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.import_data(path)?);
+    }
+    Err(UiError::Race)
+}
+
+#[tauri::command]
+fn export_data(path: String, state: State<Ui>) -> Result<(), UiError> {
+    let path = std::path::Path::new(&path);
+
+    if let Ok(logic) = state.logic.write() {
+        return Ok(logic.create_export_json(path)?);
+    }
+    Err(UiError::Race)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let logic = Logic::try_default()
@@ -263,6 +288,7 @@ pub fn run() {
         .unwrap();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .manage(Ui {
             logic: logic.into(),
         })
@@ -280,7 +306,9 @@ pub fn run() {
             read_config,
             write_config,
             update_command_last_used,
-            execute_in_terminal
+            execute_in_terminal,
+            import_data,
+            export_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

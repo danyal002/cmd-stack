@@ -53,7 +53,7 @@ export function AddForm({ onSuccess }: AddFormProps) {
       .then((res) => {
         console.log(res);
         toast({
-          title: 'Command added ✅ ',
+          title: 'Command added ✅',
         });
 
         refreshCommands();

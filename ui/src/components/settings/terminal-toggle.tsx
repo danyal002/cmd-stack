@@ -22,7 +22,7 @@ export function TerminalToggle() {
       .then((res) => {
         console.log(res);
         toast({
-          title: 'Settings updated ✅ ',
+          title: 'Settings updated ✅',
         });
         refreshSettings();
       })
